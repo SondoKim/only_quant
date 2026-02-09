@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000043",
+  "created_at": "2026-02-09T15:24:22.001854",
+  "updated_at": "2026-02-09T15:24:22.012398",
+  "asset": "GTAUD3YR Corp",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 5,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 0.9976935583323002,
+    "sharpe_6m": 2.554056252274326,
+    "sharpe_1m": 1.2429844973550874,
+    "total_return": 7.098810543928651,
+    "annual_return": 0.0,
+    "max_drawdown": 0.7771334651387608,
+    "win_rate": 0.3161764705882353,
+    "num_trades": 137,
+    "calmar_ratio": 0.7918601199076144,
+    "sortino_ratio": 2.2800091166780656
+  },
+  "is_active": true,
+  "version": 1
+}

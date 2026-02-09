@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_000262",
+  "created_at": "2026-02-09T15:24:22.400510",
+  "updated_at": "2026-02-09T15:24:22.410027",
+  "asset": "USGG10YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": "USGG2YR Index",
+  "performance": {
+    "sharpe_3y": 1.0419047178425107,
+    "sharpe_6m": 1.8141999677924814,
+    "sharpe_1m": 4.51009390965712,
+    "total_return": 10.054323761677681,
+    "annual_return": 0.0,
+    "max_drawdown": 0.6177305151674776,
+    "win_rate": 0.6666666666666665,
+    "num_trades": 175,
+    "calmar_ratio": 1.1895324399121112,
+    "sortino_ratio": 1.9511448247469998
+  },
+  "is_active": true,
+  "version": 1
+}

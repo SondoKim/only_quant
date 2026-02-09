@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_002216",
+  "created_at": "2026-02-06T17:17:00.930222",
+  "updated_at": "2026-02-06T17:17:00.930222",
+  "asset": "GUKG10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "rsi_extremes",
+  "params": {
+    "period": 10,
+    "oversold": 30,
+    "overbought": 75,
+    "exit_level": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0596407958847638,
+    "sharpe_6m": 0.6579083603413474,
+    "sharpe_1m": 2.0932478552056226,
+    "total_return": -0.37004117836714184,
+    "annual_return": 0.0,
+    "max_drawdown": 0.9325394240286555,
+    "win_rate": 0.7575757575757575,
+    "num_trades": 33,
+    "calmar_ratio": -0.10786365529798891,
+    "sortino_ratio": 0.6741954801348949
+  },
+  "is_active": false,
+  "version": 1
+}

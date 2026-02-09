@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_000076",
+  "created_at": "2026-02-09T15:23:08.617120",
+  "updated_at": "2026-02-09T15:23:08.617120",
+  "asset": "GFRN10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 120,
+    "low_percentile": 25,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "GDBR10 Index",
+  "performance": {
+    "sharpe_3y": 1.0555733209395521,
+    "sharpe_6m": 0.4651374433848132,
+    "sharpe_1m": -3.934546882861102,
+    "total_return": -0.03957939199265582,
+    "annual_return": 0.0,
+    "max_drawdown": 0.29492770856838113,
+    "win_rate": 0.76,
+    "num_trades": 26,
+    "calmar_ratio": -0.031248854846022873,
+    "sortino_ratio": -0.06769251052436981
+  },
+  "is_active": false,
+  "version": 1
+}

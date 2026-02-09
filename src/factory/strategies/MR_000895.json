@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_000895",
+  "created_at": "2026-02-06T17:15:41.911057",
+  "updated_at": "2026-02-06T17:15:41.911057",
+  "asset": "AUD Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 60,
+    "entry_threshold": 2.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2942660496974243,
+    "sharpe_6m": 0.712724814495244,
+    "sharpe_1m": -3.5366672528259526,
+    "total_return": 0.46196218333389055,
+    "annual_return": 0.0,
+    "max_drawdown": 0.10331881649229148,
+    "win_rate": 0.8,
+    "num_trades": 31,
+    "calmar_ratio": 0.881112946543596,
+    "sortino_ratio": 1.6918322249198874
+  },
+  "is_active": false,
+  "version": 1
+}

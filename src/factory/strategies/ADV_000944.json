@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_000944",
+  "created_at": "2026-02-09T15:20:43.102292",
+  "updated_at": "2026-02-09T15:20:43.112801",
+  "asset": "GTAUD3YR Corp",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 0.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 0.853879446306548,
+    "sharpe_6m": 2.684384282751307,
+    "sharpe_1m": 2.920581927755176,
+    "total_return": 13.629854951755304,
+    "annual_return": 0.0,
+    "max_drawdown": 0.8132182056198848,
+    "win_rate": 0.4042553191489361,
+    "num_trades": 188,
+    "calmar_ratio": 1.0451483736686435,
+    "sortino_ratio": 2.7512718746071942
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,112 @@
+# Indicator Configuration - Parameter Ranges for Strategy Generation
+
+technical_indicators:
+  rsi:
+    params:
+      period: [5, 10, 14, 20, 30]
+    thresholds:
+      oversold: [20, 25, 30]
+      overbought: [70, 75, 80]
+  
+  sma_crossover:
+    params:
+      fast_period: [5, 10, 20]
+      slow_period: [20, 30, 50, 60]
+  
+  ema_crossover:
+    params:
+      fast_period: [5, 10, 12]
+      slow_period: [20, 26, 50]
+  
+  bollinger_bands:
+    params:
+      period: [10, 20, 30]
+      std_dev: [1.5, 2.0, 2.5, 3.0]
+  
+  zscore:
+    params:
+      period: [10, 20, 30, 60]
+    thresholds:
+      entry: [1.0, 1.5, 2.0, 2.5]
+      exit: [0.0, 0.25, 0.5]
+  
+  macd:
+    params:
+      fast_period: [8, 12]
+      slow_period: [21, 26]
+      signal_period: [7, 9]
+  
+  rate_of_change:
+    params:
+      period: [5, 10, 20, 30]
+
+cross_asset_indicators:
+  spread_zscore:
+    params:
+      period: [10, 20, 30, 60]
+    thresholds:
+      entry: [1.0, 1.5, 2.0]
+      exit: [0.0, 0.5]
+  
+  spread_percentile:
+    params:
+      period: [60, 120, 252]
+    thresholds:
+      low: [10, 20, 25]
+      high: [75, 80, 90]
+  
+  correlation_rolling:
+    params:
+      period: [20, 60, 120]
+  
+  relative_strength:
+    params:
+      period: [10, 20, 30]
+
+advanced_strategies:
+  filtered_momentum:
+    ma_period: [100, 200]
+    rsi_period: [10, 14, 20]
+    rsi_entry: [45, 50, 55]
+  lead_lag_momentum:
+    period: [10, 20, 30, 60]
+    threshold: [0, 1.0, 2.0]
+  multi_tf_momentum:
+    periods: 
+      - [20, 60, 120]
+      - [10, 30, 60]
+      - [5, 10, 20]
+  volatility_breakout:
+    period: [10, 20, 30]
+    k: [0.5, 1.0, 1.5, 2.0]
+  relative_strength_rank:
+    period: [10, 20, 60]
+    top_n: [1, 2, 3]
+
+# Strategy type configurations
+strategy_types:
+  momentum:
+    description: "Follow the trend"
+    indicators:
+      - sma_crossover
+      - ema_crossover
+      - macd
+      - rate_of_change
+      - rsi  # RSI > 50 as momentum
+  
+  mean_reversion:
+    description: "Trade against extremes"
+    indicators:
+      - rsi
+      - bollinger_bands
+      - zscore
+      - spread_zscore
+      - spread_percentile
+
+# Backtest configuration
+backtest:
+  sharpe_threshold_3y: 0.8
+  sharpe_threshold_6m: 0.9
+  min_trades: 20
+  max_drawdown: -0.20
+  transaction_cost_bps: 2

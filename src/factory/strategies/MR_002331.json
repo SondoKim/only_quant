@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MR_002331",
+  "created_at": "2026-02-06T17:17:00.964129",
+  "updated_at": "2026-02-06T17:17:00.964129",
+  "asset": "AUD Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "bollinger_reversion",
+  "params": {
+    "period": 20,
+    "std_dev": 2.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.3950797177610619,
+    "sharpe_6m": 0.1913508751987858,
+    "sharpe_1m": -2.4177489043241596,
+    "total_return": 0.05997638189414161,
+    "annual_return": 0.0,
+    "max_drawdown": 0.20274427880574333,
+    "win_rate": 0.6607142857142857,
+    "num_trades": 57,
+    "calmar_ratio": 0.06635134866476672,
+    "sortino_ratio": 0.2677876571006799
+  },
+  "is_active": false,
+  "version": 1
+}

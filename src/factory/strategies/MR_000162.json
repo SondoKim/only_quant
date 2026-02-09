@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_000162",
+  "created_at": "2026-02-09T15:18:16.329044",
+  "updated_at": "2026-02-09T15:18:16.329044",
+  "asset": "GBP Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 20,
+    "entry_threshold": 2.5,
+    "exit_threshold": 0.25
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0242735638948923,
+    "sharpe_6m": -0.036900793150085175,
+    "sharpe_1m": 2.316084635445347,
+    "total_return": 0.1476974850463536,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08666332799476882,
+    "win_rate": 0.6666666666666665,
+    "num_trades": 27,
+    "calmar_ratio": 0.370260073765612,
+    "sortino_ratio": 0.8934334400853452
+  },
+  "is_active": false,
+  "version": 1
+}

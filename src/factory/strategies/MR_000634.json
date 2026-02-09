@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_000634",
+  "created_at": "2026-02-09T15:18:43.625330",
+  "updated_at": "2026-02-09T15:18:43.632731",
+  "asset": "GTAUD10YR Corp",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": "GTAUD3YR Corp",
+  "performance": {
+    "sharpe_3y": 0.8716835570310992,
+    "sharpe_6m": 1.7460459759911884,
+    "sharpe_1m": 1.5197721234058286,
+    "total_return": 5.97774718114689,
+    "annual_return": 0.0,
+    "max_drawdown": 0.5541707136761674,
+    "win_rate": 0.6524064171122995,
+    "num_trades": 188,
+    "calmar_ratio": 1.012562338553431,
+    "sortino_ratio": 1.739181152502949
+  },
+  "is_active": true,
+  "version": 1
+}

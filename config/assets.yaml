@@ -1,0 +1,69 @@
+# Global Macro Trading - Asset Configuration
+
+rates:
+  US:
+    tickers:
+      - USGG2YR Index
+      - USGG10YR Index
+    spreads:
+      - [USGG2YR Index, USGG10YR Index]  # 2s10s curve
+  UK:
+    tickers:
+      - GUKG10 Index
+  Australia:
+    tickers:
+      - GTAUD3YR Corp
+      - GTAUD10YR Corp
+    spreads:
+      - [GTAUD3YR Corp, GTAUD10YR Corp]
+  Korea:
+    tickers:
+      - GVSK3YR Index
+      - GVSK10YR Index
+    spreads:
+      - [GVSK3YR Index, GVSK10YR Index]
+  Germany:
+    tickers:
+      - GDBR2 Index
+      - GDBR10 Index
+    spreads:
+      - [GDBR2 Index, GDBR10 Index]
+  France:
+    tickers:
+      - GFRN10 Index
+  Italy:
+    tickers:
+      - GBTPGR10 Index
+  Japan:
+    tickers:
+      - GJGB10 Index
+
+fx:
+  GBP:
+    ticker: GBP Curncy
+  AUD:
+    ticker: AUD Curncy
+  EUR:
+    ticker: EUR Curncy
+  JPY:
+    ticker: JPY Curncy
+  KRW:
+    ticker: KRW Curncy
+
+# Cross-asset relationships for spread indicators
+cross_asset_pairs:
+  rates_curves:
+    - [USGG2YR Index, USGG10YR Index]      # US 2s10s
+    - [GDBR2 Index, GDBR10 Index]          # DE 2s10s
+    - [GVSK3YR Index, GVSK10YR Index]      # KR 3s10s
+    - [GTAUD3YR Corp, GTAUD10YR Corp]      # AU 3s10s
+  
+  rates_cross_country:
+    - [USGG2YR Index, GDBR2 Index]         # US-DE 2Y spread
+    - [USGG10YR Index, GDBR10 Index]       # US-DE 10Y spread
+    - [USGG10YR Index, GJGB10 Index]       # US-JP 10Y spread
+    - [USGG10YR Index, GUKG10 Index]       # US-UK 10Y spread
+  
+  rates_peripheral:
+    - [GBTPGR10 Index, GDBR10 Index]       # Italy-Germany spread
+    - [GFRN10 Index, GDBR10 Index]         # France-Germany spread

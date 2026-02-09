@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000651",
+  "created_at": "2026-02-06T17:15:41.786311",
+  "updated_at": "2026-02-06T17:15:41.786311",
+  "asset": "USGG10YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "spread_momentum",
+  "params": {
+    "period": 30,
+    "threshold": 0
+  },
+  "related_asset": "GUKG10 Index",
+  "performance": {
+    "sharpe_3y": 0.8799842706778244,
+    "sharpe_6m": 0.6770337208729236,
+    "sharpe_1m": -0.1608078625827552,
+    "total_return": 0.7992330211254984,
+    "annual_return": 0.0,
+    "max_drawdown": 0.33085890461589473,
+    "win_rate": 0.4705882352941176,
+    "num_trades": 68,
+    "calmar_ratio": 0.43598705431016155,
+    "sortino_ratio": 0.8223503893639691
+  },
+  "is_active": false,
+  "version": 1
+}

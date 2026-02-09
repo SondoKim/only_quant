@@ -1,0 +1,17 @@
+# Core dependencies
+pandas>=2.0.0
+numpy>=1.24.0
+pyyaml>=6.0
+
+# Bloomberg data
+xbbg>=0.7.0
+
+# Backtesting
+vectorbt>=0.26.0
+
+# Technical analysis
+ta>=0.10.0
+
+# Utilities
+tqdm>=4.65.0
+joblib>=1.3.0
