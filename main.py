@@ -281,10 +281,11 @@ class GlobalMacroTradingSystem:
     def run_portfolio_backtest(
         self,
         start_date: str = "2023-01-01",
-        max_correlation: float = 0.7
+        max_correlation: float = 0.7,
+        realistic: bool = False
     ) -> Dict[str, Any]:
-        """Run portfolio rebalancing backtest."""
-        logger.info(f"📊 Running portfolio backtest from {start_date}...")
+        """Run portfolio backtest with monthly rebalancing."""
+        logger.info(f"📊 Running {'realistic ' if realistic else ''}portfolio backtest from {start_date}...")
         
         # 1. Load data
         prices = self.data_loader.load_data()
@@ -295,7 +296,9 @@ class GlobalMacroTradingSystem:
         backtester = PortfolioBacktester(
             prices=prices,
             factory=self.strategy_factory,
-            max_correlation=max_correlation
+            selector_threshold=self.sharpe_6m_threshold,
+            max_correlation=max_correlation,
+            realistic=realistic
         )
         
         return backtester.run_simulation(start_date=start_date)
@@ -316,6 +319,8 @@ def main():
                         help='Target number of strategies to test (overrides sample-ratio)')
     parser.add_argument('--max-corr', type=float, default=0.7,
                         help='Maximum allowed correlation between strategies (0.0 to 1.0)')
+    parser.add_argument('--realistic', action='store_true',
+                        help='Run realistic walk-forward backtest (no future bias)')
     
     args = parser.parse_args()
     
@@ -357,7 +362,8 @@ def main():
     elif args.mode == 'backtest-portfolio':
         result = system.run_portfolio_backtest(
             start_date=args.start_date,
-            max_correlation=args.max_corr
+            max_correlation=args.max_corr,
+            realistic=args.realistic
         )
         if 'error' in result:
             print(f"\n❌ Error: {result['error']}")

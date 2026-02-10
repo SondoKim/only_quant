@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_004137",
+  "created_at": "2026-02-10T13:21:01.304553",
+  "updated_at": "2026-02-10T13:21:01.314066",
+  "asset": "GJGB10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2296181282433587,
+    "sharpe_6m": 2.8924026956524136,
+    "sharpe_1m": 3.592053666835135,
+    "total_return": 0.1457964958036858,
+    "annual_return": 0.0,
+    "max_drawdown": 0.040362816700161,
+    "win_rate": 0.4117647058823529,
+    "num_trades": 52,
+    "calmar_ratio": 0.7847710935001151,
+    "sortino_ratio": 1.6627350805653136
+  },
+  "is_active": true,
+  "version": 1
+}

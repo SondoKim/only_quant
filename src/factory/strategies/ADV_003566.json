@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_003566",
+  "created_at": "2026-02-10T13:20:40.185434",
+  "updated_at": "2026-02-10T13:20:40.192935",
+  "asset": "GJGB10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 200,
+    "rsi_period": 20,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.4629015521197746,
+    "sharpe_6m": 3.479411529167191,
+    "sharpe_1m": 3.5920536668351275,
+    "total_return": 0.16044090651041756,
+    "annual_return": 0.0,
+    "max_drawdown": 0.027319873061090308,
+    "win_rate": 0.2826086956521739,
+    "num_trades": 47,
+    "calmar_ratio": 1.2694801184050193,
+    "sortino_ratio": 1.7293537469190943
+  },
+  "is_active": true,
+  "version": 1
+}

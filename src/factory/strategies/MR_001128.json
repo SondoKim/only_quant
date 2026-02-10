@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001128",
+  "created_at": "2026-02-10T13:18:10.587386",
+  "updated_at": "2026-02-10T13:18:10.593920",
+  "asset": "GDBR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 2.5,
+    "exit_threshold": 0.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.4949391407373784,
+    "sharpe_6m": 1.3764137581391758,
+    "sharpe_1m": 0.0,
+    "total_return": 0.14659029897973241,
+    "annual_return": 0.0,
+    "max_drawdown": 0.04169470430982077,
+    "win_rate": 0.9,
+    "num_trades": 20,
+    "calmar_ratio": 0.7636292259595653,
+    "sortino_ratio": 1.719834934519933
+  },
+  "is_active": true,
+  "version": 1
+}

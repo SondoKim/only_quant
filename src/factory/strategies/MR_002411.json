@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MR_002411",
+  "created_at": "2026-02-10T13:18:58.673272",
+  "updated_at": "2026-02-10T13:18:58.682051",
+  "asset": "GBP Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "bollinger_reversion",
+  "params": {
+    "period": 10,
+    "std_dev": 2.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.078405235421484,
+    "sharpe_6m": 1.4008022060874643,
+    "sharpe_1m": -0.2560111786817391,
+    "total_return": 0.08503123785145661,
+    "annual_return": 0.0,
+    "max_drawdown": 0.12259177908530765,
+    "win_rate": 0.5714285714285714,
+    "num_trades": 70,
+    "calmar_ratio": 0.15396405247801173,
+    "sortino_ratio": 0.47424954319186247
+  },
+  "is_active": true,
+  "version": 1
+}

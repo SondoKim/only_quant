@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_002929",
+  "created_at": "2026-02-10T13:18:59.364760",
+  "updated_at": "2026-02-10T13:18:59.373756",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "GDBR10 Index",
+  "performance": {
+    "sharpe_3y": 1.3155948753908857,
+    "sharpe_6m": 2.533977614594491,
+    "sharpe_1m": -4.040295932051973,
+    "total_return": 0.35848314196320613,
+    "annual_return": 0.0,
+    "max_drawdown": 0.5529399327954916,
+    "win_rate": 0.6153846153846154,
+    "num_trades": 156,
+    "calmar_ratio": 0.1315151970380111,
+    "sortino_ratio": 0.6674014543471531
+  },
+  "is_active": true,
+  "version": 1
+}
