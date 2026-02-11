@@ -367,20 +367,53 @@ class StrategySelector:
         signals = self.generate_signals(prices, target_date, max_correlation)
         positions = self.aggregate_positions(signals)
         
-        # Summary by asset
+        # Create summary including ALL assets in the price data
         asset_summary = []
-        for _, row in positions.iterrows():
-            pos_str = '🟢 LONG' if row['position'] == 1 else \
-                      '🔴 SHORT' if row['position'] == -1 else '⚪ FLAT'
-            asset_summary.append({
-                'asset': row['asset'],
-                'position': pos_str,
-                'confidence': abs(row['raw_position']),
-                'strategies': row['num_strategies'],
-                'momentum': row['momentum_count'],
-                'mean_reversion': row['mr_count'],
-                'advanced': row['adv_count'],
-            })
+        # Custom sort for assets: US, DE, UK, AU, JP, KR rates, then FX
+        def asset_sort_key(ticker: str) -> tuple:
+            # Group priority
+            if 'USGG' in ticker: group = 1
+            elif 'GDBR' in ticker: group = 2
+            elif 'GUKG' in ticker: group = 3
+            elif 'GTAUD' in ticker: group = 4
+            elif 'GJGB' in ticker: group = 5
+            elif 'GVSK' in ticker: group = 6
+            elif 'Index' in ticker or 'Corp' in ticker: group = 7  # Other rates (FR, IT etc)
+            elif 'Curncy' in ticker: group = 8  # FX
+            else: group = 9
+            
+            return (group, ticker)
+
+        all_assets = sorted(list(prices.columns), key=asset_sort_key)
+        
+        # Map existing positions for quick lookup
+        pos_lookup = {row['asset']: row for _, row in positions.iterrows()} if not positions.empty else {}
+        
+        for asset in all_assets:
+            if asset in pos_lookup:
+                row = pos_lookup[asset]
+                pos_str = '🟢 LONG' if row['position'] == 1 else \
+                          '🔴 SHORT' if row['position'] == -1 else '⚪ FLAT'
+                asset_summary.append({
+                    'asset': asset,
+                    'position': pos_str,
+                    'confidence': abs(row['raw_position']),
+                    'strategies': row['num_strategies'],
+                    'momentum': row['momentum_count'],
+                    'mean_reversion': row['mr_count'],
+                    'advanced': row['adv_count'],
+                })
+            else:
+                # Default "NOSIG" for assets with no active strategies
+                asset_summary.append({
+                    'asset': asset,
+                    'position': '🔘 NOSIG',
+                    'confidence': 0.0,
+                    'strategies': 0,
+                    'momentum': 0,
+                    'mean_reversion': 0,
+                    'advanced': 0,
+                })
         
         return {
             'date': target_date or str(datetime.now().date()),

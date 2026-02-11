@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001458",
+  "created_at": "2026-02-11T13:29:01.802486",
+  "updated_at": "2026-02-11T13:29:01.809344",
+  "asset": "KRW Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 20,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1362354544513524,
+    "sharpe_6m": 1.5168614220822327,
+    "sharpe_1m": 2.9236504837864254,
+    "total_return": 0.09866965262682242,
+    "annual_return": 0.0,
+    "max_drawdown": 0.2116814671393052,
+    "win_rate": 0.75,
+    "num_trades": 132,
+    "calmar_ratio": 0.1028960915093526,
+    "sortino_ratio": 0.41221733702610536
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000908",
+  "created_at": "2026-02-11T13:28:18.037071",
+  "updated_at": "2026-02-11T13:28:18.042605",
+  "asset": "GJGB10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rate_of_change",
+  "params": {
+    "period": 5,
+    "entry_threshold": 0,
+    "exit_threshold": 0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0437839111042104,
+    "sharpe_6m": 2.092286948750414,
+    "sharpe_1m": -0.3541518026548931,
+    "total_return": 0.06481385409563614,
+    "annual_return": 0.0,
+    "max_drawdown": 0.050006347047972535,
+    "win_rate": 0.30538922155688625,
+    "num_trades": 167,
+    "calmar_ratio": 0.28964458324401954,
+    "sortino_ratio": 0.7857272119856882
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001288",
+  "created_at": "2026-02-11T13:29:01.628771",
+  "updated_at": "2026-02-11T13:29:01.628771",
+  "asset": "GFRN10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 0.9991878967760526,
+    "sharpe_6m": 0.48782669925537986,
+    "sharpe_1m": -3.381112051742097,
+    "total_return": -0.020881094915628465,
+    "annual_return": 0.0,
+    "max_drawdown": 0.24717765969779917,
+    "win_rate": 0.673076923076923,
+    "num_trades": 53,
+    "calmar_ratio": -0.01950176763762334,
+    "sortino_ratio": -0.023416599476052964
+  },
+  "is_active": false,
+  "version": 1
+}

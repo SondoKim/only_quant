@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000383",
+  "created_at": "2026-02-11T13:28:17.642805",
+  "updated_at": "2026-02-11T13:28:17.652803",
+  "asset": "GJGB10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 14,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.5074394506169804,
+    "sharpe_6m": 2.799381140210571,
+    "sharpe_1m": 2.4078982847849497,
+    "total_return": 0.13746263676671078,
+    "annual_return": 0.0,
+    "max_drawdown": 0.04448039770896637,
+    "win_rate": 0.23170731707317074,
+    "num_trades": 83,
+    "calmar_ratio": 0.6729331420274609,
+    "sortino_ratio": 1.5387346198727387
+  },
+  "is_active": true,
+  "version": 1
+}

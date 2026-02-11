@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_003763",
+  "created_at": "2026-02-11T13:31:11.390147",
+  "updated_at": "2026-02-11T13:31:11.390147",
+  "asset": "GBP Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 30,
+    "k": 1.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 0.9852737776176413,
+    "sharpe_6m": 0.4872762697649138,
+    "sharpe_1m": 2.383127297175074,
+    "total_return": 0.1405491325703646,
+    "annual_return": 0.0,
+    "max_drawdown": 0.1240547823948772,
+    "win_rate": 0.5,
+    "num_trades": 27,
+    "calmar_ratio": 0.24643636121813012,
+    "sortino_ratio": 0.691298099532607
+  },
+  "is_active": false,
+  "version": 1
+}

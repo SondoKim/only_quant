@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MR_002166",
+  "created_at": "2026-02-11T13:30:21.759927",
+  "updated_at": "2026-02-11T13:30:21.767274",
+  "asset": "GDBR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "bollinger_reversion",
+  "params": {
+    "period": 20,
+    "std_dev": 2.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2912311017318154,
+    "sharpe_6m": 1.371190763044727,
+    "sharpe_1m": 0.0,
+    "total_return": 0.09215954579728987,
+    "annual_return": 0.0,
+    "max_drawdown": 0.11620036875396879,
+    "win_rate": 0.7407407407407408,
+    "num_trades": 27,
+    "calmar_ratio": 0.17548682584952824,
+    "sortino_ratio": 0.7089732066894288
+  },
+  "is_active": true,
+  "version": 1
+}

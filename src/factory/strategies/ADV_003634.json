@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_003634",
+  "created_at": "2026-02-11T13:31:11.225025",
+  "updated_at": "2026-02-11T13:31:11.235541",
+  "asset": "GJGB10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 1.6988360934815057,
+    "sharpe_6m": 2.3187669167152514,
+    "sharpe_1m": 2.9602606156274387,
+    "total_return": 0.19208038027882096,
+    "annual_return": 0.0,
+    "max_drawdown": 0.017249494274590157,
+    "win_rate": 0.4590163934426229,
+    "num_trades": 122,
+    "calmar_ratio": 2.3799377202878755,
+    "sortino_ratio": 2.5424481603357294
+  },
+  "is_active": true,
+  "version": 1
+}

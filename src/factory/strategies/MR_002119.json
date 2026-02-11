@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MR_002119",
+  "created_at": "2026-02-11T13:30:21.698457",
+  "updated_at": "2026-02-11T13:30:21.709608",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "bollinger_reversion",
+  "params": {
+    "period": 20,
+    "std_dev": 1.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0668679017777285,
+    "sharpe_6m": 2.1994815048291705,
+    "sharpe_1m": 1.705158972475174,
+    "total_return": -0.7455346944523821,
+    "annual_return": 0.0,
+    "max_drawdown": 1.4637163906716981,
+    "win_rate": 0.7066666666666667,
+    "num_trades": 76,
+    "calmar_ratio": -0.643657635464508,
+    "sortino_ratio": -0.12006048597188738
+  },
+  "is_active": true,
+  "version": 1
+}

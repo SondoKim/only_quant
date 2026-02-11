@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000846",
+  "created_at": "2026-02-11T13:28:18.020656",
+  "updated_at": "2026-02-11T13:28:18.020656",
+  "asset": "GUKG10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 26,
+    "signal_period": 3
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 0.9982090396999068,
+    "sharpe_6m": -0.608142324657198,
+    "sharpe_1m": 2.5054376825403173,
+    "total_return": -0.39669511463141804,
+    "annual_return": 0.0,
+    "max_drawdown": 0.9737526772252905,
+    "win_rate": 0.3868613138686132,
+    "num_trades": 137,
+    "calmar_ratio": -0.11221443248120828,
+    "sortino_ratio": 0.4548691491720036
+  },
+  "is_active": false,
+  "version": 1
+}
