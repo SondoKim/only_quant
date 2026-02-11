@@ -151,8 +151,15 @@ class StrategyFactory:
             logger.warning(f"Strategy not found: {strategy_id}")
             return None
         
-        with open(strategy_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        try:
+            with open(strategy_file, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            logger.error(f"Error decoding JSON for strategy {strategy_id}: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error loading strategy {strategy_id}: {e}")
+            return None
     
     def update_performance(
         self,
@@ -173,9 +180,23 @@ class StrategyFactory:
         if not strategy:
             return False
         
-        strategy['performance'].update(performance)
+        # Ensure all performance metrics are JSON serializable
+        clean_performance = {}
+        for k, v in performance.items():
+            if hasattr(v, 'tolist'):
+                val = v.tolist()
+                clean_performance[k] = val if len(val) > 1 else val[0]
+            elif isinstance(v, (list, dict)):
+                clean_performance[k] = v
+            else:
+                try:
+                    clean_performance[k] = float(v)
+                except (TypeError, ValueError):
+                    clean_performance[k] = v
+                    
+        strategy['performance'].update(clean_performance)
         strategy['updated_at'] = datetime.now().isoformat()
-        strategy['version'] += 1
+        strategy['version'] = strategy.get('version', 1) + 1
         
         strategy_file = self.storage_dir / f"{strategy_id}.json"
         with open(strategy_file, 'w', encoding='utf-8') as f:

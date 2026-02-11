@@ -3,15 +3,15 @@
 technical_indicators:
   rsi:
     params:
-      period: [5, 10, 14, 20, 30]
+      period: [4, 5, 9, 14]
     thresholds:
       oversold: [20, 25, 30]
-      overbought: [70, 75, 80]
+      overbought: [70, 75]
   
   sma_crossover:
     params:
-      fast_period: [5, 10, 20]
-      slow_period: [20, 30, 50, 60]
+      fast_period: [3, 5, 10]
+      slow_period: [10, 15, 20, 30]
   
   ema_crossover:
     params:
@@ -21,24 +21,24 @@ technical_indicators:
   bollinger_bands:
     params:
       period: [10, 20, 30]
-      std_dev: [1.5, 2.0, 2.5, 3.0]
+      std_dev: [1.5, 2.0, 2.5]
   
   zscore:
     params:
       period: [10, 20, 30, 60]
     thresholds:
-      entry: [1.0, 1.5, 2.0, 2.5]
+      entry: [1.0, 1.5, 2.0]
       exit: [0.0, 0.25, 0.5]
   
   macd:
     params:
-      fast_period: [8, 12]
-      slow_period: [21, 26]
-      signal_period: [7, 9]
+      fast_period: [5, 8, 12]
+      slow_period: [13, 21, 26]
+      signal_period: [3, 5, 9]
   
   rate_of_change:
     params:
-      period: [5, 10, 20, 30]
+      period: [3, 5, 10, 15]
 
 cross_asset_indicators:
   spread_zscore:
@@ -50,27 +50,27 @@ cross_asset_indicators:
   
   spread_percentile:
     params:
-      period: [60, 120, 252]
+      period: [20, 60]
     thresholds:
       low: [10, 20, 25]
       high: [75, 80, 90]
   
   correlation_rolling:
     params:
-      period: [20, 60, 120]
+      period: [5, 10, 20, 60]
   
   relative_strength:
     params:
-      period: [10, 20, 30]
+      period: [5, 10, 20]
 
 advanced_strategies:
   filtered_momentum:
-    ma_period: [100, 200]
-    rsi_period: [10, 14, 20]
+    ma_period: [20, 50, 100]
+    rsi_period: [5, 10, 14]
     rsi_entry: [45, 50, 55]
   lead_lag_momentum:
-    period: [10, 20, 30, 60]
-    threshold: [0, 1.0, 2.0]
+    period: [5, 10, 20]
+    threshold: [0, 0.5, 1.0]
   multi_tf_momentum:
     periods: 
       - [20, 60, 120]
