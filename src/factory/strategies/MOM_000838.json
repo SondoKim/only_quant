@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000838",
-  "created_at": "2026-02-11T13:28:17.988244",
-  "updated_at": "2026-02-11T15:50:59.679751",
+  "created_at": "2026-02-11T16:58:28.534015",
+  "updated_at": "2026-02-11T16:58:28.541076",
   "asset": "GTAUD3YR Corp",
   "strategy_type": "momentum",
   "strategy_name": "macd_crossover",

@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001230",
-  "created_at": "2026-02-11T13:29:01.616323",
-  "updated_at": "2026-02-11T15:50:59.862370",
+  "created_at": "2026-02-11T16:59:13.750278",
+  "updated_at": "2026-02-11T16:59:13.750278",
   "asset": "AUD Curncy",
   "strategy_type": "mean_reversion",
   "strategy_name": "zscore_reversion",

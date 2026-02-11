@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000278",
-  "created_at": "2026-02-11T13:28:17.582911",
-  "updated_at": "2026-02-11T15:50:59.380362",
+  "created_at": "2026-02-11T16:58:28.017538",
+  "updated_at": "2026-02-11T16:58:28.025045",
   "asset": "GJGB10 Index",
   "strategy_type": "momentum",
   "strategy_name": "ema_crossover",

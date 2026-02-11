@@ -12,7 +12,7 @@ from src.data.loader import DataLoader
 from src.portfolio.selector import StrategySelector
 from src.data.preprocessor import DataPreprocessor
 
-def export_trading_log(start_date_str="2026-02-05"):
+def export_trading_log(start_date_str="2026-02-01"):
     loader = DataLoader()
     prices_raw = loader.load_data(use_cache=True)
     

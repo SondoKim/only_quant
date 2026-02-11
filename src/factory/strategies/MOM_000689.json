@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000689",
-  "created_at": "2026-02-11T13:28:17.783691",
-  "updated_at": "2026-02-11T15:50:59.516013",
+  "created_at": "2026-02-11T16:58:28.293758",
+  "updated_at": "2026-02-11T16:58:28.301747",
   "asset": "GJGB10 Index",
   "strategy_type": "momentum",
   "strategy_name": "macd_crossover",

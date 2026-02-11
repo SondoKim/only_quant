@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001541",
   "created_at": "2026-02-11T13:29:01.872088",
-  "updated_at": "2026-02-11T16:34:26.332429",
+  "updated_at": "2026-02-11T16:39:49.678746",
   "asset": "GDBR10 Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "zscore_reversion",
@@ -23,6 +23,6 @@
     "calmar_ratio": -0.023355992521537326,
     "sortino_ratio": -0.05825240667923101
   },
-  "is_active": true,
+  "is_active": false,
   "version": 1
 }

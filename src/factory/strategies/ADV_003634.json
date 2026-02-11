@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_003634",
-  "created_at": "2026-02-11T13:31:11.225025",
-  "updated_at": "2026-02-11T15:51:01.159666",
+  "created_at": "2026-02-11T17:01:31.551141",
+  "updated_at": "2026-02-11T17:01:31.559147",
   "asset": "GJGB10 Index",
   "strategy_type": "advanced",
   "strategy_name": "lead_lag_momentum",

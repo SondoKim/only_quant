@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000908",
-  "created_at": "2026-02-11T13:28:18.037071",
-  "updated_at": "2026-02-11T15:50:59.746774",
+  "created_at": "2026-02-11T16:58:28.586443",
+  "updated_at": "2026-02-11T16:58:28.594649",
   "asset": "GJGB10 Index",
   "strategy_type": "momentum",
   "strategy_name": "rate_of_change",
