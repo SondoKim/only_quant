@@ -88,7 +88,7 @@ class StrategySelector:
         if not strategies:
             return []
             
-        # Sort by 6m Sharpe Ratio (descending)
+        # Sort by 6m Sharpe Ratio (Descending to prioritize top winners for fading)
         sorted_strategies = sorted(
             strategies,
             key=lambda x: x['performance']['sharpe_6m'],
@@ -221,13 +221,19 @@ class StrategySelector:
         else:
             current_position = position.iloc[-1]
         
+        # FADE THE WINNER: Reverse signal ONLY for Rates. Keep original for FX.
+        if 'Curncy' in asset:
+            final_position = current_position  # FX remains original
+        else:
+            final_position = current_position * -1  # Rates are reversed
+            
         return {
             'strategy_id': strategy['strategy_id'],
             'asset': asset,
             'related_asset': related_asset,
             'strategy_type': strategy_type,
             'strategy_name': strategy_name,
-            'position': current_position,  # 1 = long, -1 = short, 0 = flat
+            'position': final_position,
             'sharpe_6m': strategy['performance']['sharpe_6m'],
             'date': target_date or str(position.index[-1].date()),
         }

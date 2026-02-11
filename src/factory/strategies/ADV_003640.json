@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_003640",
   "created_at": "2026-02-11T13:31:11.319337",
-  "updated_at": "2026-02-11T13:31:11.319337",
+  "updated_at": "2026-02-11T15:40:49.469636",
   "asset": "GUKG10 Index",
   "strategy_type": "advanced",
   "strategy_name": "lead_lag_momentum",

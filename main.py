@@ -190,7 +190,7 @@ class GlobalMacroTradingSystem:
                 self.strategy_factory.save_strategy(strategy, result.to_dict())
                 stored += 1
                 
-                # Check if qualifies for activation
+                # Check if qualifies for activation (Fade the Winner: Top 6M Sharpe)
                 if result.sharpe_6m >= self.sharpe_6m_threshold:
                     self.strategy_factory.set_active(
                         strategy.get('id') or self.strategy_factory._generate_strategy_id(strategy),

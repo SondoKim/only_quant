@@ -105,8 +105,8 @@ strategy_types:
 
 # Backtest configuration
 backtest:
-  sharpe_threshold_3y: 0.9
-  sharpe_threshold_6m: 1.0
+  sharpe_threshold_3y: 1.0
+  sharpe_threshold_6m: 1.1
   min_trades: 20
   max_drawdown: -0.20
   transaction_cost_bps: 2

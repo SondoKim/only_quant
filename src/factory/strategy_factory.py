@@ -264,12 +264,12 @@ class StrategyFactory:
         logger.info(f"📊 Found {len(result)} strategies with Sharpe 3Y >= {min_sharpe}")
         return result
     
-    def filter_by_sharpe_6m(self, min_sharpe: float = 0.9) -> List[Dict[str, Any]]:
+    def filter_by_sharpe_6m(self, min_sharpe: float = 1.1) -> List[Dict[str, Any]]:
         """
-        Filter strategies by 6-month Sharpe ratio.
+        Filter strategies by 6-month Sharpe ratio (Fade the Winner: >= threshold).
         
         Args:
-            min_sharpe: Minimum Sharpe ratio
+            min_sharpe: Minimum Sharpe ratio for activation
             
         Returns:
             List of qualifying strategies

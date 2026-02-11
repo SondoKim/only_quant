@@ -12,7 +12,7 @@ from src.data.loader import DataLoader
 from src.portfolio.selector import StrategySelector
 from src.data.preprocessor import DataPreprocessor
 
-def export_trading_log(start_date_str="2026-01-01"):
+def export_trading_log(start_date_str="2026-02-05"):
     loader = DataLoader()
     prices_raw = loader.load_data(use_cache=True)
     
@@ -20,7 +20,16 @@ def export_trading_log(start_date_str="2026-01-01"):
     preprocessor = DataPreprocessor(prices_raw)
     prices = preprocessor.clean().get_data()
     
-    selector = StrategySelector()
+    # Load config for thresholds
+    config_path = Path(__file__).parent.parent / 'config' / 'indicators.yaml'
+    sharpe_6m_threshold = 0.7  # default
+    if config_path.exists():
+        import yaml
+        with open(config_path, 'r', encoding='utf-8') as f:
+            config = yaml.safe_load(f)
+            sharpe_6m_threshold = config.get('backtest', {}).get('sharpe_threshold_6m', 0.7)
+
+    selector = StrategySelector(sharpe_6m_threshold=sharpe_6m_threshold)
     
     start_date = pd.to_datetime(start_date_str)
     all_dates = prices.index

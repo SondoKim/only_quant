@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_003157",
   "created_at": "2026-02-11T13:31:10.780441",
-  "updated_at": "2026-02-11T13:31:10.788440",
+  "updated_at": "2026-02-11T15:51:00.891318",
   "asset": "GVSK3YR Index",
   "strategy_type": "advanced",
   "strategy_name": "filtered_momentum",
