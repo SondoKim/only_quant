@@ -13,7 +13,9 @@ from src.portfolio.selector import StrategySelector
 from src.data.preprocessor import DataPreprocessor
 from scripts.plot_trading_results import plot_pnl
 
-def export_trading_log(start_date_str="2026-01-01"):
+import argparse
+
+def export_trading_log(start_date_str="2026-01-01", max_correlation=0.7):
     loader = DataLoader()
     prices_raw = loader.load_data(use_cache=True)
     
@@ -67,7 +69,7 @@ def export_trading_log(start_date_str="2026-01-01"):
     
     log_data = []
 
-    print(f"🔄 Generating log since {start_date_str}...")
+    print(f"🔄 Generating log since {start_date_str} (Max Corr: {max_correlation})...")
     
     for date in target_dates:
         prev_idx = all_dates.get_loc(date) - 1
@@ -80,7 +82,11 @@ def export_trading_log(start_date_str="2026-01-01"):
         context_prices = prices.loc[:prev_date]
         
         # Determine signals for 'date' using data up to 'prev_date'
-        report = selector.get_trading_report(context_prices, target_date=str(date.date()))
+        report = selector.get_trading_report(
+            context_prices, 
+            target_date=str(date.date()),
+            max_correlation=max_correlation
+        )
         sig_map = {item['asset']: item for item in report['aggregated_positions']}
         
         row = {'Date': date.date()}
@@ -132,9 +138,24 @@ def export_trading_log(start_date_str="2026-01-01"):
     
     # Automatically update the PnL plot
     try:
-        plot_pnl()
+        plot_pnl(max_correlation=max_correlation)
     except Exception as e:
         print(f"⚠️ Could not generate plot: {e}")
 
 if __name__ == "__main__":
-    export_trading_log()
+    parser = argparse.ArgumentParser(description='Export Trading Log')
+    parser.add_argument('--start-date', default='2026-01-01', help='Start date (YYYY-MM-DD)')
+    parser.add_argument('--max-corr', type=float, default=None, help='Maximum correlation threshold')
+    parser.add_argument('--batch', action='store_true', help='Run batch correlation loop (0.1 to 0.7)')
+    args = parser.parse_args()
+    
+    if args.batch:
+        # Loop from 0.1 to 0.7 in 0.1 steps
+        for corr in np.arange(0.1, 0.8, 0.1):
+            corr_val = round(float(corr), 1)
+            print(f"\n🚀 Running batch for correlation: {corr_val}")
+            export_trading_log(start_date_str=args.start_date, max_correlation=corr_val)
+    else:
+        # Use provided max-corr or default to 0.7
+        corr_val = args.max_corr if args.max_corr is not None else 0.7
+        export_trading_log(start_date_str=args.start_date, max_correlation=corr_val)
