@@ -11,6 +11,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from src.data.loader import DataLoader
 from src.portfolio.selector import StrategySelector
 from src.data.preprocessor import DataPreprocessor
+from scripts.plot_trading_results import plot_pnl
 
 def export_trading_log(start_date_str="2026-02-01"):
     loader = DataLoader()
@@ -56,6 +57,11 @@ def export_trading_log(start_date_str="2026-02-01"):
     
     # Track cumulative PnL
     cum_pnl = {asset: 0.0 for asset in all_assets}
+    
+    # Identify Rates vs FX assets for aggregation
+    rates_assets = [a for a in all_assets if asset_sort_key(a)[0] <= 7]
+    fx_assets = [a for a in all_assets if asset_sort_key(a)[0] == 8]
+    
     log_data = []
 
     print(f"🔄 Generating log since {start_date_str}...")
@@ -96,21 +102,33 @@ def export_trading_log(start_date_str="2026-02-01"):
             row[f"{asset}_Price"] = round(p_curr, 4)
             row[f"{asset}_CumPnL"] = round(cum_pnl[asset], 2)
             
+        # Calculate summary PnLs
+        row['total_rates_cumpnl'] = round(sum(cum_pnl[a] for a in rates_assets), 2)
+        row['total_fx_cumpnl'] = round(sum(cum_pnl[a] for a in fx_assets), 2)
+            
         log_data.append(row)
 
     # Convert to DataFrame
     df_log = pd.DataFrame(log_data)
     df_log.set_index('Date', inplace=True)
     
-    # Reorder columns: CumPnL first, then Pos and Price
+    # Reorder columns: Total PnLs, then Asset CumPnLs, then Pos and Price
+    total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl']
     cum_pnl_cols = [c for c in df_log.columns if '_CumPnL' in c]
-    other_cols = [c for c in df_log.columns if '_CumPnL' not in c]
-    df_log = df_log[cum_pnl_cols + other_cols]
+    other_cols = [c for c in df_log.columns if c not in total_pnl_cols + cum_pnl_cols]
+    
+    df_log = df_log[total_pnl_cols + cum_pnl_cols + other_cols]
     
     # Export
     output_path = "trading_log.csv"
     df_log.to_csv(output_path)
     print(f"✅ Success! Trading log saved to {output_path} ({len(df_log)} rows)")
+    
+    # Automatically update the PnL plot
+    try:
+        plot_pnl()
+    except Exception as e:
+        print(f"⚠️ Could not generate plot: {e}")
 
 if __name__ == "__main__":
     export_trading_log()

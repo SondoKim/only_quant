@@ -413,7 +413,7 @@ class StrategySelector:
                 # Default "NOSIG" for assets with no active strategies
                 asset_summary.append({
                     'asset': asset,
-                    'position': '🔘 NOSIG',
+                    'position': '🔘 NOSTR',
                     'confidence': 0.0,
                     'strategies': 0,
                     'momentum': 0,
