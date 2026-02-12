@@ -221,11 +221,14 @@ class StrategySelector:
         else:
             current_position = position.iloc[-1]
         
-        # FADE THE WINNER: Reverse signal ONLY for Rates. Keep original for FX.
-        if 'Curncy' in asset:
-            final_position = current_position  # FX remains original
-        else:
+        # FADE THE WINNER: Reverse signal ONLY for Rates. Keep original for FX and Indices.
+        # Rates are identified as having "Index" or "Corp" but NOT being "NQ"
+        is_rate = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
+        
+        if is_rate:
             final_position = current_position * -1  # Rates are reversed
+        else:
+            final_position = current_position  # FX and Indices remain original
             
         return {
             'strategy_id': strategy['strategy_id'],
@@ -386,7 +389,8 @@ class StrategySelector:
             elif 'GVSK' in ticker: group = 6
             elif 'Index' in ticker or 'Corp' in ticker: group = 7  # Other rates (FR, IT etc)
             elif 'Curncy' in ticker: group = 8  # FX
-            else: group = 9
+            elif 'NQ' in ticker: group = 9     # Indices
+            else: group = 10
             
             return (group, ticker)
 

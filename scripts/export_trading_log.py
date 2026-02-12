@@ -13,7 +13,7 @@ from src.portfolio.selector import StrategySelector
 from src.data.preprocessor import DataPreprocessor
 from scripts.plot_trading_results import plot_pnl
 
-def export_trading_log(start_date_str="2026-02-01"):
+def export_trading_log(start_date_str="2026-01-01"):
     loader = DataLoader()
     prices_raw = loader.load_data(use_cache=True)
     
@@ -48,9 +48,11 @@ def export_trading_log(start_date_str="2026-02-01"):
         elif 'GTAUD' in ticker: group = 4
         elif 'GJGB' in ticker: group = 5
         elif 'GVSK' in ticker: group = 6
-        elif 'Index' in ticker or 'Corp' in ticker: group = 7
+        elif 'Index' in ticker or 'Corp' in ticker: 
+            if 'NQ' in ticker: group = 9 # Nasdaq is an Index but should be treated as Equity
+            else: group = 7
         elif 'Curncy' in ticker: group = 8
-        else: group = 9
+        else: group = 10
         return (group, ticker)
 
     all_assets = sorted(list(prices.columns), key=asset_sort_key)
@@ -58,9 +60,10 @@ def export_trading_log(start_date_str="2026-02-01"):
     # Track cumulative PnL
     cum_pnl = {asset: 0.0 for asset in all_assets}
     
-    # Identify Rates vs FX assets for aggregation
+    # Identify Rates vs FX vs Index assets for aggregation
     rates_assets = [a for a in all_assets if asset_sort_key(a)[0] <= 7]
     fx_assets = [a for a in all_assets if asset_sort_key(a)[0] == 8]
+    index_assets = [a for a in all_assets if asset_sort_key(a)[0] == 9]
     
     log_data = []
 
@@ -89,9 +92,11 @@ def export_trading_log(start_date_str="2026-02-01"):
             sig_info = sig_map.get(asset, {'position': 0})
             pos = sig_info.get('position', 0)
             
-            # Calculate daily PnL: Rates use (Prev - Curr) so Yield Up = Loss
-            if "Index" in asset or "Corp" in asset:
+            # Calculate daily PnL: 
+            # 1. Rates (Index/Corp except NQ) use (Prev - Curr) bps
+            if ("Index" in asset or "Corp" in asset) and "NQ" not in asset:
                 daily_pnl = (p_prev - p_curr) * 100 * pos  # bps
+            # 2. FX and Equity Indices use (Curr / Prev - 1) %
             else:
                 daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # %
                 
@@ -105,6 +110,7 @@ def export_trading_log(start_date_str="2026-02-01"):
         # Calculate summary PnLs
         row['total_rates_cumpnl'] = round(sum(cum_pnl[a] for a in rates_assets), 2)
         row['total_fx_cumpnl'] = round(sum(cum_pnl[a] for a in fx_assets), 2)
+        row['total_index_cumpnl'] = round(sum(cum_pnl[a] for a in index_assets), 2)
             
         log_data.append(row)
 
@@ -113,7 +119,7 @@ def export_trading_log(start_date_str="2026-02-01"):
     df_log.set_index('Date', inplace=True)
     
     # Reorder columns: Total PnLs, then Asset CumPnLs, then Pos and Price
-    total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl']
+    total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl', 'total_index_cumpnl']
     cum_pnl_cols = [c for c in df_log.columns if '_CumPnL' in c]
     other_cols = [c for c in df_log.columns if c not in total_pnl_cols + cum_pnl_cols]
     

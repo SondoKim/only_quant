@@ -73,6 +73,12 @@ class DataLoader:
             for currency, data in self.config['fx'].items():
                 if 'ticker' in data:
                     tickers.append(data['ticker'])
+                    
+        # Index tickers
+        if 'indices' in self.config:
+            for index, data in self.config['indices'].items():
+                if 'ticker' in data:
+                    tickers.append(data['ticker'])
         
         return list(set(tickers))  # Remove duplicates
     
@@ -206,6 +212,15 @@ class DataLoader:
             vol = 0.005 if 'JPY' not in ticker and 'KRW' not in ticker else 0.003
             returns = np.random.randn(len(dates)) * vol
             data[ticker] = base * np.exp(np.cumsum(returns))
+            
+        # Sample Equity Index data
+        base_indices = {
+            'NQ1 Index': 18000.0,
+        }
+        
+        for ticker, base in base_indices.items():
+            returns = np.random.randn(len(dates)) * 0.015
+            data[ticker] = base * np.exp(np.cumsum(returns))
         
         df = pd.DataFrame(data, index=dates)
         
@@ -233,5 +248,11 @@ class DataLoader:
             for currency, data in self.config['fx'].items():
                 if 'ticker' in data:
                     result['fx'].append(data['ticker'])
+                    
+        if 'indices' in self.config:
+            result['indices'] = []
+            for index, data in self.config['indices'].items():
+                if 'ticker' in data:
+                    result['indices'].append(data['ticker'])
         
         return result

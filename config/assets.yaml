@@ -49,6 +49,10 @@ fx:
     ticker: JPY Curncy
   KRW:
     ticker: KRW Curncy
+    
+indices:
+  Nasdaq:
+    ticker: NQ1 Index
 
 # Cross-asset relationships for spread indicators
 cross_asset_pairs:

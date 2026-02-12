@@ -78,7 +78,8 @@ class GlobalMacroTradingSystem:
         start_date: str = "2020-01-01",
         batch_size: int = 1000,
         sample_ratio: float = 1.0,
-        sample_count: int = None
+        sample_count: int = None,
+        target_tickers: List[str] = None
     ) -> Dict[str, Any]:
         """
         Run strategy discovery pipeline.
@@ -90,6 +91,7 @@ class GlobalMacroTradingSystem:
             batch_size: Number of strategies to process per batch
             sample_ratio: Ratio of strategies to sample (0.0 to 1.0)
             sample_count: (Alternative to ratio) Target number of strategies to test
+            target_tickers: Optional list of tickers to limit discovery to
             
         Returns:
             Discovery results summary
@@ -101,6 +103,15 @@ class GlobalMacroTradingSystem:
         prices = self.data_loader.load_data(start_date=start_date)
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
+        
+        # Filter prices by target_tickers if provided
+        if target_tickers:
+            available_tickers = [t for t in target_tickers if t in prices.columns]
+            if not available_tickers:
+                logger.error(f"❌ None of the requested tickers {target_tickers} found in data.")
+                return {'error': 'No valid tickers found'}
+            prices = prices[available_tickers]
+            logger.info(f"🎯 Filtered discovery to: {available_tickers}")
         
         logger.info(f"   Data shape: {prices.shape}")
         logger.info(f"   Date range: {prices.index[0]} to {prices.index[-1]}")
@@ -321,6 +332,8 @@ def main():
                         help='Maximum allowed correlation between strategies (0.0 to 1.0)')
     parser.add_argument('--realistic', action='store_true',
                         help='Run realistic walk-forward backtest (no future bias)')
+    parser.add_argument('--tickers', nargs='+', 
+                        help='Specific tickers to process (e.g. "NQ1 Index" "USGG10YR Index")')
     
     args = parser.parse_args()
     
@@ -331,7 +344,8 @@ def main():
             start_date=args.start_date,
             batch_size=args.batch_size,
             sample_ratio=args.sample_ratio,
-            sample_count=args.sample_count
+            sample_count=args.sample_count,
+            target_tickers=args.tickers
         )
         print("\n📊 Discovery Results:")
         for key, value in result.items():

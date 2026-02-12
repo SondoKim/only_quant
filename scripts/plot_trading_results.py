@@ -14,10 +14,11 @@ def plot_pnl():
     df.sort_values('Date', inplace=True)
 
     # Asset columns
-    rate_cols = [c for c in df.columns if '_CumPnL' in c and 'Curncy' not in c]
+    rate_cols = [c for c in df.columns if '_CumPnL' in c and 'Curncy' not in c and 'NQ' not in c]
     fx_cols = [c for c in df.columns if '_CumPnL' in c and 'Curncy' in c]
+    index_cols = [c for c in df.columns if '_CumPnL' in c and 'NQ' in c]
 
-    fig, (ax1, ax3, ax4) = plt.subplots(3, 1, figsize=(14, 18), sharex=True)
+    fig, (ax1, ax3, ax4, ax5) = plt.subplots(4, 1, figsize=(14, 24), sharex=True)
 
     # --- Plot 1: Aggregate Rates vs FX (Dual Y) ---
     color_rates = 'tab:blue'
@@ -31,6 +32,10 @@ def plot_pnl():
     ax2.set_ylabel('Total FX Cum PnL (%)', color=color_fx, fontweight='bold')
     ax2.plot(df['Date'], df['total_fx_cumpnl'], color=color_fx, linewidth=3, label='Total FX (%)')
     ax2.tick_params(axis='y', labelcolor=color_fx)
+    
+    # Add Total Index to ax2 or a separate axis? Let's add to ax2 since it's also %
+    ax2.plot(df['Date'], df['total_index_cumpnl'], color='tab:green', linewidth=3, label='Total Index (%)', linestyle='--')
+    
     ax1.set_title('Global Macro Strategy: Aggregate Performance', fontsize=16, pad=20)
 
     # --- Plot 2: Individual Rates (BPS) ---
@@ -50,6 +55,15 @@ def plot_pnl():
     ax4.set_title('Individual FX Performance', fontsize=14)
     ax4.grid(True, linestyle='--', alpha=0.6)
     ax4.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
+    
+    # --- Plot 4: Individual Indices (%) ---
+    for col in index_cols:
+        label = col.replace('_CumPnL', '')
+        ax5.plot(df['Date'], df[col], label=label, alpha=0.8)
+    ax5.set_ylabel('Individual Indices (%)', fontweight='bold')
+    ax5.set_title('Individual Index Performance', fontsize=14)
+    ax5.grid(True, linestyle='--', alpha=0.6)
+    ax5.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
 
     # Global Formatting
     plt.xlabel('Date')

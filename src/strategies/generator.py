@@ -157,6 +157,8 @@ class StrategyGenerator:
             if 'spread_zscore' in cross_config:
                 periods = cross_config['spread_zscore']['params']['period']
                 for asset, related_list in related_assets.items():
+                    if asset not in assets:
+                        continue
                     for related in related_list:
                         for period in periods:
                             yield {
@@ -242,6 +244,8 @@ class StrategyGenerator:
         if related_assets and 'spread_zscore' in cross_config:
             params = cross_config['spread_zscore']
             for asset, related_list in related_assets.items():
+                if asset not in assets:
+                    continue
                 for related in related_list:
                     for period in params['params']['period']:
                         for entry in params['thresholds']['entry']:
@@ -262,6 +266,8 @@ class StrategyGenerator:
         if related_assets and 'spread_percentile' in cross_config:
             params = cross_config['spread_percentile']
             for asset, related_list in related_assets.items():
+                if asset not in assets:
+                    continue
                 for related in related_list:
                     for period in params['params']['period']:
                         for low in params['thresholds']['low']:
@@ -312,6 +318,8 @@ class StrategyGenerator:
         if 'lead_lag_momentum' in adv_config and related_assets:
             p = adv_config['lead_lag_momentum']
             for asset, related_list in related_assets.items():
+                if asset not in assets:
+                    continue
                 for related in related_list:
                     for period in p.get('period', [20]):
                         for th in p.get('threshold', [0]):
