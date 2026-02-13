@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000245",
+  "created_at": "2026-02-13T17:10:13.291163",
+  "updated_at": "2026-02-13T17:19:27.565906",
+  "asset": "NQ1 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 14,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2396359726333674,
+    "sharpe_6m": 0.27739031035068634,
+    "sharpe_1m": -2.585558525841012,
+    "total_return": 0.7541355119594318,
+    "annual_return": 0.0,
+    "max_drawdown": 0.3096597280253511,
+    "win_rate": 0.2948717948717949,
+    "num_trades": 78,
+    "calmar_ratio": 0.4522551619842792,
+    "sortino_ratio": 1.1304985294894574
+  },
+  "is_active": true,
+  "version": 1
+}

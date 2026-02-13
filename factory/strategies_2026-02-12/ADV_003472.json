@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_003472",
+  "created_at": "2026-02-13T17:17:24.283050",
+  "updated_at": "2026-02-13T17:17:24.289061",
+  "asset": "JPY Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "carry_trade",
+  "params": {
+    "rate_asset": "USGG10YR Index",
+    "foreign_rate_asset": "GJGB10 Index",
+    "period": 10,
+    "threshold": 1.0
+  },
+  "related_asset": "GJGB10 Index",
+  "performance": {
+    "sharpe_3y": 1.103484851996925,
+    "sharpe_6m": 0.11144041929252933,
+    "sharpe_1m": 3.8183883016152724,
+    "total_return": 0.46223663854446473,
+    "annual_return": 0.0,
+    "max_drawdown": 0.11338421107305723,
+    "win_rate": 0.5,
+    "num_trades": 60,
+    "calmar_ratio": 0.8006812282147417,
+    "sortino_ratio": 1.6515089006052581
+  },
+  "is_active": true,
+  "version": 1
+}

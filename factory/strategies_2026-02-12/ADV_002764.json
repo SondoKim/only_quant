@@ -1,0 +1,30 @@
+{
+  "strategy_id": "ADV_002764",
+  "created_at": "2026-02-13T17:17:02.611911",
+  "updated_at": "2026-02-13T17:17:02.617912",
+  "asset": "NQ1 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "multi_tf_momentum",
+  "params": {
+    "periods": [
+      10,
+      30,
+      60
+    ]
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1408640947034985,
+    "sharpe_6m": 0.7766455684653993,
+    "sharpe_1m": -2.5577422327023314,
+    "total_return": 1.0351095151323306,
+    "annual_return": 0.0,
+    "max_drawdown": 0.20645432638460512,
+    "win_rate": 0.2916666666666667,
+    "num_trades": 48,
+    "calmar_ratio": 0.8546625091528128,
+    "sortino_ratio": 1.3547749436717147
+  },
+  "is_active": true,
+  "version": 1
+}

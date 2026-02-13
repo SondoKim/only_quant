@@ -459,8 +459,7 @@ class StrategySelector:
     
     def _refresh_sync(self, prices: pd.DataFrame, max_correlation: float = 0.3):
         """Internal synchronous refresh."""
-        # This is just a helper to keep the API clean if we don't want async everywhere
-        self.factory.activate_qualified_strategies(self.sharpe_threshold)
+        # All strategies are already activated — just get them
         potential_strategies = self.factory.get_active_strategies()
         
         if not potential_strategies:

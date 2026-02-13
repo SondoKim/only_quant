@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_001293",
+  "created_at": "2026-02-13T17:13:42.267721",
+  "updated_at": "2026-02-13T17:19:51.755034",
+  "asset": "GBP Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "rsi_extremes",
+  "params": {
+    "period": 14,
+    "oversold": 25,
+    "overbought": 70,
+    "exit_level": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2923748948655405,
+    "sharpe_6m": 1.751015419347061,
+    "sharpe_1m": 2.6677249696728667,
+    "total_return": 0.25614918151355526,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08508088675853796,
+    "win_rate": 0.8947368421052632,
+    "num_trades": 20,
+    "calmar_ratio": 0.6329287266913652,
+    "sortino_ratio": 1.7029957295153235
+  },
+  "is_active": true,
+  "version": 1
+}

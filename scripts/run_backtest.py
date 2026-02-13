@@ -169,7 +169,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
     current_selector = None
     current_strategy_date = None
     
-    print(f"🚀 Running Phase 2 Simulation (Start: {start_date_str}, S6M: {s6m_min}, MaxCorr: {max_correlation})...")
+    print(f"🚀 Running Phase 2 Simulation (Start: {start_date_str}, MaxCorr: {max_correlation})...")
     
     for date in target_dates:
         prev_idx = all_dates.get_loc(date) - 1
