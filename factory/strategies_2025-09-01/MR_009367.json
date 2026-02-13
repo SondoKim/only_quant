@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_009367",
+  "created_at": "2026-02-13T14:27:37.109931",
+  "updated_at": "2026-02-13T14:27:37.109931",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 20,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "USGG2YR Index",
+  "performance": {
+    "sharpe_3y": 2.178665851944603,
+    "sharpe_6m": 0.1545166651324537,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}

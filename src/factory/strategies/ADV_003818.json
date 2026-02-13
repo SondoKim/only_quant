@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_003818",
+  "created_at": "2026-02-13T14:35:25.774986",
+  "updated_at": "2026-02-13T14:35:25.785987",
+  "asset": "NQ1 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "relative_strength_rank",
+  "params": {
+    "period": 10,
+    "top_n": 1
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1631004456890075,
+    "sharpe_6m": 2.3643646567545327,
+    "sharpe_1m": 0.0,
+    "total_return": 0.26018178731339264,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08942956505650262,
+    "win_rate": 0.52,
+    "num_trades": 50,
+    "calmar_ratio": 0.6073049610543235,
+    "sortino_ratio": 1.34068178085717
+  },
+  "is_active": true,
+  "version": 1
+}

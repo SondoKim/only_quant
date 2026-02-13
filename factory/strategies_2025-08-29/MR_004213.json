@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_004213",
+  "created_at": "2026-02-13T14:24:37.396738",
+  "updated_at": "2026-02-13T14:24:37.396738",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "GUKG10 Index",
+  "performance": {
+    "sharpe_3y": 2.3653702083009587,
+    "sharpe_6m": 1.0299067148591596,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}

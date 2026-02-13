@@ -3,20 +3,20 @@
 technical_indicators:
   rsi:
     params:
-      period: [4, 5, 9, 14]
+      period: [4, 9, 14]
     thresholds:
-      oversold: [20, 25, 30]
-      overbought: [70, 75]
+      oversold: [25, 30]
+      overbought: [65, 70]
   
   sma_crossover:
     params:
       fast_period: [3, 5, 10]
-      slow_period: [10, 15, 20, 30]
+      slow_period: [10, 15, 20]
   
   ema_crossover:
     params:
       fast_period: [5, 10, 12]
-      slow_period: [20, 26, 50]
+      slow_period: [20, 26]
   
   bollinger_bands:
     params:
@@ -25,7 +25,7 @@ technical_indicators:
   
   zscore:
     params:
-      period: [10, 20, 30, 60]
+      period: [10, 20, 30]
     thresholds:
       entry: [1.0, 1.5, 2.0]
       exit: [0.0, 0.25, 0.5]
@@ -43,7 +43,7 @@ technical_indicators:
 cross_asset_indicators:
   spread_zscore:
     params:
-      period: [10, 20, 30, 60]
+      period: [10, 20, 30]
     thresholds:
       entry: [1.0, 1.5, 2.0]
       exit: [0.0, 0.5]
@@ -57,7 +57,7 @@ cross_asset_indicators:
   
   correlation_rolling:
     params:
-      period: [5, 10, 20, 60]
+      period: [5, 10, 20]
   
   relative_strength:
     params:
@@ -65,7 +65,7 @@ cross_asset_indicators:
 
 advanced_strategies:
   filtered_momentum:
-    ma_period: [20, 50, 100]
+    ma_period: [20, 50]
     rsi_period: [5, 10, 14]
     rsi_entry: [45, 50, 55]
   lead_lag_momentum:
@@ -73,14 +73,13 @@ advanced_strategies:
     threshold: [0, 0.5, 1.0]
   multi_tf_momentum:
     periods: 
-      - [20, 60, 120]
       - [10, 30, 60]
       - [5, 10, 20]
   volatility_breakout:
     period: [10, 20, 30]
     k: [0.5, 1.0, 1.5, 2.0]
   relative_strength_rank:
-    period: [10, 20, 60]
+    period: [10, 20]
     top_n: [1, 2, 3]
 
 # Strategy type configurations
@@ -106,6 +105,7 @@ strategy_types:
 # Backtest configuration
 backtest:
   sharpe_threshold_3y: 1.0
+  sortino_threshold_3y: 1.0
   sharpe_threshold_6m: 1.1
   min_trades: 20
   max_drawdown: -0.20

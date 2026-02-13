@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_002432",
+  "created_at": "2026-02-13T14:34:40.189708",
+  "updated_at": "2026-02-13T14:34:40.200363",
+  "asset": "GUKG10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 1.2636884711370513,
+    "sharpe_6m": 2.1640314560951794,
+    "sharpe_1m": 3.8321179408459147,
+    "total_return": -0.7919557025992313,
+    "annual_return": 0.0,
+    "max_drawdown": 0.9484274831920856,
+    "win_rate": 0.5598086124401914,
+    "num_trades": 210,
+    "calmar_ratio": -0.31806750017812546,
+    "sortino_ratio": 0.4287820177070783
+  },
+  "is_active": true,
+  "version": 1
+}

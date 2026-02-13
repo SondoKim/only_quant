@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_018299",
+  "created_at": "2026-02-13T14:31:15.762157",
+  "updated_at": "2026-02-13T14:31:51.040276",
+  "asset": "GTAUD10YR Corp",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 5,
+    "threshold": 1.0
+  },
+  "related_asset": "GUKG10 Index",
+  "performance": {
+    "sharpe_3y": 1.7429424553806445,
+    "sharpe_6m": 1.4078927550190246,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": true,
+  "version": 1
+}

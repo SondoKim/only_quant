@@ -31,12 +31,13 @@ logger = logging.getLogger(__name__)
 class GlobalMacroTradingSystem:
     """Main orchestrator for the trading system."""
     
-    def __init__(self, config_dir: str = None):
+    def __init__(self, config_dir: str = None, storage_dir: str = None):
         """
         Initialize trading system.
         
         Args:
             config_dir: Path to configuration directory
+            storage_dir: Path to strategy storage directory
         """
         self.config_dir = Path(config_dir) if config_dir else Path(__file__).parent / 'config'
         
@@ -47,7 +48,7 @@ class GlobalMacroTradingSystem:
         self.strategy_generator = StrategyGenerator(
             config_path=str(self.config_dir / 'indicators.yaml')
         )
-        self.strategy_factory = StrategyFactory()
+        self.strategy_factory = StrategyFactory(storage_dir=storage_dir)
         self.strategy_selector = StrategySelector(factory=self.strategy_factory)
         
         # Load configurations
@@ -60,22 +61,25 @@ class GlobalMacroTradingSystem:
             with open(indicators_config, 'r', encoding='utf-8') as f:
                 config = yaml.safe_load(f)
                 bt_config = config.get('backtest', {})
-                self.sharpe_3y_threshold = bt_config.get('sharpe_threshold_3y', 0.8)
-                self.sharpe_6m_threshold = bt_config.get('sharpe_threshold_6m', 0.9)
+                self.sharpe_3y_threshold = bt_config.get('sharpe_threshold_3y', 1.0)
+                self.sortino_3y_threshold = bt_config.get('sortino_threshold_3y', 1.0)
+                self.sharpe_6m_threshold = bt_config.get('sharpe_threshold_6m', 1.1)
                 self.min_trades = bt_config.get('min_trades', 20)
                 self.max_drawdown = bt_config.get('max_drawdown', -0.20)
                 
                 # Update selector threshold
                 self.strategy_selector.sharpe_threshold = self.sharpe_6m_threshold
         else:
-            self.sharpe_3y_threshold = 0.8
-            self.sharpe_6m_threshold = 0.9
+            self.sharpe_3y_threshold = 1.0
+            self.sortino_3y_threshold = 1.0
+            self.sharpe_6m_threshold = 1.1
             self.min_trades = 20
             self.max_drawdown = -0.20
     
     def run_discovery(
         self,
         start_date: str = "2020-01-01",
+        end_date: str = None,
         batch_size: int = 1000,
         sample_ratio: float = 1.0,
         sample_count: int = None,
@@ -99,8 +103,8 @@ class GlobalMacroTradingSystem:
         logger.info("🚀 Starting strategy discovery pipeline...")
         
         # 1. Load data
-        logger.info("📊 Loading price data...")
-        prices = self.data_loader.load_data(start_date=start_date)
+        logger.info(f"📊 Loading price data from {start_date} to {end_date or 'latest'}...")
+        prices = self.data_loader.load_data(start_date=start_date, end_date=end_date)
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
         
@@ -174,7 +178,7 @@ class GlobalMacroTradingSystem:
         
         logger.info("✅ Discovery complete!")
         logger.info(f"   Tested: {tested_count}/{total_possible}")
-        logger.info(f"   Stored: {stored_count} (Sharpe 3Y >= {self.sharpe_3y_threshold})")
+        logger.info(f"   Stored: {stored_count} (Sharpe 3Y >= {self.sharpe_3y_threshold}, Sortino 3Y >= {self.sortino_3y_threshold})")
         logger.info(f"   Active: {active_count} (Sharpe 6M >= {self.sharpe_6m_threshold})")
         
         return summary
@@ -193,8 +197,9 @@ class GlobalMacroTradingSystem:
         active = 0
         
         for strategy, result in zip(strategies, results):
-            # Check if qualifies for storage
+            # Check if qualifies for storage: Sharpe 3Y AND Sortino 3Y
             if (result.sharpe_3y >= self.sharpe_3y_threshold and
+                result.sortino_ratio >= self.sortino_3y_threshold and
                 result.num_trades >= self.min_trades and
                 result.max_drawdown >= self.max_drawdown):
                 
@@ -233,7 +238,7 @@ class GlobalMacroTradingSystem:
         
         return related
     
-    def run_daily_update(self, max_correlation: float = 0.7) -> Dict[str, Any]:
+    def run_daily_update(self, max_correlation: float = 0.3) -> Dict[str, Any]:
         """
         Run daily update pipeline.
         
@@ -269,7 +274,7 @@ class GlobalMacroTradingSystem:
         logger.info("✅ Daily update complete!")
         return report
     
-    def get_trading_signals(self, max_correlation: float = 0.7) -> Dict[str, Any]:
+    def get_trading_signals(self, max_correlation: float = 0.3) -> Dict[str, Any]:
         """
         Get current trading signals.
         
@@ -292,7 +297,7 @@ class GlobalMacroTradingSystem:
     def run_portfolio_backtest(
         self,
         start_date: str = "2023-01-01",
-        max_correlation: float = 0.7,
+        max_correlation: float = 0.3,
         realistic: bool = False
     ) -> Dict[str, Any]:
         """Run portfolio backtest with monthly rebalancing."""
@@ -322,13 +327,17 @@ def main():
                        default='signals', help='Execution mode')
     parser.add_argument('--start-date', default='2020-01-01',
                        help='Data start date for discovery')
+    parser.add_argument('--end-date', default=None,
+                       help='Data end date for discovery')
+    parser.add_argument('--storage-dir', default=None,
+                       help='Directory for strategy storage')
     parser.add_argument('--batch-size', type=int, default=1000,
                        help='Batch size for strategy processing')
     parser.add_argument('--sample-ratio', type=float, default=1.0,
                        help='Ratio of strategies to sample (0.0 to 1.0)')
     parser.add_argument('--sample-count', type=int, default=None,
                         help='Target number of strategies to test (overrides sample-ratio)')
-    parser.add_argument('--max-corr', type=float, default=0.7,
+    parser.add_argument('--max-corr', type=float, default=0.3,
                         help='Maximum allowed correlation between strategies (0.0 to 1.0)')
     parser.add_argument('--realistic', action='store_true',
                         help='Run realistic walk-forward backtest (no future bias)')
@@ -337,11 +346,12 @@ def main():
     
     args = parser.parse_args()
     
-    system = GlobalMacroTradingSystem()
+    system = GlobalMacroTradingSystem(storage_dir=args.storage_dir)
     
     if args.mode == 'discover':
         result = system.run_discovery(
             start_date=args.start_date,
+            end_date=args.end_date,
             batch_size=args.batch_size,
             sample_ratio=args.sample_ratio,
             sample_count=args.sample_count,

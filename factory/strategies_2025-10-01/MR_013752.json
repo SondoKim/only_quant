@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_013752",
+  "created_at": "2026-02-13T14:31:14.112361",
+  "updated_at": "2026-02-13T14:31:14.112361",
+  "asset": "GTAUD10YR Corp",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 20,
+    "low_percentile": 10,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 2.0163624542968375,
+    "sharpe_6m": -0.045802566652091134,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}

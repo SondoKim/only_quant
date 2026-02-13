@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_009963",
+  "created_at": "2026-02-13T14:24:51.220947",
+  "updated_at": "2026-02-13T14:25:10.369645",
+  "asset": "GUKG10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "GTAUD3YR Corp",
+  "performance": {
+    "sharpe_3y": 1.047953807758023,
+    "sharpe_6m": 1.4033111234970057,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": true,
+  "version": 1
+}

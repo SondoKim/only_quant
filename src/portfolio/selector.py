@@ -42,7 +42,7 @@ class StrategySelector:
     async def refresh_active_strategies(
         self,
         prices: pd.DataFrame,
-        max_correlation: float = 0.7
+        max_correlation: float = 0.3
     ) -> int:
         """
         Refresh list of active strategies based on performance and correlation.
@@ -125,7 +125,7 @@ class StrategySelector:
         self,
         prices: pd.DataFrame,
         target_date: str = None,
-        max_correlation: float = 0.7
+        max_correlation: float = 0.3
     ) -> pd.DataFrame:
         """
         Generate signals for all active strategies.
@@ -221,14 +221,15 @@ class StrategySelector:
         else:
             current_position = position.iloc[-1]
         
-        # FADE THE WINNER: Reverse signal ONLY for Rates. Keep original for FX and Indices.
+        # FADE THE WINNER: Reverse signal for Rates and FX. Keep original for Indices (Nasdaq).
         # Rates are identified as having "Index" or "Corp" but NOT being "NQ"
         is_rate = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
+        is_fx = "Curncy" in asset
         
-        if is_rate:
-            final_position = current_position * -1  # Rates are reversed
+        if is_rate or is_fx:
+            final_position = current_position * -1  # Rates and FX are reversed
         else:
-            final_position = current_position  # FX and Indices remain original
+            final_position = current_position  # Indices remain original
             
         return {
             'strategy_id': strategy['strategy_id'],
@@ -360,7 +361,7 @@ class StrategySelector:
         self,
         prices: pd.DataFrame,
         target_date: str = None,
-        max_correlation: float = 0.7
+        max_correlation: float = 0.3
     ) -> Dict[str, Any]:
         """
         Generate comprehensive trading report.
@@ -469,7 +470,7 @@ class StrategySelector:
         row = positions.iloc[0]
         return int(row['position']), abs(row['raw_position'])
     
-    def _refresh_sync(self, prices: pd.DataFrame, max_correlation: float = 0.7):
+    def _refresh_sync(self, prices: pd.DataFrame, max_correlation: float = 0.3):
         """Internal synchronous refresh."""
         # This is just a helper to keep the API clean if we don't want async everywhere
         self.factory.activate_qualified_strategies(self.sharpe_threshold)

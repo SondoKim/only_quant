@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_016969",
+  "created_at": "2026-02-13T14:24:38.272049",
+  "updated_at": "2026-02-13T14:24:38.272049",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0.5
+  },
+  "related_asset": "GBTPGR10 Index",
+  "performance": {
+    "sharpe_3y": 1.647924052969014,
+    "sharpe_6m": 0.075237755066313,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}

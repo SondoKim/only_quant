@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_014739",
+  "created_at": "2026-02-13T14:24:44.915757",
+  "updated_at": "2026-02-13T14:24:44.915757",
+  "asset": "USGG10YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 60,
+    "low_percentile": 25,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "GUKG10 Index",
+  "performance": {
+    "sharpe_3y": 1.0023937449853229,
+    "sharpe_6m": 0.9412696901108869,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}

@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001137",
+  "created_at": "2026-02-13T14:33:45.968083",
+  "updated_at": "2026-02-13T14:33:45.976533",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 60,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.25
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.167017182512589,
+    "sharpe_6m": 1.3155982484455677,
+    "sharpe_1m": -0.4574915992457769,
+    "total_return": -0.5810541478545767,
+    "annual_return": 0.0,
+    "max_drawdown": 1.0655504987629776,
+    "win_rate": 0.7352941176470589,
+    "num_trades": 35,
+    "calmar_ratio": -0.16698130006074574,
+    "sortino_ratio": 0.05661966468267533
+  },
+  "is_active": true,
+  "version": 1
+}

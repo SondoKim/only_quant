@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_004041",
+  "created_at": "2026-02-13T14:31:01.957512",
+  "updated_at": "2026-02-13T14:31:41.884869",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 20,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "USGG2YR Index",
+  "performance": {
+    "sharpe_3y": 1.7890667094737238,
+    "sharpe_6m": 1.3377281671883432,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_001158",
+  "created_at": "2026-02-13T14:31:04.948986",
+  "updated_at": "2026-02-13T14:31:45.563766",
+  "asset": "NQ1 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "spread_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0
+  },
+  "related_asset": "GTAUD10YR Corp",
+  "performance": {
+    "sharpe_3y": 1.0141792226634072,
+    "sharpe_6m": 3.7492445287226444,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -56,22 +56,22 @@ class CrossAssetIndicators:
         period: int = 252
     ) -> pd.Series:
         """
-        Calculate percentile rank of spread.
-        
-        Args:
-            asset1: First asset prices/yields
-            asset2: Second asset prices/yields
-            period: Lookback period
-            
-        Returns:
-            Percentile rank of spread (0-100)
+        Calculate percentile rank of spread. Faster implementation using numpy.
         """
         spread = CrossAssetIndicators.spread(asset1, asset2)
         
-        def pct_rank(x):
-            return pd.Series(x).rank(pct=True).iloc[-1] * 100
+        def pct_rank_fast(x):
+            if np.isnan(x).any():
+                return np.nan
+            # Count how many elements are smaller than the last one
+            last_val = x[-1]
+            smaller = np.sum(x < last_val)
+            equal = np.sum(x == last_val)
+            # Standard rank: smaller + (equal + 1) / 2
+            rank = smaller + (equal + 1) / 2.0
+            return (rank / len(x)) * 100
         
-        return spread.rolling(window=period).apply(pct_rank, raw=False)
+        return spread.rolling(window=period).apply(pct_rank_fast, raw=True)
     
     @staticmethod
     def ratio(asset1: pd.Series, asset2: pd.Series) -> pd.Series:

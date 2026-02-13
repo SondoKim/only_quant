@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_009722",
+  "created_at": "2026-02-13T14:24:50.799708",
+  "updated_at": "2026-02-13T14:25:10.217585",
+  "asset": "GUKG10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.0
+  },
+  "related_asset": "GFRN10 Index",
+  "performance": {
+    "sharpe_3y": 1.0010679466774017,
+    "sharpe_6m": 1.2403135669137255,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": true,
+  "version": 1
+}

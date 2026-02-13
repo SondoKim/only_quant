@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_011106",
+  "created_at": "2026-02-13T14:27:28.681049",
+  "updated_at": "2026-02-13T14:27:51.858087",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 20,
+    "low_percentile": 10,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "GDBR2 Index",
+  "performance": {
+    "sharpe_3y": 1.2266344021313125,
+    "sharpe_6m": 1.576551104252655,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": true,
+  "version": 1
+}

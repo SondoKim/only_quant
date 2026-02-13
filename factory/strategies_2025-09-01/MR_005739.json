@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_005739",
+  "created_at": "2026-02-13T14:27:30.134124",
+  "updated_at": "2026-02-13T14:27:30.134124",
+  "asset": "GDBR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "JPY Curncy",
+  "performance": {
+    "sharpe_3y": 1.110283325681469,
+    "sharpe_6m": 0.06881646706417496,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}

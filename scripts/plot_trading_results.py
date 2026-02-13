@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def plot_pnl(max_correlation=None):
+def plot_pnl(max_correlation=None, mode=None):
     csv_path = Path("trading_log.csv")
     if not csv_path.exists():
         print(f"Error: {csv_path} not found. Please run export_trading_log.py first.")
@@ -59,7 +59,8 @@ def plot_pnl(max_correlation=None):
     # Add Total Index to ax2 or a separate axis? Let's add to ax2 since it's also %
     ax2.plot(df['Date'], df['total_index_cumpnl'], color='tab:green', linewidth=3, label=f'Total Index (Sharpe: {sharpe_idx:.2f})', linestyle='--')
     
-    ax1.set_title('Global Macro Strategy: Aggregate Performance', fontsize=16, pad=20)
+    title_mode = f" (Mode: {mode.upper()})" if mode else ""
+    ax1.set_title(f'Global Macro Strategy: Aggregate Performance{title_mode}', fontsize=16, pad=20)
 
     # --- Plot 2: Individual Rates (BPS) ---
     for col in rate_cols:
@@ -101,8 +102,9 @@ def plot_pnl(max_correlation=None):
     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 
     suffix_corr = f"_corr{max_correlation}" if max_correlation is not None else ""
+    suffix_mode = f"_{mode}" if mode else ""
     suffix_sharpe = f"_rates{sharpe_rates:.2f}_fx{sharpe_fx:.2f}"
-    output_path = f"trading_pnl{suffix_corr}{suffix_sharpe}.png"
+    output_path = f"trading_pnl{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     

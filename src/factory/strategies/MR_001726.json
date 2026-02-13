@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_001726",
+  "created_at": "2026-02-13T14:33:46.271879",
+  "updated_at": "2026-02-13T14:33:46.282442",
+  "asset": "GFRN10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "rsi_extremes",
+  "params": {
+    "period": 14,
+    "oversold": 25,
+    "overbought": 65,
+    "exit_level": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2754319099496993,
+    "sharpe_6m": 1.7197532068347006,
+    "sharpe_1m": 0.0,
+    "total_return": 0.016141655791575574,
+    "annual_return": 0.0,
+    "max_drawdown": 0.14909293467515852,
+    "win_rate": 0.6666666666666665,
+    "num_trades": 24,
+    "calmar_ratio": 0.02460734052397544,
+    "sortino_ratio": 0.14933134660191458
+  },
+  "is_active": true,
+  "version": 1
+}

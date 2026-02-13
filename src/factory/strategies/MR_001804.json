@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_001804",
+  "created_at": "2026-02-13T14:33:46.364764",
+  "updated_at": "2026-02-13T14:33:46.364764",
+  "asset": "KRW Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "rsi_extremes",
+  "params": {
+    "period": 4,
+    "oversold": 30,
+    "overbought": 65,
+    "exit_level": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.057047838632419,
+    "sharpe_6m": 0.8598086009631388,
+    "sharpe_1m": 4.437860124713882,
+    "total_return": 0.17053117016264493,
+    "annual_return": 0.0,
+    "max_drawdown": 0.12427921315670766,
+    "win_rate": 0.7256637168141593,
+    "num_trades": 113,
+    "calmar_ratio": 0.29503134596917635,
+    "sortino_ratio": 0.8217877738409525
+  },
+  "is_active": false,
+  "version": 1
+}

@@ -302,7 +302,7 @@ class VectorBTEngine:
                 win_rate=win_rate,
                 num_trades=num_trades,
                 calmar_ratio=annual_return / abs(max_dd) if max_dd != 0 else 0,
-                sortino_ratio=0,  # Simplified version doesn't calculate this
+                sortino_ratio=self._safe_sortino(strategy_returns),
             )
             
         except Exception as e:
@@ -318,6 +318,19 @@ class VectorBTEngine:
         if std == 0 or np.isnan(std):
             return 0.0
         return float(mean / std * np.sqrt(252))
+
+    def _safe_sortino(self, returns: pd.Series) -> float:
+        """Calculate Sortino ratio safely."""
+        if len(returns) < 2:
+            return 0.0
+        mean = returns.mean() * 252
+        downside_returns = returns[returns < 0]
+        if len(downside_returns) < 2:
+            return 0.0
+        downside_std = downside_returns.std() * np.sqrt(252)
+        if downside_std == 0 or np.isnan(downside_std):
+            return 0.0
+        return float(mean / downside_std)
     
     def _calculate_period_sharpe(
         self,

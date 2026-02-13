@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_003972",
+  "created_at": "2026-02-13T14:27:28.075430",
+  "updated_at": "2026-02-13T14:27:28.075430",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": "GDBR10 Index",
+  "performance": {
+    "sharpe_3y": 1.4686305977265324,
+    "sharpe_6m": 0.3574177045096082,
+    "sharpe_1m": 0,
+    "total_return": 0,
+    "annual_return": 0,
+    "max_drawdown": 0,
+    "win_rate": 0,
+    "num_trades": 20,
+    "calmar_ratio": 0,
+    "sortino_ratio": 0
+  },
+  "is_active": false,
+  "version": 1
+}
