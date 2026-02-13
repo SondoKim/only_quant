@@ -21,6 +21,8 @@ class AdvancedStrategies:
         'multi_tf_momentum',
         'volatility_breakout',
         'relative_strength_rank',
+        'adx_momentum',
+        'carry_trade',
     ]
     
     @staticmethod
@@ -130,6 +132,83 @@ class AdvancedStrategies:
         
         return entries, exits
 
+    @staticmethod
+    def adx_momentum(
+        prices: pd.Series,
+        adx_period: int = 14,
+        roc_period: int = 10,
+        adx_threshold: float = 25
+    ) -> Tuple[pd.Series, pd.Series]:
+        """
+        ADX-filtered momentum: Only enter when trend is strong (ADX > threshold)
+        AND momentum is positive (ROC > 0).
+        
+        Args:
+            prices: Price series
+            adx_period: ADX calculation period
+            roc_period: Rate of change period
+            adx_threshold: Minimum ADX for trend confirmation (typically 20-30)
+            
+        Returns:
+            Tuple of (entries, exits)
+        """
+        adx = TechnicalIndicators.adx(prices, adx_period)
+        roc = TechnicalIndicators.rate_of_change(prices, roc_period)
+        
+        trending = adx > adx_threshold
+        momentum_up = roc > 0
+        
+        # Entry: trend becomes strong AND momentum is positive
+        entries = trending & momentum_up & (~(trending.shift(1) & momentum_up.shift(1)))
+        # Exit: trend weakens OR momentum turns negative
+        exits = (~trending | ~momentum_up) & (trending.shift(1) & momentum_up.shift(1))
+        
+        return entries, exits
+
+    @staticmethod
+    def carry_trade(
+        prices: pd.DataFrame,
+        fx_asset: str,
+        rate_asset: str,
+        foreign_rate_asset: str,
+        period: int = 20,
+        threshold: float = 1.0
+    ) -> Tuple[pd.Series, pd.Series]:
+        """
+        Carry trade: Trade FX based on interest rate differential.
+        
+        When the rate spread z-score increases (domestic rate advantage grows),
+        go long the foreign currency (carry trade logic).
+        
+        Args:
+            prices: DataFrame with all price data
+            fx_asset: FX pair ticker (e.g., 'EUR Curncy')
+            rate_asset: Domestic rate ticker (e.g., 'USGG2YR Index')
+            foreign_rate_asset: Foreign rate ticker (e.g., 'GDBR2 Index')
+            period: Z-score lookback period
+            threshold: Z-score threshold for entry
+            
+        Returns:
+            Tuple of (entries, exits)
+        """
+        if rate_asset not in prices.columns or foreign_rate_asset not in prices.columns:
+            # Return empty signals if data not available
+            empty = pd.Series(False, index=prices.index)
+            return empty, empty
+        
+        # Rate differential (domestic - foreign)
+        rate_spread = prices[rate_asset] - prices[foreign_rate_asset]
+        
+        # Z-score of spread
+        spread_zscore = TechnicalIndicators.zscore(rate_spread, period)
+        
+        # When spread z-score is high (domestic rate advantage increasing),
+        # the foreign currency tends to appreciate (carry unwind/flow)
+        entries = (spread_zscore > threshold) & (spread_zscore.shift(1) <= threshold)
+        exits = (spread_zscore < -threshold) & (spread_zscore.shift(1) >= -threshold)
+        
+        return entries, exits
+
     @classmethod
     def generate_signals(
         cls,
@@ -152,5 +231,10 @@ class AdvancedStrategies:
             return cls.volatility_breakout(prices, asset, **params)
         elif strategy_type == 'relative_strength_rank':
             return cls.relative_strength_rank(prices, asset, **params)
+        elif strategy_type == 'adx_momentum':
+            return cls.adx_momentum(price_series, **params)
+        elif strategy_type == 'carry_trade':
+            # params contain rate_asset and foreign_rate_asset
+            return cls.carry_trade(prices, asset, **params)
         else:
             raise ValueError(f"Unknown advanced strategy: {strategy_type}")

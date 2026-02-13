@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def plot_pnl(max_correlation=None, mode=None):
+def plot_pnl(max_correlation=None, mode=None, start_date=None):
     csv_path = Path("trading_log.csv")
     if not csv_path.exists():
         print(f"Error: {csv_path} not found. Please run export_trading_log.py first.")
@@ -101,10 +101,11 @@ def plot_pnl(max_correlation=None, mode=None):
     lines2, labels2 = ax2.get_legend_handles_labels()
     ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 
+    suffix_start = f"_{start_date}" if start_date else ""
     suffix_corr = f"_corr{max_correlation}" if max_correlation is not None else ""
     suffix_mode = f"_{mode}" if mode else ""
     suffix_sharpe = f"_rates{sharpe_rates:.2f}_fx{sharpe_fx:.2f}"
-    output_path = f"trading_pnl{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
+    output_path = f"trading_pnl{suffix_start}{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     

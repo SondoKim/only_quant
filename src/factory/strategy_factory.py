@@ -304,13 +304,15 @@ class StrategyFactory:
     
     def activate_qualified_strategies(
         self,
-        sharpe_6m_min: float = 0.9
+        sharpe_6m_min: float = 0.5,
+        sortino_6m_min: float = 0.5
     ) -> List[str]:
         """
-        Activate strategies that meet 6-month Sharpe threshold.
+        Activate strategies that meet both 6-month Sharpe and Sortino thresholds.
         
         Args:
             sharpe_6m_min: Minimum 6-month Sharpe ratio
+            sortino_6m_min: Minimum 6-month Sortino ratio
             
         Returns:
             List of activated strategy IDs
@@ -318,7 +320,10 @@ class StrategyFactory:
         activated = []
         
         for strategy_id, info in self.index['strategies'].items():
-            if info.get('sharpe_6m', 0) >= sharpe_6m_min:
+            sharpe_ok = info.get('sharpe_6m', 0) >= sharpe_6m_min
+            sortino_ok = info.get('sortino_6m', 0) >= sortino_6m_min
+            
+            if sharpe_ok and sortino_ok:
                 if not info.get('is_active', False):
                     self.set_active(strategy_id, True)
                     activated.append(strategy_id)
@@ -327,7 +332,7 @@ class StrategyFactory:
                 if info.get('is_active', False):
                     self.set_active(strategy_id, False)
         
-        logger.info(f"🚀 Activated {len(activated)} strategies (Sharpe 6M >= {sharpe_6m_min})")
+        logger.info(f"🚀 Activated {len(activated)} strategies (Sharpe 6M >= {sharpe_6m_min}, Sortino 6M >= {sortino_6m_min})")
         return activated
     
     def get_summary(self) -> Dict[str, Any]:

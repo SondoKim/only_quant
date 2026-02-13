@@ -263,6 +263,47 @@ class TechnicalIndicators:
         return prices.rolling(window=period).apply(pct_rank, raw=False)
     
     @staticmethod
+    def adx(prices: pd.Series, period: int = 14) -> pd.Series:
+        """
+        Average Directional Index (ADX) - measures trend strength.
+        
+        Uses price changes as proxy for High/Low when only Close data is available
+        (common for bond yields and macro data).
+        
+        Args:
+            prices: Price series (close)
+            period: ADX period
+            
+        Returns:
+            ADX series (0-100, >25 = trending)
+        """
+        # Use absolute price changes as proxy for directional movement
+        diff = prices.diff()
+        
+        # Positive/Negative directional movement
+        plus_dm = diff.where(diff > 0, 0.0)
+        minus_dm = (-diff).where(diff < 0, 0.0)
+        
+        # True range proxy (absolute change)
+        tr = diff.abs()
+        
+        # Wilder's smoothing
+        alpha = 1 / period
+        smoothed_tr = tr.ewm(alpha=alpha, min_periods=period, adjust=False).mean()
+        smoothed_plus = plus_dm.ewm(alpha=alpha, min_periods=period, adjust=False).mean()
+        smoothed_minus = minus_dm.ewm(alpha=alpha, min_periods=period, adjust=False).mean()
+        
+        # DI+ and DI-
+        plus_di = 100 * smoothed_plus / smoothed_tr.replace(0, np.nan)
+        minus_di = 100 * smoothed_minus / smoothed_tr.replace(0, np.nan)
+        
+        # DX and ADX
+        dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di).replace(0, np.nan)
+        adx = dx.ewm(alpha=alpha, min_periods=period, adjust=False).mean()
+        
+        return adx.fillna(0)
+    
+    @staticmethod
     def donchian_channel(
         prices: pd.Series,
         period: int = 20

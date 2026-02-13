@@ -25,18 +25,15 @@ class StrategySelector:
     
     def __init__(
         self,
-        factory: StrategyFactory = None,
-        sharpe_6m_threshold: float = 0.9
+        factory: StrategyFactory = None
     ):
         """
         Initialize strategy selector.
         
         Args:
             factory: Strategy factory instance
-            sharpe_6m_threshold: Minimum 6-month Sharpe for activation
         """
         self.factory = factory or StrategyFactory()
-        self.sharpe_threshold = sharpe_6m_threshold
         self.active_strategies: List[Dict[str, Any]] = []
     
     async def refresh_active_strategies(
@@ -54,10 +51,7 @@ class StrategySelector:
         Returns:
             Number of active strategies
         """
-        # 1. Activate/deactivate based on current performance
-        self.factory.activate_qualified_strategies(self.sharpe_threshold)
-        
-        # 2. Get all potential active strategies (unfiltered)
+        # 1. Get all potential active strategies (already activated in factory)
         potential_strategies = self.factory.get_active_strategies()
         
         if not potential_strategies:
@@ -221,15 +215,8 @@ class StrategySelector:
         else:
             current_position = position.iloc[-1]
         
-        # FADE THE WINNER: Reverse signal for Rates and FX. Keep original for Indices (Nasdaq).
-        # Rates are identified as having "Index" or "Corp" but NOT being "NQ"
-        is_rate = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
-        is_fx = "Curncy" in asset
-        
-        if is_rate or is_fx:
-            final_position = current_position * -1  # Rates and FX are reversed
-        else:
-            final_position = current_position  # Indices remain original
+        # All assets use the original strategy signal direction (no reversal).
+        final_position = current_position
             
         return {
             'strategy_id': strategy['strategy_id'],

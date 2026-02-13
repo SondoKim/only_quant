@@ -6,6 +6,7 @@ LLM-Free automated trading strategy discovery, backtesting, and signal generatio
 
 import argparse
 import logging
+import numpy as np
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Any, List
@@ -63,7 +64,8 @@ class GlobalMacroTradingSystem:
                 bt_config = config.get('backtest', {})
                 self.sharpe_3y_threshold = bt_config.get('sharpe_threshold_3y', 1.0)
                 self.sortino_3y_threshold = bt_config.get('sortino_threshold_3y', 1.0)
-                self.sharpe_6m_threshold = bt_config.get('sharpe_threshold_6m', 1.1)
+                self.sharpe_6m_threshold = bt_config.get('sharpe_threshold_6m', 0.5)
+                self.sortino_6m_threshold = bt_config.get('sortino_threshold_6m', 0.5)
                 self.min_trades = bt_config.get('min_trades', 20)
                 self.max_drawdown = bt_config.get('max_drawdown', -0.20)
                 
@@ -72,7 +74,8 @@ class GlobalMacroTradingSystem:
         else:
             self.sharpe_3y_threshold = 1.0
             self.sortino_3y_threshold = 1.0
-            self.sharpe_6m_threshold = 1.1
+            self.sharpe_6m_threshold = 0.5
+            self.sortino_6m_threshold = 0.5
             self.min_trades = 20
             self.max_drawdown = -0.20
     
@@ -179,7 +182,6 @@ class GlobalMacroTradingSystem:
         logger.info("✅ Discovery complete!")
         logger.info(f"   Tested: {tested_count}/{total_possible}")
         logger.info(f"   Stored: {stored_count} (Sharpe 3Y >= {self.sharpe_3y_threshold}, Sortino 3Y >= {self.sortino_3y_threshold})")
-        logger.info(f"   Active: {active_count} (Sharpe 6M >= {self.sharpe_6m_threshold})")
         
         return summary
     
@@ -206,13 +208,11 @@ class GlobalMacroTradingSystem:
                 self.strategy_factory.save_strategy(strategy, result.to_dict())
                 stored += 1
                 
-                # Check if qualifies for activation (Fade the Winner: Top 6M Sharpe)
-                if result.sharpe_6m >= self.sharpe_6m_threshold:
-                    self.strategy_factory.set_active(
-                        strategy.get('id') or self.strategy_factory._generate_strategy_id(strategy),
-                        True
-                    )
-                    active += 1
+                self.strategy_factory.set_active(
+                    strategy.get('id') or self.strategy_factory._generate_strategy_id(strategy),
+                    True
+                )
+                active += 1
         
         return stored, active
     

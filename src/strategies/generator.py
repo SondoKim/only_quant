@@ -26,6 +26,7 @@ class StrategyGenerator:
         """
         self.config_path = config_path or self._get_default_config_path()
         self.config = self._load_config()
+        self.assets_config = self._load_assets_config()
         
     def _get_default_config_path(self) -> str:
         """Get default path to indicators.yaml."""
@@ -38,6 +39,15 @@ class StrategyGenerator:
                 return yaml.safe_load(f)
         except FileNotFoundError:
             logger.error(f"Config file not found: {self.config_path}")
+            return {}
+    
+    def _load_assets_config(self) -> Dict[str, Any]:
+        """Load assets configuration for carry pairs etc."""
+        assets_path = Path(self.config_path).parent / 'assets.yaml'
+        try:
+            with open(assets_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f) or {}
+        except FileNotFoundError:
             return {}
     
     def _generate_param_combinations(
@@ -168,6 +178,19 @@ class StrategyGenerator:
                                 'params': {'period': period, 'threshold': 0},
                                 'related_asset': related
                             }
+        
+        # Breakout (Donchian Channel)
+        if 'breakout' in tech_config:
+            params = tech_config['breakout']['params']
+            for asset in assets:
+                for period in params['period']:
+                    yield {
+                        'asset': asset,
+                        'strategy_type': 'momentum',
+                        'strategy_name': 'breakout',
+                        'params': {'period': period},
+                        'related_asset': None
+                    }
     
     def generate_mean_reversion_strategies(
         self,
@@ -370,6 +393,48 @@ class StrategyGenerator:
                             'strategy_name': 'relative_strength_rank',
                             'params': {'period': period, 'top_n': n},
                             'related_asset': None
+                        }
+
+        # ADX Momentum
+        if 'adx_momentum' in adv_config:
+            p = adv_config['adx_momentum']
+            for asset in assets:
+                for adx_p in p.get('adx_period', [14]):
+                    for roc_p in p.get('roc_period', [10]):
+                        for threshold in p.get('adx_threshold', [25]):
+                            yield {
+                                'asset': asset,
+                                'strategy_type': 'advanced',
+                                'strategy_name': 'adx_momentum',
+                                'params': {
+                                    'adx_period': adx_p,
+                                    'roc_period': roc_p,
+                                    'adx_threshold': threshold
+                                },
+                                'related_asset': None
+                            }
+
+        # Carry Trade
+        if 'carry_trade' in adv_config:
+            p = adv_config['carry_trade']
+            carry_pairs = self.assets_config.get('carry_pairs', [])
+            for pair in carry_pairs:
+                fx = pair['fx']
+                if fx not in assets:
+                    continue
+                for period in p.get('period', [20]):
+                    for threshold in p.get('threshold', [1.0]):
+                        yield {
+                            'asset': fx,
+                            'strategy_type': 'advanced',
+                            'strategy_name': 'carry_trade',
+                            'params': {
+                                'rate_asset': pair['us_rate'],
+                                'foreign_rate_asset': pair['foreign_rate'],
+                                'period': period,
+                                'threshold': threshold
+                            },
+                            'related_asset': pair['foreign_rate']
                         }
     
     def generate_all_strategies(

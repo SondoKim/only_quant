@@ -71,3 +71,21 @@ cross_asset_pairs:
   rates_peripheral:
     - [GBTPGR10 Index, GDBR10 Index]       # Italy-Germany spread
     - [GFRN10 Index, GDBR10 Index]         # France-Germany spread
+
+# Carry trade pairs: [FX asset, US rate, Foreign rate]
+carry_pairs:
+  - fx: EUR Curncy
+    us_rate: USGG2YR Index
+    foreign_rate: GDBR2 Index
+  - fx: GBP Curncy
+    us_rate: USGG10YR Index
+    foreign_rate: GUKG10 Index
+  - fx: AUD Curncy
+    us_rate: USGG2YR Index
+    foreign_rate: GTAUD3YR Corp
+  - fx: JPY Curncy
+    us_rate: USGG10YR Index
+    foreign_rate: GJGB10 Index
+  - fx: KRW Curncy
+    us_rate: USGG2YR Index
+    foreign_rate: GVSK3YR Index
