@@ -1,27 +1,27 @@
 {
   "strategy_id": "MOM_000017",
-  "created_at": "2026-02-12T13:36:27.971902",
-  "updated_at": "2026-02-12T13:36:27.971902",
-  "asset": "NQ1 Index",
+  "created_at": "2026-02-19T13:17:08.833203",
+  "updated_at": "2026-02-19T13:17:08.848852",
+  "asset": "GTAUD3YR Corp",
   "strategy_type": "momentum",
-  "strategy_name": "ema_crossover",
+  "strategy_name": "ma_crossover",
   "params": {
-    "fast_period": 12,
-    "slow_period": 20
+    "fast_period": 5,
+    "slow_period": 10
   },
   "related_asset": null,
   "performance": {
-    "sharpe_3y": 1.0604614135166308,
-    "sharpe_6m": -0.4016274212890523,
-    "sharpe_1m": -3.8404279355729587,
-    "total_return": 1.2808768158624175,
+    "sharpe_3y": 1.0014871574294621,
+    "sharpe_6m": 1.749986404936296,
+    "sharpe_1m": 1.8090013594371288,
+    "total_return": 1.6948344685379144,
     "annual_return": 0.0,
-    "max_drawdown": 0.16879668050286084,
-    "win_rate": 0.4615384615384615,
-    "num_trades": 26,
-    "calmar_ratio": 1.23029324373867,
-    "sortino_ratio": 1.6054559814766367
+    "max_drawdown": 0.8198443362289665,
+    "win_rate": 0.38372093023255816,
+    "num_trades": 86,
+    "calmar_ratio": 0.3095247213799046,
+    "sortino_ratio": 1.469045776932812
   },
-  "is_active": false,
+  "is_active": true,
   "version": 1
 }

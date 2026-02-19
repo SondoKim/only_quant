@@ -19,7 +19,6 @@ from src.strategies.generator import StrategyGenerator
 from src.backtester.vectorbt_engine import VectorBTEngine
 from src.factory.strategy_factory import StrategyFactory
 from src.portfolio.selector import StrategySelector
-from src.backtester.portfolio_backtester import PortfolioBacktester
 
 # Configure logging
 logging.basicConfig(
@@ -293,37 +292,12 @@ class GlobalMacroTradingSystem:
     def get_factory_summary(self) -> Dict[str, Any]:
         """Get strategy factory summary."""
         return self.strategy_factory.get_summary()
-    
-    def run_portfolio_backtest(
-        self,
-        start_date: str = "2023-01-01",
-        max_correlation: float = 0.3,
-        realistic: bool = False
-    ) -> Dict[str, Any]:
-        """Run portfolio backtest with monthly rebalancing."""
-        logger.info(f"📊 Running {'realistic ' if realistic else ''}portfolio backtest from {start_date}...")
-        
-        # 1. Load data
-        prices = self.data_loader.load_data()
-        preprocessor = DataPreprocessor(prices)
-        prices = preprocessor.clean().get_data()
-        
-        # 2. Run simulation
-        backtester = PortfolioBacktester(
-            prices=prices,
-            factory=self.strategy_factory,
-            selector_threshold=self.sharpe_6m_threshold,
-            max_correlation=max_correlation,
-            realistic=realistic
-        )
-        
-        return backtester.run_simulation(start_date=start_date)
 
 
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description='Global Macro Trading System')
-    parser.add_argument('--mode', choices=['discover', 'update', 'signals', 'summary', 'backtest-portfolio'],
+    parser.add_argument('--mode', choices=['discover', 'update', 'signals', 'summary'],
                        default='signals', help='Execution mode')
     parser.add_argument('--start-date', default='2020-01-01',
                        help='Data start date for discovery')
@@ -339,8 +313,6 @@ def main():
                         help='Target number of strategies to test (overrides sample-ratio)')
     parser.add_argument('--max-corr', type=float, default=0.3,
                         help='Maximum allowed correlation between strategies (0.0 to 1.0)')
-    parser.add_argument('--realistic', action='store_true',
-                        help='Run realistic walk-forward backtest (no future bias)')
     parser.add_argument('--tickers', nargs='+', 
                         help='Specific tickers to process (e.g. "NQ1 Index" "USGG10YR Index")')
     parser.add_argument('--include-index', action='store_true',
@@ -443,20 +415,7 @@ def main():
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
     
-    elif args.mode == 'backtest-portfolio':
-        result = system.run_portfolio_backtest(
-            start_date=args.start_date,
-            max_correlation=args.max_corr,
-            realistic=args.realistic
-        )
-        if 'error' in result:
-            print(f"\n❌ Error: {result['error']}")
-        else:
-            print("\n📈 Portfolio Backtest Results:")
-            print(f"   Total Return: {result['total_return']*100:.2f}%")
-            print(f"   Sharpe Ratio: {result['sharpe']:.2f}")
-            print(f"   Max Drawdown: {result['max_drawdown']*100:.2f}%")
-            print(f"\n✅ Plot saved as portfolio_backtest.png")
+
     
     elif args.mode == 'summary':
         result = system.get_factory_summary()

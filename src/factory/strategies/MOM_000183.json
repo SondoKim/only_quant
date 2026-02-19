@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000183",
+  "created_at": "2026-02-19T13:17:09.296456",
+  "updated_at": "2026-02-19T13:17:09.309975",
+  "asset": "NQ1 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "ema_crossover",
+  "params": {
+    "fast_period": 10,
+    "slow_period": 26
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0393730749601917,
+    "sharpe_6m": -0.45281389623421014,
+    "sharpe_1m": -2.8743758053429653,
+    "total_return": 1.3308491986328042,
+    "annual_return": 0.0,
+    "max_drawdown": 0.1610255349309034,
+    "win_rate": 0.48,
+    "num_trades": 25,
+    "calmar_ratio": 1.3223964136894335,
+    "sortino_ratio": 1.634071271651392
+  },
+  "is_active": true,
+  "version": 1
+}
