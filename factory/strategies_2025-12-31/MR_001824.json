@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001824",
   "created_at": "2026-02-13T17:10:58.879920",
-  "updated_at": "2026-02-19T10:35:47.963635",
+  "updated_at": "2026-02-19T10:43:38.315912",
   "asset": "GJGB10 Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_zscore_reversion",

@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_002184",
   "created_at": "2026-02-13T17:11:48.861371",
-  "updated_at": "2026-02-19T10:35:48.149725",
+  "updated_at": "2026-02-19T10:43:38.481832",
   "asset": "GJGB10 Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_percentile_reversion",

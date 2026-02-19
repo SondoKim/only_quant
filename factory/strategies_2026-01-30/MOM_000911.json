@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000911",
   "created_at": "2026-02-13T17:12:58.574274",
-  "updated_at": "2026-02-19T10:36:15.915088",
+  "updated_at": "2026-02-19T10:44:08.752121",
   "asset": "GJGB10 Index",
   "strategy_type": "momentum",
   "strategy_name": "breakout",

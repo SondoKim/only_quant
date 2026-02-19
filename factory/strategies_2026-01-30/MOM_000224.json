@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000224",
   "created_at": "2026-02-13T17:12:58.315411",
-  "updated_at": "2026-02-19T10:36:15.707797",
+  "updated_at": "2026-02-19T10:44:08.598676",
   "asset": "NQ1 Index",
   "strategy_type": "momentum",
   "strategy_name": "rsi_momentum",

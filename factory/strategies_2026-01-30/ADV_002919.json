@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002919",
   "created_at": "2026-02-13T17:14:27.944045",
-  "updated_at": "2026-02-19T10:36:16.370767",
+  "updated_at": "2026-02-19T10:44:09.219473",
   "asset": "GVSK3YR Index",
   "strategy_type": "advanced",
   "strategy_name": "volatility_breakout",

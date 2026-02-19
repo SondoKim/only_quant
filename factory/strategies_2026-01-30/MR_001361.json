@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001361",
   "created_at": "2026-02-13T17:13:42.284554",
-  "updated_at": "2026-02-19T10:36:15.934695",
+  "updated_at": "2026-02-19T10:44:08.767181",
   "asset": "AUD Curncy",
   "strategy_type": "mean_reversion",
   "strategy_name": "rsi_extremes",

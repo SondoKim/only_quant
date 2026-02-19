@@ -368,13 +368,39 @@ def main():
         print("\n📅 Daily Update Results:")
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
-        print("\n   Asset Positions:")
         positions = result['asset_positions']
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
+        
+        # Calculate delta allocation for rates
+        rate_keywords = ['Index', 'Corp']
+        fx_keywords = ['Curncy']
+        rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
+                         and p['confidence'] > 0 and p['position'] not in ['🔘 NOSTR', '⚪ FLAT']]
+        total_confidence = sum(p['confidence'] for p in rate_positions)
+        delta_map = {}
+        if total_confidence > 0:
+            for p in rate_positions:
+                delta_map[p['asset']] = round(p['confidence'] / total_confidence * 1000)
+        
+        print("\n   📊 금리 포지션:")
         for pos in positions:
+            if not any(k in pos['asset'] for k in rate_keywords):
+                continue
+            delta_str = f", 델타: {delta_map[pos['asset']]}만원" if pos['asset'] in delta_map else ""
             print(f"      {pos['asset']}: {pos['position']} "
-                  f"(confidence: {pos['confidence']:.2f}, strategies: {pos['strategies']} "
+                  f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
+                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
+        
+        if total_confidence > 0:
+            print(f"\n      💰 금리 총 델타: 1,000만원 (활성 {len(rate_positions)}개 자산에 신뢰도 비율 배분)")
+        
+        print("\n   💱 FX 포지션:")
+        for pos in positions:
+            if not any(k in pos['asset'] for k in fx_keywords):
+                continue
+            print(f"      {pos['asset']}: {pos['position']} "
+                  f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
     
     elif args.mode == 'signals':
@@ -382,13 +408,39 @@ def main():
         print("\n🎯 Trading Signals:")
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
-        print("\n   Asset Positions:")
         positions = result['asset_positions']
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
+        
+        # Calculate delta allocation for rates
+        rate_keywords = ['Index', 'Corp']
+        fx_keywords = ['Curncy']
+        rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
+                         and p['confidence'] > 0 and p['position'] not in ['🔘 NOSTR', '⚪ FLAT']]
+        total_confidence = sum(p['confidence'] for p in rate_positions)
+        delta_map = {}
+        if total_confidence > 0:
+            for p in rate_positions:
+                delta_map[p['asset']] = round(p['confidence'] / total_confidence * 1000)
+        
+        print("\n   📊 금리 포지션:")
         for pos in positions:
+            if not any(k in pos['asset'] for k in rate_keywords):
+                continue
+            delta_str = f", 델타: {delta_map[pos['asset']]}만원" if pos['asset'] in delta_map else ""
             print(f"      {pos['asset']}: {pos['position']} "
-                  f"(confidence: {pos['confidence']:.2f}, strategies: {pos['strategies']} "
+                  f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
+                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
+        
+        if total_confidence > 0:
+            print(f"\n      💰 금리 총 델타: 1,000만원 (활성 {len(rate_positions)}개 자산에 신뢰도 비율 배분)")
+        
+        print("\n   💱 FX 포지션:")
+        for pos in positions:
+            if not any(k in pos['asset'] for k in fx_keywords):
+                continue
+            print(f"      {pos['asset']}: {pos['position']} "
+                  f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
     
     elif args.mode == 'backtest-portfolio':

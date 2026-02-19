@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000821",
   "created_at": "2026-02-13T17:12:58.535426",
-  "updated_at": "2026-02-19T10:36:15.884458",
+  "updated_at": "2026-02-19T10:44:08.731807",
   "asset": "USGG10YR Index",
   "strategy_type": "momentum",
   "strategy_name": "spread_momentum",
