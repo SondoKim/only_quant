@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002478",
   "created_at": "2026-02-13T17:11:49.007643",
-  "updated_at": "2026-02-13T17:19:28.080563",
+  "updated_at": "2026-02-19T10:35:48.213472",
   "asset": "GJGB10 Index",
   "strategy_type": "advanced",
   "strategy_name": "filtered_momentum",

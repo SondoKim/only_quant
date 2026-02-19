@@ -27,9 +27,11 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
 
     sharpe_rates = calc_sharpe(df['total_rates_cumpnl'])
     sharpe_fx = calc_sharpe(df['total_fx_cumpnl'])
-    sharpe_idx = calc_sharpe(df['total_index_cumpnl'])
 
-    fig, (ax1, ax3, ax4, ax5) = plt.subplots(4, 1, figsize=(14, 24), sharex=True)
+    last_date = df['Date'].iloc[-1]
+
+    # === Main Plot: Rates + FX only (3 subplots) ===
+    fig, (ax1, ax3, ax4) = plt.subplots(3, 1, figsize=(14, 18), sharex=True)
 
     # --- Plot 1: Aggregate Rates vs FX (Dual Y) ---
     color_rates = 'tab:blue'
@@ -39,7 +41,6 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
     ax1.grid(True, linestyle='--', alpha=0.6)
     
     # Annotate last value
-    last_date = df['Date'].iloc[-1]
     last_val_rates = df['total_rates_cumpnl'].iloc[-1]
     ax1.text(last_date, last_val_rates, f" {last_val_rates:.1f}", color=color_rates, fontweight='bold', va='center')
 
@@ -53,14 +54,13 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
     last_val_fx = df['total_fx_cumpnl'].iloc[-1]
     ax2.text(last_date, last_val_fx, f" {last_val_fx:.2f}%", color=color_fx, fontweight='bold', va='center')
     
-    last_val_idx = df['total_index_cumpnl'].iloc[-1]
-    ax2.text(last_date, last_val_idx, f" {last_val_idx:.2f}%", color='tab:green', fontweight='bold', va='center')
-    
-    # Add Total Index to ax2 or a separate axis? Let's add to ax2 since it's also %
-    ax2.plot(df['Date'], df['total_index_cumpnl'], color='tab:green', linewidth=3, label=f'Total Index (Sharpe: {sharpe_idx:.2f})', linestyle='--')
-    
     title_mode = f" (Mode: {mode.upper()})" if mode else ""
-    ax1.set_title(f'Global Macro Strategy: Aggregate Performance{title_mode}', fontsize=16, pad=20)
+    ax1.set_title(f'Global Macro Strategy: Rates + FX Performance{title_mode}', fontsize=16, pad=20)
+
+    # Legend for top plot
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 
     # --- Plot 2: Individual Rates (BPS) ---
     for col in rate_cols:
@@ -81,25 +81,10 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
     ax4.set_title('Individual FX Performance', fontsize=14)
     ax4.grid(True, linestyle='--', alpha=0.6)
     ax4.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
-    
-    # --- Plot 4: Individual Indices (%) ---
-    for col in index_cols:
-        label = col.replace('_CumPnL', '')
-        line = ax5.plot(df['Date'], df[col], label=label, alpha=0.8)[0]
-        ax5.text(last_date, df[col].iloc[-1], f" {df[col].iloc[-1]:.2f}%", color=line.get_color(), fontsize=8, va='center')
-    ax5.set_ylabel('Individual Indices (%)', fontweight='bold')
-    ax5.set_title('Individual Index Performance', fontsize=14)
-    ax5.grid(True, linestyle='--', alpha=0.6)
-    ax5.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
 
     # Global Formatting
     plt.xlabel('Date')
     fig.tight_layout()
-    
-    # Legend for top plot
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
 
     suffix_start = f"_{start_date}" if start_date else ""
     suffix_corr = f"_corr{max_correlation}" if max_correlation is not None else ""
@@ -109,7 +94,42 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    print(f"✅ Success! PnL plot saved to {output_path}")
+    print(f"✅ Rates+FX PnL plot saved to {output_path}")
+
+    # === Separate Index Plot ===
+    if index_cols and 'total_index_cumpnl' in df.columns:
+        sharpe_idx = calc_sharpe(df['total_index_cumpnl'])
+        
+        fig_idx, (ax_agg, ax_ind) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
+
+        # Aggregate index
+        ax_agg.plot(df['Date'], df['total_index_cumpnl'], color='tab:green', linewidth=3,
+                    label=f'Total Index (Sharpe: {sharpe_idx:.2f})')
+        last_val_idx = df['total_index_cumpnl'].iloc[-1]
+        ax_agg.text(last_date, last_val_idx, f" {last_val_idx:.2f}%", color='tab:green', fontweight='bold', va='center')
+        ax_agg.set_ylabel('Total Index Cum PnL (%)', fontweight='bold')
+        ax_agg.set_title(f'Index Strategy Performance{title_mode}', fontsize=16, pad=20)
+        ax_agg.grid(True, linestyle='--', alpha=0.6)
+        ax_agg.legend(loc='upper left')
+
+        # Individual indices
+        for col in index_cols:
+            label = col.replace('_CumPnL', '')
+            line = ax_ind.plot(df['Date'], df[col], label=label, alpha=0.8)[0]
+            ax_ind.text(last_date, df[col].iloc[-1], f" {df[col].iloc[-1]:.2f}%", color=line.get_color(), fontsize=8, va='center')
+        ax_ind.set_ylabel('Individual Indices (%)', fontweight='bold')
+        ax_ind.set_title('Individual Index Performance', fontsize=14)
+        ax_ind.grid(True, linestyle='--', alpha=0.6)
+        ax_ind.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
+
+        plt.xlabel('Date')
+        fig_idx.tight_layout()
+
+        index_output = f"trading_pnl_index{suffix_start}{suffix_corr}{suffix_mode}_idx{sharpe_idx:.2f}.png"
+        plt.savefig(index_output, dpi=300, bbox_inches='tight')
+        plt.close()
+        
+        print(f"✅ Index PnL plot saved to {index_output}")
 
 if __name__ == "__main__":
     plot_pnl()

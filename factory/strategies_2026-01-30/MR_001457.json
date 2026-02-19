@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001457",
   "created_at": "2026-02-13T17:13:42.297455",
-  "updated_at": "2026-02-13T17:19:51.769032",
+  "updated_at": "2026-02-19T10:36:15.939693",
   "asset": "GUKG10 Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "rsi_extremes",

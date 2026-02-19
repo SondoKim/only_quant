@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_002039",
   "created_at": "2026-02-13T17:14:27.581431",
-  "updated_at": "2026-02-13T17:19:51.988927",
+  "updated_at": "2026-02-19T10:36:16.197567",
   "asset": "GDBR2 Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_percentile_reversion",

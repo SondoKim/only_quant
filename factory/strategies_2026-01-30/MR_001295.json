@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001295",
   "created_at": "2026-02-13T17:13:42.275455",
-  "updated_at": "2026-02-13T17:19:51.760033",
+  "updated_at": "2026-02-19T10:36:15.927606",
   "asset": "GBP Curncy",
   "strategy_type": "mean_reversion",
   "strategy_name": "rsi_extremes",

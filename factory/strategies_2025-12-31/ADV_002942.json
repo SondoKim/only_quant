@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002942",
   "created_at": "2026-02-13T17:11:49.344868",
-  "updated_at": "2026-02-13T17:19:28.207442",
+  "updated_at": "2026-02-19T10:35:48.542528",
   "asset": "GJGB10 Index",
   "strategy_type": "advanced",
   "strategy_name": "volatility_breakout",

@@ -343,6 +343,8 @@ def main():
                         help='Run realistic walk-forward backtest (no future bias)')
     parser.add_argument('--tickers', nargs='+', 
                         help='Specific tickers to process (e.g. "NQ1 Index" "USGG10YR Index")')
+    parser.add_argument('--include-index', action='store_true',
+                         help='Include index assets (e.g. NQ1 Index) in signal output')
     
     args = parser.parse_args()
     
@@ -367,7 +369,10 @@ def main():
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
         print("\n   Asset Positions:")
-        for pos in result['asset_positions']:
+        positions = result['asset_positions']
+        if not args.include_index:
+            positions = [p for p in positions if 'NQ' not in p['asset']]
+        for pos in positions:
             print(f"      {pos['asset']}: {pos['position']} "
                   f"(confidence: {pos['confidence']:.2f}, strategies: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
@@ -378,7 +383,10 @@ def main():
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
         print("\n   Asset Positions:")
-        for pos in result['asset_positions']:
+        positions = result['asset_positions']
+        if not args.include_index:
+            positions = [p for p in positions if 'NQ' not in p['asset']]
+        for pos in positions:
             print(f"      {pos['asset']}: {pos['position']} "
                   f"(confidence: {pos['confidence']:.2f}, strategies: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")

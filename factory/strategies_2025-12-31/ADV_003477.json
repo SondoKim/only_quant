@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_003477",
   "created_at": "2026-02-13T17:12:13.083711",
-  "updated_at": "2026-02-13T17:19:28.268014",
+  "updated_at": "2026-02-19T10:35:48.804022",
   "asset": "JPY Curncy",
   "strategy_type": "advanced",
   "strategy_name": "carry_trade",
