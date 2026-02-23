@@ -28,6 +28,61 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _resolve_signals_storage_dir(explicit_storage_dir: str = None) -> str:
+    """
+    Resolve the strategy storage directory for signals mode.
+
+    If explicit_storage_dir is given, use it directly.
+    Otherwise, auto-detect from today's date:
+      - Today is in month M  →  use last business day of month M-1
+      - Looks for 'strategies_YYYY-MM-DD' directories inside src/factory/
+        and picks the newest one whose date falls within month M-1.
+      - Falls back to 'strategies_present' if nothing is found.
+    """
+    if explicit_storage_dir:
+        return explicit_storage_dir
+
+    import re
+    from datetime import timedelta
+
+    today = datetime.now().date()
+
+    # Previous month
+    first_of_this_month = today.replace(day=1)
+    last_month = first_of_this_month - timedelta(days=1)
+    prev_year  = last_month.year
+    prev_month = last_month.month
+
+    factory_base = Path(__file__).parent / 'src' / 'factory'
+
+    # Find all strategies_YYYY-MM-DD directories
+    pattern = re.compile(r'^strategies_(\d{4})-(\d{2})-(\d{2})$')
+    candidates = []
+    for d in factory_base.iterdir():
+        if not d.is_dir():
+            continue
+        m = pattern.match(d.name)
+        if not m:
+            continue
+        y, mo, dy = int(m.group(1)), int(m.group(2)), int(m.group(3))
+        # Only consider folders from the previous month
+        if y == prev_year and mo == prev_month:
+            candidates.append((y, mo, dy, d))
+
+    if candidates:
+        # Pick the latest date within that month (= last business day)
+        candidates.sort()
+        chosen = candidates[-1][3]
+        logger.info(f"📂 [signals] Auto-selected strategy folder: {chosen.name}")
+        return str(chosen)
+
+    # Fallback
+    fallback = factory_base / 'strategies_present'
+    logger.warning(f"⚠️  [signals] No folder found for {prev_year}-{prev_month:02d}. "
+                   f"Falling back to strategies_present.")
+    return str(fallback)
+
+
 class GlobalMacroTradingSystem:
     """Main orchestrator for the trading system."""
     
@@ -311,16 +366,23 @@ def main():
                        help='Ratio of strategies to sample (0.0 to 1.0)')
     parser.add_argument('--sample-count', type=int, default=None,
                         help='Target number of strategies to test (overrides sample-ratio)')
-    parser.add_argument('--max-corr', type=float, default=0.3,
+    parser.add_argument('--max-corr', type=float, default=0.5,
                         help='Maximum allowed correlation between strategies (0.0 to 1.0)')
     parser.add_argument('--tickers', nargs='+', 
                         help='Specific tickers to process (e.g. "NQ1 Index" "USGG10YR Index")')
     parser.add_argument('--include-index', action='store_true',
                          help='Include index assets (e.g. NQ1 Index) in signal output')
+    parser.add_argument('--verbose', action='store_true',
+                         help='Show per-strategy details for each asset in signals/update mode')
     
     args = parser.parse_args()
     
-    system = GlobalMacroTradingSystem(storage_dir=args.storage_dir)
+    # For signals mode, auto-resolve the storage dir if not explicitly provided
+    storage_dir = args.storage_dir
+    if args.mode == 'signals' and not storage_dir:
+        storage_dir = _resolve_signals_storage_dir()
+
+    system = GlobalMacroTradingSystem(storage_dir=storage_dir)
     
     if args.mode == 'discover':
         result = system.run_discovery(
@@ -344,28 +406,39 @@ def main():
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
         
-        # Calculate delta allocation for rates
+        # Per-active-asset budget allocation
+        # Budget = 1,000만원 / active_count → max net = ±1,000만원 when all agree
         rate_keywords = ['Index', 'Corp']
         fx_keywords = ['Curncy']
+        LONG_KEYWORDS = ['🟢 LONG']
+        SHORT_KEYWORDS = ['🔴 SHORT']
         rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
                          and p['confidence'] > 0 and p['position'] not in ['🔘 NOSTR', '⚪ FLAT']]
-        total_confidence = sum(p['confidence'] for p in rate_positions)
         delta_map = {}
-        if total_confidence > 0:
+        net_delta = 0
+        if rate_positions:
+            per_budget = 1000 / len(rate_positions)
             for p in rate_positions:
-                delta_map[p['asset']] = round(p['confidence'] / total_confidence * 1000)
+                sign = 1 if p['position'] in LONG_KEYWORDS else -1
+                d = round(p['confidence'] * per_budget * sign)
+                delta_map[p['asset']] = d
+                net_delta += d
         
         print("\n   📊 금리 포지션:")
         for pos in positions:
             if not any(k in pos['asset'] for k in rate_keywords):
                 continue
-            delta_str = f", 델타: {delta_map[pos['asset']]}만원" if pos['asset'] in delta_map else ""
+            delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
             print(f"      {pos['asset']}: {pos['position']} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
         
-        if total_confidence > 0:
-            print(f"\n      💰 금리 총 델타: 1,000만원 (활성 {len(rate_positions)}개 자산에 신뢰도 비율 배분)")
+        if rate_positions:
+            long_cnt = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)
+            short_cnt = sum(1 for p in rate_positions if p['position'] in SHORT_KEYWORDS)
+            gross = sum(abs(v) for v in delta_map.values())
+            net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
+            print(f"\n      💰 금리 넷 델타: {net_delta:+d}만원 {net_sign} (롱 {long_cnt} / 숏 {short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")
         
         print("\n   💱 FX 포지션:")
         for pos in positions:
@@ -384,28 +457,48 @@ def main():
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
         
-        # Calculate delta allocation for rates
+        # Per-active-asset budget allocation
+        # For rates: display is INVERTED (yield direction → futures direction)
         rate_keywords = ['Index', 'Corp']
         fx_keywords = ['Curncy']
+        LONG_KEYWORDS = ['🟢 LONG']
+        SHORT_KEYWORDS = ['🔴 SHORT']
+        # Helper: flip yield signal → futures direction for display
+        def rate_futures_display(pos_str):
+            if pos_str == '🟢 LONG':  return '🔴 SHORT'  # yield up → futures short
+            if pos_str == '🔴 SHORT': return '🟢 LONG'   # yield down → futures long
+            return pos_str
         rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
                          and p['confidence'] > 0 and p['position'] not in ['🔘 NOSTR', '⚪ FLAT']]
-        total_confidence = sum(p['confidence'] for p in rate_positions)
         delta_map = {}
-        if total_confidence > 0:
+        net_delta = 0
+        if rate_positions:
+            per_budget = 1000 / len(rate_positions)
             for p in rate_positions:
-                delta_map[p['asset']] = round(p['confidence'] / total_confidence * 1000)
+                # Futures delta: yield LONG → short futures → negative delta
+                sign = -1 if p['position'] in LONG_KEYWORDS else 1
+                d = round(p['confidence'] * per_budget * sign)
+                delta_map[p['asset']] = d
+                net_delta += d
         
-        print("\n   📊 금리 포지션:")
+        print("\n   📊 금리 포지션 (국채선물 기준):")
         for pos in positions:
             if not any(k in pos['asset'] for k in rate_keywords):
                 continue
-            delta_str = f", 델타: {delta_map[pos['asset']]}만원" if pos['asset'] in delta_map else ""
-            print(f"      {pos['asset']}: {pos['position']} "
+            display_pos = rate_futures_display(pos['position']) if pos['position'] not in ['🔘 NOSTR', '⚪ FLAT'] else pos['position']
+            delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
+            print(f"      {pos['asset']}: {display_pos} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
         
-        if total_confidence > 0:
-            print(f"\n      💰 금리 총 델타: 1,000만원 (활성 {len(rate_positions)}개 자산에 신뢰도 비율 배분)")
+        if rate_positions:
+            # Futures perspective: yield-LONG = futures-SHORT
+            fut_long_cnt  = sum(1 for p in rate_positions if p['position'] in SHORT_KEYWORDS)  # yield short → fut long
+            fut_short_cnt = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)   # yield long  → fut short
+            gross = sum(abs(v) for v in delta_map.values())
+            net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
+            print(f"\n      💰 선물 넷 델타: {net_delta:+d}만원 {net_sign} (선물롱 {fut_long_cnt} / 선물숏 {fut_short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")
+
         
         print("\n   💱 FX 포지션:")
         for pos in positions:
@@ -414,8 +507,21 @@ def main():
             print(f"      {pos['asset']}: {pos['position']} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
+        
+        # Verbose: per-strategy detail grouped by asset
+        if args.verbose and result.get('raw_signals'):
+            from collections import defaultdict
+            by_asset = defaultdict(list)
+            for s in result['raw_signals']:
+                by_asset[s['asset']].append(s)
+            print("\n   🔍 전략 세부 내역:")
+            for asset in sorted(by_asset.keys()):
+                strats = by_asset[asset]
+                print(f"      [{asset}]")
+                for s in sorted(strats, key=lambda x: -x['sharpe_6m']):
+                    pos_icon = '🟢' if s['position'] == 1 else '🔴' if s['position'] == -1 else '⚪'
+                    print(f"         {pos_icon} {s['strategy_id']}  {s['strategy_name']}  Sharpe6M: {s['sharpe_6m']:.2f}")
     
-
     
     elif args.mode == 'summary':
         result = system.get_factory_summary()

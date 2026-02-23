@@ -276,7 +276,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Generate PnL plot
     try:
-        plot_pnl(max_correlation=max_correlation, mode='backtest', start_date=start_date_str)
+        plot_pnl(max_correlation=max_correlation, mode='backtest', start_date=start_date_str,
+                 end_date=prices.index[-1].strftime('%Y-%m-%d'))
     except Exception as e:
         print(f"⚠️ Could not generate plot: {e}")
 
@@ -290,7 +291,7 @@ def main():
                         help='Backtest start date (YYYY-MM-DD)')
     parser.add_argument('--end-date', default=None,
                         help='Backtest end date (YYYY-MM-DD, default: latest)')
-    parser.add_argument('--max-corr', type=float, default=0.3,
+    parser.add_argument('--max-corr', type=float, default=0.5,
                         help='Maximum correlation threshold')
     parser.add_argument('--skip-discovery', action='store_true',
                         help='Skip Phase 1 (use existing cached strategies)')
@@ -304,7 +305,7 @@ def main():
     preprocessor = DataPreprocessor(prices_raw)
     prices = preprocessor.clean().get_data()
     
-    factory_base = Path(__file__).parent.parent / 'factory'
+    factory_base = Path(__file__).parent.parent / 'src' / 'factory'
     factory_base.mkdir(exist_ok=True)
     
     # Get month-end business days

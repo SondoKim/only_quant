@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-def plot_pnl(max_correlation=None, mode=None, start_date=None):
+def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     csv_path = Path("trading_log.csv")
     if not csv_path.exists():
         print(f"Error: {csv_path} not found. Please run export_trading_log.py first.")
@@ -86,11 +86,13 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
     plt.xlabel('Date')
     fig.tight_layout()
 
+    _end_date = end_date or df['Date'].iloc[-1].strftime('%Y-%m-%d')
     suffix_start = f"_{start_date}" if start_date else ""
+    suffix_end   = f"_to{_end_date}"
     suffix_corr = f"_corr{max_correlation}" if max_correlation is not None else ""
     suffix_mode = f"_{mode}" if mode else ""
     suffix_sharpe = f"_rates{sharpe_rates:.2f}_fx{sharpe_fx:.2f}"
-    output_path = f"trading_pnl{suffix_start}{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
+    output_path = f"trading_pnl{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -125,7 +127,7 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None):
         plt.xlabel('Date')
         fig_idx.tight_layout()
 
-        index_output = f"trading_pnl_index{suffix_start}{suffix_corr}{suffix_mode}_idx{sharpe_idx:.2f}.png"
+        index_output = f"trading_pnl_index{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}_idx{sharpe_idx:.2f}.png"
         plt.savefig(index_output, dpi=300, bbox_inches='tight')
         plt.close()
         

@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002966",
+  "created_at": "2026-02-13T17:11:49.411041",
+  "updated_at": "2026-02-23T09:50:30.340375",
+  "asset": "JPY Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0897938373439429,
+    "sharpe_6m": 1.5356592849378905,
+    "sharpe_1m": 0.5278750588212521,
+    "total_return": 0.39330690070280383,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08455019804595987,
+    "win_rate": 0.4523809523809524,
+    "num_trades": 43,
+    "calmar_ratio": 0.9512380830428201,
+    "sortino_ratio": 1.484745017486263
+  },
+  "is_active": true,
+  "version": 1
+}

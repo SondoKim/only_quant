@@ -25,7 +25,7 @@ class StrategyFactory:
             storage_dir: Directory for storing strategy JSON files
         """
         self.storage_dir = Path(storage_dir) if storage_dir else \
-            Path(__file__).parent / 'strategies'
+            Path(__file__).parent / 'strategies_present'
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         
         self.index_file = self.storage_dir / 'index.json'

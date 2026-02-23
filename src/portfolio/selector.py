@@ -323,6 +323,9 @@ class StrategySelector:
             else:
                 avg_position = asset_signals['position'].mean()
             
+            # Cap to [-1, 1] — confidence never exceeds 1.0
+            avg_position = float(np.clip(avg_position, -1.0, 1.0))
+            
             # Discretize to -1, 0, 1
             if avg_position > 0.3:
                 final_position = 1

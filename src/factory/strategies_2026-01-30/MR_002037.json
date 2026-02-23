@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_002037",
+  "created_at": "2026-02-13T17:14:27.560013",
+  "updated_at": "2026-02-23T09:51:03.385750",
+  "asset": "GDBR2 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 60,
+    "low_percentile": 25,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "USGG2YR Index",
+  "performance": {
+    "sharpe_3y": 1.2584414013015224,
+    "sharpe_6m": -0.8843831622408495,
+    "sharpe_1m": 0.8835387243724734,
+    "total_return": 0.3828526008275841,
+    "annual_return": 0.0,
+    "max_drawdown": 0.09261486765786776,
+    "win_rate": 0.5882352941176471,
+    "num_trades": 51,
+    "calmar_ratio": 0.8357349319076387,
+    "sortino_ratio": 1.3646605017615254
+  },
+  "is_active": true,
+  "version": 1
+}

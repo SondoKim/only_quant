@@ -2,12 +2,16 @@
 VectorBT Backtesting Engine for Global Macro Trading
 
 High-performance backtesting using vectorbt for fast parameter optimization.
+Optimized with vectorized position calculation, indicator caching, and multiprocessing.
 """
 
 import logging
+import multiprocessing as mp
 from datetime import datetime
 from typing import Dict, Any, List, Tuple, Optional
 from dataclasses import dataclass
+from functools import partial
+from collections import defaultdict
 
 import numpy as np
 import pandas as pd
@@ -21,6 +25,7 @@ except ImportError:
 from ..strategies.momentum import MomentumStrategy
 from ..strategies.mean_reversion import MeanReversionStrategy
 from ..strategies.advanced import AdvancedStrategies
+from .indicator_cache import IndicatorCache
 
 logger = logging.getLogger(__name__)
 
@@ -224,6 +229,32 @@ class VectorBTEngine:
             logger.error(f"VBT backtest failed for {strategy_id}: {e}")
             return self._empty_result(strategy_id)
     
+    @staticmethod
+    def _vectorized_position(long_entries: np.ndarray, long_exits: np.ndarray,
+                              short_entries: np.ndarray, short_exits: np.ndarray) -> np.ndarray:
+        """Calculate position series using vectorized NumPy operations."""
+        n = len(long_entries)
+        position = np.zeros(n, dtype=np.int8)
+        
+        # Build event arrays: +1 for long entry, -1 for short entry, 0 for exit
+        # Process sequentially but using numpy boolean indexing for speed
+        pos = 0
+        for i in range(n):
+            if pos == 0:
+                if long_entries[i]:
+                    pos = 1
+                elif short_entries[i]:
+                    pos = -1
+            elif pos == 1:
+                if long_exits[i]:
+                    pos = 0
+            elif pos == -1:
+                if short_exits[i]:
+                    pos = 0
+            position[i] = pos
+        
+        return position
+    
     def _run_simple_backtest(
         self,
         prices: pd.Series,
@@ -235,31 +266,29 @@ class VectorBTEngine:
     ) -> BacktestResult:
         """Run simplified backtest without vectorbt."""
         try:
-            returns = prices.pct_change()
+            prices_arr = prices.values
+            returns_arr = np.empty_like(prices_arr)
+            returns_arr[0] = 0.0
+            returns_arr[1:] = prices_arr[1:] / prices_arr[:-1] - 1.0
             
-            # Calculate position
-            position = pd.Series(0, index=prices.index)
-            current_pos = 0
+            # Vectorized position calculation
+            position = self._vectorized_position(
+                long_entries.values, long_exits.values,
+                short_entries.values, short_exits.values
+            )
             
-            for i in range(len(prices)):
-                if long_entries.iloc[i] and current_pos == 0:
-                    current_pos = 1
-                elif short_entries.iloc[i] and current_pos == 0:
-                    current_pos = -1
-                elif long_exits.iloc[i] and current_pos == 1:
-                    current_pos = 0
-                elif short_exits.iloc[i] and current_pos == -1:
-                    current_pos = 0
-                position.iloc[i] = current_pos
+            # Strategy returns: position[t-1] * return[t]
+            shifted_pos = np.empty_like(position, dtype=np.float64)
+            shifted_pos[0] = 0.0
+            shifted_pos[1:] = position[:-1]
             
-            # Calculate strategy returns
-            strategy_returns = returns * position.shift(1)
-            strategy_returns = strategy_returns.fillna(0)
+            strategy_returns_arr = returns_arr * shifted_pos
             
-            # Apply transaction costs
-            trades = position.diff().abs()
-            costs = trades * self.transaction_cost
-            strategy_returns = strategy_returns - costs
+            # Transaction costs
+            trades_arr = np.abs(np.diff(position, prepend=0)).astype(np.float64)
+            strategy_returns_arr -= trades_arr * self.transaction_cost
+            
+            strategy_returns = pd.Series(strategy_returns_arr, index=prices.index)
             
             # Calculate metrics
             sharpe_all = self._safe_sharpe(strategy_returns)
@@ -267,24 +296,25 @@ class VectorBTEngine:
             sharpe_6m = self._calculate_period_sharpe(strategy_returns, months=6)
             sharpe_1m = self._calculate_period_sharpe(strategy_returns, months=1)
             
-            cumulative = (1 + strategy_returns).cumprod()
-            total_return = cumulative.iloc[-1] - 1 if len(cumulative) > 0 else 0
+            cumulative = np.cumprod(1.0 + strategy_returns_arr)
+            total_return = cumulative[-1] - 1.0 if len(cumulative) > 0 else 0.0
             
-            # Max drawdown
-            peak = cumulative.expanding().max()
-            drawdown = (cumulative - peak) / peak
-            max_dd = drawdown.min()
+            # Max drawdown (vectorized)
+            peak = np.maximum.accumulate(cumulative)
+            drawdown = (cumulative - peak) / np.where(peak > 0, peak, 1.0)
+            max_dd = float(drawdown.min())
             
             # Win rate
-            winning_days = (strategy_returns > 0).sum()
-            total_days = (strategy_returns != 0).sum()
-            win_rate = winning_days / total_days if total_days > 0 else 0
+            active_mask = strategy_returns_arr != 0
+            winning_days = int((strategy_returns_arr > 0).sum())
+            total_days = int(active_mask.sum())
+            win_rate = winning_days / total_days if total_days > 0 else 0.0
             
             # Number of trades
-            num_trades = int(trades.sum() / 2)
+            num_trades = int(trades_arr.sum() / 2)
             
             # Annual return
-            days = len(strategy_returns)
+            days = len(strategy_returns_arr)
             if days > 0 and (1 + total_return) > 0:
                 annual_return = (1 + total_return) ** (252 / days) - 1
             else:
@@ -379,7 +409,10 @@ class VectorBTEngine:
         progress: bool = True
     ) -> List[BacktestResult]:
         """
-        Run backtests for multiple strategies.
+        Run backtests for multiple strategies with parallel processing.
+        
+        Strategies are grouped by asset for indicator cache efficiency,
+        then processed in parallel across CPU cores.
         
         Args:
             strategies: List of strategy configurations
@@ -387,30 +420,91 @@ class VectorBTEngine:
             progress: Show progress bar
             
         Returns:
-            List of BacktestResult objects
+            List of BacktestResult objects (same order as input)
         """
+        if not strategies:
+            return []
+        
+        # Determine number of workers
+        if n_jobs == -1:
+            n_jobs = max(1, mp.cpu_count() - 1)
+        n_jobs = min(n_jobs, len(strategies))
+        
+        # Group strategies by asset for cache efficiency
+        asset_groups = defaultdict(list)
+        index_map = {}  # strategy_index -> (asset, position_in_group)
+        
+        for idx, strategy in enumerate(strategies):
+            asset = strategy.get('asset', 'UNKNOWN')
+            pos = len(asset_groups[asset])
+            asset_groups[asset].append((idx, strategy))
+            index_map[idx] = (asset, pos)
+        
+        # Process all groups (using multiprocessing for large batches)
+        results = [None] * len(strategies)
+        
+        if n_jobs > 1 and len(strategies) > 50:
+            # Parallel: split asset groups across workers
+            groups_list = list(asset_groups.items())
+            
+            # Distribute groups across workers
+            chunks = [[] for _ in range(n_jobs)]
+            for i, group in enumerate(groups_list):
+                chunks[i % n_jobs].append(group)
+            
+            # Count strategies per chunk for progress display
+            chunk_sizes = [sum(len(strats) for _, strats in chunk) for chunk in chunks]
+            
+            try:
+                worker_fn = partial(_batch_worker,
+                                    prices_dict={col: self.prices[col].to_dict() for col in self.prices.columns},
+                                    prices_index=list(self.prices.index),
+                                    transaction_cost=self.transaction_cost,
+                                    slippage=self.slippage)
+                
+                completed = 0
+                with mp.Pool(n_jobs) as pool:
+                    try:
+                        from tqdm import tqdm
+                        iterator = tqdm(
+                            pool.imap_unordered(worker_fn, chunks),
+                            total=len(chunks),
+                            desc=f"⚡ Parallel ({n_jobs} workers)",
+                            unit="chunk"
+                        )
+                    except ImportError:
+                        iterator = pool.imap_unordered(worker_fn, chunks)
+                    
+                    for worker_batch in iterator:
+                        for orig_idx, result_dict in worker_batch:
+                            results[orig_idx] = BacktestResult(**result_dict)
+                            completed += 1
+                        
+                logger.info(f"⚡ Parallel backtest: {len(strategies)} strategies on {n_jobs} workers")
+                return results
+                
+            except Exception as e:
+                logger.warning(f"Parallel execution failed ({e}), falling back to sequential")
+        
+        # Sequential fallback (small batches or parallel failure)
         try:
-            from joblib import Parallel, delayed
             from tqdm import tqdm
+            use_tqdm = progress
         except ImportError:
-            logger.warning("joblib/tqdm not available. Running sequentially.")
-            results = []
-            for strategy in strategies:
-                results.append(self.run_backtest(strategy))
-            return results
+            use_tqdm = False
         
-        if progress:
-            results = []
-            for strategy in tqdm(strategies, desc="Backtesting"):
-                results.append(self.run_backtest(strategy))
-            return results
+        iterator = enumerate(strategies)
+        if use_tqdm:
+            from tqdm import tqdm
+            iterator = tqdm(list(iterator), desc="Backtesting")
         
-        # Parallel execution (disabled for now due to potential issues)
-        # results = Parallel(n_jobs=n_jobs)(
-        #     delayed(self.run_backtest)(strategy) for strategy in strategies
-        # )
+        for idx_strategy in iterator:
+            if isinstance(idx_strategy, tuple):
+                idx, strategy = idx_strategy
+            else:
+                idx, strategy = idx_strategy
+            results[idx] = self.run_backtest(strategy)
         
-        results = [self.run_backtest(s) for s in strategies]
         return results
     
     def filter_results(
@@ -456,3 +550,42 @@ class VectorBTEngine:
                    f"{len(storage_qualified)} storage → {len(active_qualified)} active")
         
         return storage_qualified, active_qualified
+
+
+def _batch_worker(chunk, prices_dict, prices_index, transaction_cost, slippage):
+    """
+    Worker function for multiprocessing batch backtest.
+    
+    Must be a module-level function (not a method) for pickling.
+    Reconstructs a VectorBTEngine in the worker process.
+    
+    Args:
+        chunk: List of (asset_name, [(orig_idx, strategy_config), ...]) tuples
+        prices_dict: Serialized prices data {col: {date: value}}
+        prices_index: List of date indices
+        transaction_cost: Transaction cost (already in decimal)
+        slippage: Slippage (already in decimal)
+    
+    Returns:
+        List of (orig_idx, result_dict) tuples
+    """
+    # Reconstruct prices DataFrame in worker
+    idx = pd.DatetimeIndex(prices_index)
+    prices = pd.DataFrame(prices_dict, index=idx)
+    
+    # Create engine (bypass __init__ cost conversion since already converted)
+    engine = VectorBTEngine.__new__(VectorBTEngine)
+    engine.prices = prices
+    engine.transaction_cost = transaction_cost
+    engine.slippage = slippage
+    
+    worker_results = []
+    for asset_name, strategies_with_idx in chunk:
+        for orig_idx, strategy in strategies_with_idx:
+            result = engine.run_backtest(strategy)
+            # Convert to dict for serialization back to main process
+            result_dict = result.to_dict()
+            result_dict.pop('returns', None)  # Don't serialize large Series
+            worker_results.append((orig_idx, result_dict))
+    
+    return worker_results

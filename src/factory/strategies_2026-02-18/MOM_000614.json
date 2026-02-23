@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000614",
+  "created_at": "2026-02-19T16:00:32.610967",
+  "updated_at": "2026-02-19T16:00:32.625237",
+  "asset": "GJGB10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 8,
+    "slow_period": 13,
+    "signal_period": 9
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0953617786352456,
+    "sharpe_6m": 1.8624414917695087,
+    "sharpe_1m": 1.0051411324039499,
+    "total_return": 0.08047417909348795,
+    "annual_return": 0.0,
+    "max_drawdown": 0.0366129241478023,
+    "win_rate": 0.41666666666666674,
+    "num_trades": 84,
+    "calmar_ratio": 0.48654073516008706,
+    "sortino_ratio": 1.0406572846244007
+  },
+  "is_active": true,
+  "version": 1
+}

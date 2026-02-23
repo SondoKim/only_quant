@@ -1,0 +1,26 @@
+{
+  "strategy_id": "MOM_000911",
+  "created_at": "2026-02-19T16:00:32.933751",
+  "updated_at": "2026-02-19T16:00:32.947751",
+  "asset": "GJGB10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "breakout",
+  "params": {
+    "period": 30
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.4770977763435988,
+    "sharpe_6m": 2.4725537900339214,
+    "sharpe_1m": 0.3944015137634609,
+    "total_return": 0.1286249122183662,
+    "annual_return": 0.0,
+    "max_drawdown": 0.02887491678084575,
+    "win_rate": 0.36363636363636365,
+    "num_trades": 22,
+    "calmar_ratio": 0.9692710474666456,
+    "sortino_ratio": 1.6276803554503312
+  },
+  "is_active": true,
+  "version": 1
+}
