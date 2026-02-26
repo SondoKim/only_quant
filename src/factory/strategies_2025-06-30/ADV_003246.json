@@ -1,0 +1,28 @@
+{
+  "strategy_id": "ADV_003246",
+  "created_at": "2026-02-24T12:07:21.577591",
+  "updated_at": "2026-02-26T16:45:06.823492",
+  "asset": "GUKG10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "adx_momentum",
+  "params": {
+    "adx_period": 10,
+    "roc_period": 5,
+    "adx_threshold": 20
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0892096548416383,
+    "sharpe_6m": -0.6111836227971339,
+    "sharpe_1m": 0.0,
+    "total_return": 1.4008375242544449,
+    "annual_return": 0.0,
+    "max_drawdown": 0.7515189497244096,
+    "win_rate": 0.3896103896103897,
+    "num_trades": 77,
+    "calmar_ratio": 0.3325536759512969,
+    "sortino_ratio": 1.0402490485512617
+  },
+  "is_active": true,
+  "version": 1
+}

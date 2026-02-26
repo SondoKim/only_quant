@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002742",
+  "created_at": "2026-02-24T11:50:24.199711",
+  "updated_at": "2026-02-26T16:42:03.216174",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 5,
+    "threshold": 0
+  },
+  "related_asset": "GDBR10 Index",
+  "performance": {
+    "sharpe_3y": 1.0262762153727005,
+    "sharpe_6m": 2.272857494419321,
+    "sharpe_1m": 1.054808831375154,
+    "total_return": 5.4316316677552265,
+    "annual_return": 0.0,
+    "max_drawdown": 0.5296376205071965,
+    "win_rate": 0.5294117647058824,
+    "num_trades": 119,
+    "calmar_ratio": 1.2383847329938178,
+    "sortino_ratio": 2.0381625917294786
+  },
+  "is_active": true,
+  "version": 1
+}

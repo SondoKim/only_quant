@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002404",
+  "created_at": "2026-02-24T12:10:28.671481",
+  "updated_at": "2026-02-26T16:45:52.426318",
+  "asset": "JPY Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 20,
+    "rsi_period": 10,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1328034535359093,
+    "sharpe_6m": -0.22117751109942763,
+    "sharpe_1m": 3.5103890364262686,
+    "total_return": 0.31312419381421036,
+    "annual_return": 0.0,
+    "max_drawdown": 0.10617655930548484,
+    "win_rate": 0.2857142857142857,
+    "num_trades": 71,
+    "calmar_ratio": 0.6656375530259893,
+    "sortino_ratio": 1.5374937926903407
+  },
+  "is_active": true,
+  "version": 1
+}

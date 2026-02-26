@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002882",
+  "created_at": "2026-02-24T12:02:24.960377",
+  "updated_at": "2026-02-26T16:44:27.866652",
+  "asset": "GUKG10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.4915434209280103,
+    "sharpe_6m": -0.08067414188682963,
+    "sharpe_1m": 1.3584372511486038,
+    "total_return": 3.293067102821259,
+    "annual_return": 0.0,
+    "max_drawdown": 0.8869005239646431,
+    "win_rate": 0.5,
+    "num_trades": 34,
+    "calmar_ratio": 0.5156937645546563,
+    "sortino_ratio": 1.3642268182112385
+  },
+  "is_active": true,
+  "version": 1
+}

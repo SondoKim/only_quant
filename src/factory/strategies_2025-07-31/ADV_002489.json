@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002489",
+  "created_at": "2026-02-24T12:10:28.790847",
+  "updated_at": "2026-02-26T16:45:52.485941",
+  "asset": "NQ1 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 50,
+    "rsi_period": 14,
+    "rsi_entry": 55,
+    "rsi_exit": 55
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0422028522114113,
+    "sharpe_6m": 2.5430569331315582,
+    "sharpe_1m": 3.739623975886773,
+    "total_return": 0.8161438682532524,
+    "annual_return": 0.0,
+    "max_drawdown": 0.15159418905427052,
+    "win_rate": 0.3661971830985916,
+    "num_trades": 72,
+    "calmar_ratio": 1.0643975714560885,
+    "sortino_ratio": 1.5713959676795695
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -30,8 +30,8 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
 
     last_date = df['Date'].iloc[-1]
 
-    # === Main Plot: Rates + FX only (3 subplots) ===
-    fig, (ax1, ax3, ax4) = plt.subplots(3, 1, figsize=(14, 18), sharex=True)
+    # === Main Plot: Rates + FX only (4 subplots) ===
+    fig, (ax1, ax3, ax4, ax5) = plt.subplots(4, 1, figsize=(14, 24), sharex=True)
 
     # --- Plot 1: Aggregate Rates vs FX (Dual Y) ---
     color_rates = 'tab:blue'
@@ -81,6 +81,30 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     ax4.set_title('Individual FX Performance', fontsize=14)
     ax4.grid(True, linestyle='--', alpha=0.6)
     ax4.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
+
+    # --- Plot 4: Diagnostic - Portfolio Rolling Sharpe & Pivots ---
+    if 'Portfolio_Rolling_Sharpe' in df.columns:
+        # Plot Portfolio Rolling Sharpe
+        ax5.plot(df['Date'], df['Portfolio_Rolling_Sharpe'], color='purple', linewidth=2.5, label='Portfolio Rolling Sharpe')
+        ax5.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+        
+        # Mark pivot points (Portfolio Level) - Only the first day of trigger
+        pivots = df[df['Portfolio_Pivot_Active'] == 1]
+        if not pivots.empty:
+            # Shift and check for the first 1 in a sequence
+            first_trigger = df[(df['Portfolio_Pivot_Active'] == 1) & (df['Portfolio_Pivot_Active'].shift(1) == 0)]
+            if not first_trigger.empty:
+                ax5.scatter(first_trigger['Date'], first_trigger['Portfolio_Rolling_Sharpe'], 
+                           marker='x', s=150, color='red', linewidth=3, label='PORTFOLIO PIVOT TRIGGER', zorder=5)
+            else:
+                # If it started as 1
+                ax5.scatter(pivots['Date'].iloc[0], pivots['Portfolio_Rolling_Sharpe'].iloc[0], 
+                           marker='x', s=150, color='red', linewidth=3, label='PORTFOLIO PIVOT TRIGGER', zorder=5)
+    
+    ax5.set_ylabel('Rolling Sharpe / Pivot', fontweight='bold')
+    ax5.set_title('Global Portfolio Pivot Diagnostic: Rolling Sharpe & Reversal Triggers', fontsize=14)
+    ax5.grid(True, linestyle='--', alpha=0.6)
+    ax5.legend(loc='upper left')
 
     # Global Formatting
     plt.xlabel('Date')

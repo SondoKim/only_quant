@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001768",
+  "created_at": "2026-02-24T12:25:42.968952",
+  "updated_at": "2026-02-26T16:47:56.496583",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 2.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": "GVSK10YR Index",
+  "performance": {
+    "sharpe_3y": 1.0700180771676044,
+    "sharpe_6m": -0.7084722743675682,
+    "sharpe_1m": -0.28641125572310094,
+    "total_return": 1.0949164920838481,
+    "annual_return": 0.0,
+    "max_drawdown": 0.32325844186254926,
+    "win_rate": 0.6511627906976745,
+    "num_trades": 43,
+    "calmar_ratio": 0.5917934381388293,
+    "sortino_ratio": 1.2071137090640653
+  },
+  "is_active": true,
+  "version": 1
+}

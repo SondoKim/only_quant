@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000223",
+  "created_at": "2026-02-24T11:48:13.511278",
+  "updated_at": "2026-02-26T16:42:00.836982",
+  "asset": "JPY Curncy",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 9,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.6427546804449185,
+    "sharpe_6m": 1.1383811715878172,
+    "sharpe_1m": -3.3332043218516305,
+    "total_return": 0.31604645388631736,
+    "annual_return": 0.0,
+    "max_drawdown": 0.13924256709234473,
+    "win_rate": 0.2777777777777778,
+    "num_trades": 90,
+    "calmar_ratio": 0.5548357240415293,
+    "sortino_ratio": 1.4696584640873152
+  },
+  "is_active": true,
+  "version": 1
+}

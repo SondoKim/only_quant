@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000805",
+  "created_at": "2026-02-24T11:44:19.135456",
+  "updated_at": "2026-02-26T16:40:43.025067",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rate_of_change",
+  "params": {
+    "period": 10,
+    "entry_threshold": 0,
+    "exit_threshold": 0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.3228072219217129,
+    "sharpe_6m": 0.03091409351911267,
+    "sharpe_1m": 1.1710832311394141,
+    "total_return": 3.066700047612591,
+    "annual_return": 0.0,
+    "max_drawdown": 0.7307678683923935,
+    "win_rate": 0.39743589743589747,
+    "num_trades": 78,
+    "calmar_ratio": 0.6443576494640021,
+    "sortino_ratio": 1.525244880528542
+  },
+  "is_active": true,
+  "version": 1
+}

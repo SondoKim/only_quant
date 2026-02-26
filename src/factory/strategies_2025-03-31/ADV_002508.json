@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002508",
+  "created_at": "2026-02-24T11:54:19.994155",
+  "updated_at": "2026-02-26T16:43:04.501271",
+  "asset": "GTAUD10YR Corp",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 20,
+    "rsi_period": 5,
+    "rsi_entry": 45,
+    "rsi_exit": 45
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0550187443544807,
+    "sharpe_6m": 0.09921711883006516,
+    "sharpe_1m": -0.34373455907161576,
+    "total_return": 1.1049670384684345,
+    "annual_return": 0.0,
+    "max_drawdown": 0.5095351406033494,
+    "win_rate": 0.35,
+    "num_trades": 60,
+    "calmar_ratio": 0.43113863911596,
+    "sortino_ratio": 1.1938831614681427
+  },
+  "is_active": true,
+  "version": 1
+}

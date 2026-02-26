@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002572",
+  "created_at": "2026-02-24T11:50:23.505751",
+  "updated_at": "2026-02-26T16:42:02.786769",
+  "asset": "USGG10YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 50,
+    "rsi_period": 5,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.334765822173708,
+    "sharpe_6m": 1.5546523123592542,
+    "sharpe_1m": -0.18693593637248623,
+    "total_return": 1.0065306036572528,
+    "annual_return": 0.0,
+    "max_drawdown": 0.3330268804148206,
+    "win_rate": 0.4057971014492754,
+    "num_trades": 69,
+    "calmar_ratio": 0.6236352573071918,
+    "sortino_ratio": 1.116413484169226
+  },
+  "is_active": true,
+  "version": 1
+}

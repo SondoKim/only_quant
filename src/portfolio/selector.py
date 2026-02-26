@@ -16,6 +16,7 @@ from ..strategies.momentum import MomentumStrategy
 from ..strategies.mean_reversion import MeanReversionStrategy
 from ..strategies.advanced import AdvancedStrategies
 from ..backtester.vectorbt_engine import VectorBTEngine
+from ..indicators.technical import TechnicalIndicators
 
 logger = logging.getLogger(__name__)
 
@@ -25,16 +26,36 @@ class StrategySelector:
     
     def __init__(
         self,
-        factory: StrategyFactory = None
+        factory: StrategyFactory = None,
+        config_path: str = None
     ):
         """
         Initialize strategy selector.
         
         Args:
             factory: Strategy factory instance
+            config_path: Path to indicators.yaml
         """
         self.factory = factory or StrategyFactory()
+        self.config_path = config_path or self._get_default_config_path()
+        self.config = self._load_config()
         self.active_strategies: List[Dict[str, Any]] = []
+        self._portfolio_pivot_active = False
+        self._hwm_since_recovery = 0.0
+
+    def _get_default_config_path(self) -> str:
+        """Get default path to indicators.yaml."""
+        from pathlib import Path
+        return str(Path(__file__).parent.parent.parent / 'config' / 'indicators.yaml')
+
+    def _load_config(self) -> Dict[str, Any]:
+        """Load indicator configuration."""
+        import yaml
+        try:
+            with open(self.config_path, 'r', encoding='utf-8') as f:
+                return yaml.safe_load(f) or {}
+        except Exception:
+            return {}
     
     async def refresh_active_strategies(
         self,
@@ -274,6 +295,7 @@ class StrategySelector:
     def aggregate_positions(
         self,
         signals: pd.DataFrame,
+        prices: pd.DataFrame,
         method: str = 'sharpe_weighted'
     ) -> pd.DataFrame:
         """
@@ -291,9 +313,11 @@ class StrategySelector:
         
         # Group by asset
         asset_positions = []
+        pivot_cfg = self.config.get('pivot_settings', {})
         
         for asset in signals['asset'].unique():
             asset_signals = signals[signals['asset'] == asset]
+            avg_position = 0.0
             
             if method == 'equal':
                 # Simple average
@@ -312,10 +336,12 @@ class StrategySelector:
             
             elif method == 'vote':
                 # Majority vote
-                positions = asset_signals['position'].values
-                if np.sum(positions > 0) > np.sum(positions < 0):
+                positions = asset_signals['positions'].values # Fix: positions should be from individual strategy status
+                # Actually, aggregation usually works on the current proposed positions
+                pos_vals = asset_signals['position'].values
+                if np.sum(pos_vals > 0) > np.sum(pos_vals < 0):
                     avg_position = 1
-                elif np.sum(positions < 0) > np.sum(positions > 0):
+                elif np.sum(pos_vals < 0) > np.sum(pos_vals > 0):
                     avg_position = -1
                 else:
                     avg_position = 0
@@ -345,7 +371,76 @@ class StrategySelector:
                 'avg_sharpe_6m': asset_signals['sharpe_6m'].mean(),
             })
         
-        return pd.DataFrame(asset_positions)
+        asset_df = pd.DataFrame(asset_positions)
+
+        # --- Aggregate Pivot Logic (Portfolio Level) ---
+        # Calculate single pivot for the whole portfolio based on aggregate performance of all active strategies.
+        portfolio_pivot_active = False
+        portfolio_sharpe_val = 0.0
+        
+        if pivot_cfg.get('enabled', False) and not asset_df.empty:
+            try:
+                # Collect returns for ALL strategies currently identified as active
+                group_returns = []
+                backtester = VectorBTEngine(prices)
+                
+                for strat_obj in self.active_strategies:
+                    res = backtester.run_backtest(strat_obj)
+                    if res.returns is not None:
+                        group_returns.append(res.returns)
+                
+                if group_returns:
+                    # Aggregate ALL active strategies performance
+                    # This represents the "Equity Curve" of the selected portfolio
+                    agg_rets = pd.concat(group_returns, axis=1).mean(axis=1)
+                    equity_curve = agg_rets.cumsum()
+                    
+                    period = pivot_cfg.get('rolling_period', 20)
+                    roll_sharpe = TechnicalIndicators.rolling_sharpe(equity_curve, period=period)
+                    
+                    portfolio_sharpe_val = float(roll_sharpe.iloc[-1])
+                    
+                    stop_pct = pivot_cfg.get('trailing_stop_pct', 0.2)
+                    hwm_window = pivot_cfg.get('hwm_window', 60)
+                    abs_drop = pivot_cfg.get('abs_drop_threshold', 3.0)
+                    
+                    current_sharpe = portfolio_sharpe_val
+                    recovery_thresh = pivot_cfg.get('recovery_sharpe', 3.0)
+                    abs_drop_thresh = pivot_cfg.get('abs_drop_threshold', 3.0)
+                    
+                    # Regime Logic:
+                    # 1. In Healthy Zone (Sharpe >= 3.0): Always Normal, track Peak.
+                    # 2. In Unhealthy Zone (Sharpe < 3.0): Check if we dropped significantly from the peak seen while healthy.
+                    
+                    if current_sharpe >= recovery_thresh:
+                        # We are healthy. Reset/Track HWM since we are in a good place.
+                        if self._portfolio_pivot_active:
+                            logger.info(f"✅ PORTFOLIO PIVOT CANCELLED (Sharpe: {current_sharpe:.2f} > {recovery_thresh})")
+                        
+                        self._portfolio_pivot_active = False
+                        self._hwm_since_recovery = max(self._hwm_since_recovery, current_sharpe)
+                    else:
+                        # We are in the potential pivot zone (< 3.0).
+                        # Only trigger if the drop from our last healthy peak is significant (> 3.0 points).
+                        if not self._portfolio_pivot_active:
+                            if current_sharpe < (self._hwm_since_recovery - abs_drop_thresh):
+                                self._portfolio_pivot_active = True
+                                logger.info(f"🚨 GLOBAL PORTFOLIO PIVOT TRIGGERED (Sharpe: {current_sharpe:.2f} < HWM {self._hwm_since_recovery:.2f} - {abs_drop_thresh})")
+                    
+                    if self._portfolio_pivot_active:
+                        action = pivot_cfg.get('action', 'reverse')
+                        if action == 'reverse':
+                            asset_df['position'] = -asset_df['position']
+                        elif action == 'exit':
+                            asset_df['position'] = 0
+            except Exception as e:
+                logger.warning(f"Portfolio pivot logic failed: {e}")
+
+        # Add portfolio-level metadata to all asset rows for logging
+        asset_df['portfolio_sharpe'] = portfolio_sharpe_val
+        asset_df['portfolio_pivot_active'] = self._portfolio_pivot_active
+        
+        return asset_df
     
     def get_trading_report(
         self,
@@ -365,7 +460,7 @@ class StrategySelector:
             Trading report dict
         """
         signals = self.generate_signals(prices, target_date, max_correlation)
-        positions = self.aggregate_positions(signals)
+        positions = self.aggregate_positions(signals, prices)
         
         # Create summary including ALL assets in the price data
         asset_summary = []
@@ -423,6 +518,8 @@ class StrategySelector:
             'asset_positions': asset_summary,
             'raw_signals': signals.to_dict('records') if not signals.empty else [],
             'aggregated_positions': positions.to_dict('records') if not positions.empty else [],
+            'portfolio_pivot_active': bool(positions['portfolio_pivot_active'].iloc[0]) if not positions.empty else False,
+            'portfolio_sharpe': float(positions['portfolio_sharpe'].iloc[0]) if not positions.empty else 0.0,
         }
     
     def get_position_for_asset(

@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000053",
+  "created_at": "2026-02-24T11:40:16.613093",
+  "updated_at": "2026-02-26T16:38:39.840669",
+  "asset": "KRW Curncy",
+  "strategy_type": "momentum",
+  "strategy_name": "ma_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 20
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0836371767614381,
+    "sharpe_6m": 2.37227630273883,
+    "sharpe_1m": 5.93151738760666,
+    "total_return": 0.1962391702121573,
+    "annual_return": 0.0,
+    "max_drawdown": 0.09391919603251153,
+    "win_rate": 0.4722222222222222,
+    "num_trades": 37,
+    "calmar_ratio": 0.5476375602872572,
+    "sortino_ratio": 1.04160481334758
+  },
+  "is_active": true,
+  "version": 1
+}

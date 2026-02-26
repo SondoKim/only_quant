@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000139",
+  "created_at": "2026-02-24T11:44:17.624324",
+  "updated_at": "2026-02-26T16:40:41.705694",
+  "asset": "JPY Curncy",
+  "strategy_type": "momentum",
+  "strategy_name": "ema_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 26
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.78944614681915,
+    "sharpe_6m": 1.3983645782560594,
+    "sharpe_1m": -1.5132411125119343,
+    "total_return": 0.3430750055264886,
+    "annual_return": 0.0,
+    "max_drawdown": 0.1459241497981476,
+    "win_rate": 0.3783783783783784,
+    "num_trades": 37,
+    "calmar_ratio": 0.5791579255356308,
+    "sortino_ratio": 1.589584417095478
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002734",
+  "created_at": "2026-02-24T11:46:22.474220",
+  "updated_at": "2026-02-26T16:40:44.962443",
+  "asset": "GUKG10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 5,
+    "threshold": 0.5
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 1.5477430513981354,
+    "sharpe_6m": 2.4369692654842017,
+    "sharpe_1m": 1.0135115816197788,
+    "total_return": 4.422350898528988,
+    "annual_return": 0.0,
+    "max_drawdown": 0.8106678210677472,
+    "win_rate": 0.4495412844036697,
+    "num_trades": 109,
+    "calmar_ratio": 0.7302622397461931,
+    "sortino_ratio": 1.5996050236835344
+  },
+  "is_active": true,
+  "version": 1
+}

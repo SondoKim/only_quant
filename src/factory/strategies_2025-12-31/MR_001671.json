@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001671",
   "created_at": "2026-02-13T17:10:58.754753",
-  "updated_at": "2026-02-23T09:50:29.890588",
+  "updated_at": "2026-02-26T16:48:37.505253",
   "asset": "GDBR2 Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_zscore_reversion",

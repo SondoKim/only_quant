@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000867",
+  "created_at": "2026-02-24T11:44:19.283330",
+  "updated_at": "2026-02-26T16:40:43.137367",
+  "asset": "GFRN10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "spread_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0
+  },
+  "related_asset": "GDBR10 Index",
+  "performance": {
+    "sharpe_3y": 1.5245554939274162,
+    "sharpe_6m": 0.18046421939092788,
+    "sharpe_1m": 6.132440287993862,
+    "total_return": 0.4697612893750312,
+    "annual_return": 0.0,
+    "max_drawdown": 0.0729057068900001,
+    "win_rate": 0.5729166666666666,
+    "num_trades": 96,
+    "calmar_ratio": 1.532632776563185,
+    "sortino_ratio": 2.0650960748111773
+  },
+  "is_active": true,
+  "version": 1
+}

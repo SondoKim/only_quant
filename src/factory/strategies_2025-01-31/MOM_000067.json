@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000067",
+  "created_at": "2026-02-24T11:44:17.494377",
+  "updated_at": "2026-02-26T16:40:41.561435",
+  "asset": "GDBR10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "ma_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 10
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0038088802014071,
+    "sharpe_6m": 1.1178171620012614,
+    "sharpe_1m": 0.5697048855367792,
+    "total_return": 0.2113070698135202,
+    "annual_return": 0.0,
+    "max_drawdown": 0.09262548699970707,
+    "win_rate": 0.38028169014084506,
+    "num_trades": 71,
+    "calmar_ratio": 0.5845392406892221,
+    "sortino_ratio": 1.0740160931116134
+  },
+  "is_active": true,
+  "version": 1
+}

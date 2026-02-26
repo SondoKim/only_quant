@@ -1,0 +1,26 @@
+{
+  "strategy_id": "MOM_000923",
+  "created_at": "2026-02-24T12:28:34.542960",
+  "updated_at": "2026-02-24T12:28:34.549062",
+  "asset": "NQ1 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "breakout",
+  "params": {
+    "period": 30
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0662966543108436,
+    "sharpe_6m": 0.0036081188926652573,
+    "sharpe_1m": -3.710335185394317,
+    "total_return": 0.6788405332776398,
+    "annual_return": 0.0,
+    "max_drawdown": 0.13828383832913474,
+    "win_rate": 0.44,
+    "num_trades": 25,
+    "calmar_ratio": 0.9054683496637304,
+    "sortino_ratio": 1.1983032700443386
+  },
+  "is_active": true,
+  "version": 1
+}

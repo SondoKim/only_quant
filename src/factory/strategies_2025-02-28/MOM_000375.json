@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000375",
+  "created_at": "2026-02-24T11:48:13.821878",
+  "updated_at": "2026-02-26T16:42:01.171523",
+  "asset": "GFRN10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 8,
+    "slow_period": 26,
+    "signal_period": 3
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0290457249786347,
+    "sharpe_6m": 1.5278550710763807,
+    "sharpe_1m": -0.32565937208690593,
+    "total_return": 0.21215528140551185,
+    "annual_return": 0.0,
+    "max_drawdown": 0.1290755107859849,
+    "win_rate": 0.326530612244898,
+    "num_trades": 98,
+    "calmar_ratio": 0.41462612522738523,
+    "sortino_ratio": 1.1071585748365111
+  },
+  "is_active": true,
+  "version": 1
+}

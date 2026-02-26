@@ -1,0 +1,28 @@
+{
+  "strategy_id": "ADV_003177",
+  "created_at": "2026-02-24T11:47:14.074430",
+  "updated_at": "2026-02-26T16:40:45.314674",
+  "asset": "USGG2YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "adx_momentum",
+  "params": {
+    "adx_period": 10,
+    "roc_period": 10,
+    "adx_threshold": 20
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2612691200340973,
+    "sharpe_6m": 0.9137913338590755,
+    "sharpe_1m": -3.2826030870171965,
+    "total_return": 1.6132947893882192,
+    "annual_return": 0.0,
+    "max_drawdown": 0.619958953404805,
+    "win_rate": 0.33333333333333326,
+    "num_trades": 48,
+    "calmar_ratio": 0.487803261445735,
+    "sortino_ratio": 1.261547134205334
+  },
+  "is_active": true,
+  "version": 1
+}

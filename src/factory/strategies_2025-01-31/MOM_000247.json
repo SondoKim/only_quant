@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000247",
+  "created_at": "2026-02-24T11:44:17.808527",
+  "updated_at": "2026-02-26T16:40:41.912178",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 9,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2597331362816857,
+    "sharpe_6m": 0.20080510541453137,
+    "sharpe_1m": 0.807967624712878,
+    "total_return": 2.5245444141166615,
+    "annual_return": 0.0,
+    "max_drawdown": 0.6868778486807028,
+    "win_rate": 0.29213483146067415,
+    "num_trades": 89,
+    "calmar_ratio": 0.6028923750879176,
+    "sortino_ratio": 1.4444660816092563
+  },
+  "is_active": true,
+  "version": 1
+}

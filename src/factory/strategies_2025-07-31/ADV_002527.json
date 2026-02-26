@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002527",
+  "created_at": "2026-02-24T12:10:28.813442",
+  "updated_at": "2026-02-26T16:45:52.501784",
+  "asset": "GDBR2 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 20,
+    "rsi_period": 5,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.023957564161826,
+    "sharpe_6m": -1.9574935128435835,
+    "sharpe_1m": -2.4237507505229816,
+    "total_return": 0.17409780190483842,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08588601041480842,
+    "win_rate": 0.27710843373493976,
+    "num_trades": 84,
+    "calmar_ratio": 0.47802480013938364,
+    "sortino_ratio": 1.1248235155794533
+  },
+  "is_active": true,
+  "version": 1
+}

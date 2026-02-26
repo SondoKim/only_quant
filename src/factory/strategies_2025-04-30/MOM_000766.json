@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000766",
+  "created_at": "2026-02-24T11:56:16.284291",
+  "updated_at": "2026-02-26T16:43:47.649020",
+  "asset": "GUKG10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rate_of_change",
+  "params": {
+    "period": 3,
+    "entry_threshold": 0,
+    "exit_threshold": 0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.3672468292746425,
+    "sharpe_6m": 1.8418159710038886,
+    "sharpe_1m": 0.14552781755113792,
+    "total_return": 2.940353845072615,
+    "annual_return": 0.0,
+    "max_drawdown": 0.8971298114970225,
+    "win_rate": 0.4242424242424242,
+    "num_trades": 165,
+    "calmar_ratio": 0.4831482601695569,
+    "sortino_ratio": 1.3926921748958685
+  },
+  "is_active": true,
+  "version": 1
+}

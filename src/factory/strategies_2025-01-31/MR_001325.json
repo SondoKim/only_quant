@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_001325",
+  "created_at": "2026-02-24T11:45:19.871037",
+  "updated_at": "2026-02-26T16:40:43.256367",
+  "asset": "AUD Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "rsi_extremes",
+  "params": {
+    "period": 9,
+    "oversold": 25,
+    "overbought": 70,
+    "exit_level": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0926758975530206,
+    "sharpe_6m": 0.7672602503515029,
+    "sharpe_1m": 0.17045843625340337,
+    "total_return": 0.19483151122484885,
+    "annual_return": 0.0,
+    "max_drawdown": 0.07826930473953321,
+    "win_rate": 0.6756756756756757,
+    "num_trades": 37,
+    "calmar_ratio": 0.6411185421991417,
+    "sortino_ratio": 1.245635225152006
+  },
+  "is_active": true,
+  "version": 1
+}

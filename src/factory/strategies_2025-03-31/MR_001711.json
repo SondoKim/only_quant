@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001711",
+  "created_at": "2026-02-24T11:53:18.185657",
+  "updated_at": "2026-02-26T16:43:04.109086",
+  "asset": "GDBR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 1.1633658874556296,
+    "sharpe_6m": 0.7358963042005324,
+    "sharpe_1m": -3.9485149584932278,
+    "total_return": 0.38389872050013507,
+    "annual_return": 0.0,
+    "max_drawdown": 0.09541857387103367,
+    "win_rate": 0.6363636363636364,
+    "num_trades": 99,
+    "calmar_ratio": 0.9490519989879183,
+    "sortino_ratio": 1.6362311308831512
+  },
+  "is_active": true,
+  "version": 1
+}

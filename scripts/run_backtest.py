@@ -12,6 +12,7 @@ Usage:
 import sys
 import logging
 import argparse
+from typing import List, Dict, Any, Optional, Union
 import pandas as pd
 import numpy as np
 import yaml
@@ -137,7 +138,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
                            month_ends: list, 
                            factory_base: Path,
                            start_date_str: str,
-                           max_correlation: float = 0.3):
+                           max_correlation: float = 0.3,
+                           pivot_enabled: Optional[bool] = None):
     """
     Simulate monthly trading using pre-cached strategies.
     Each month uses the previous month-end's strategies.
@@ -208,6 +210,13 @@ def run_phase2_simulation(prices: pd.DataFrame,
             
             current_selector = StrategySelector(factory=factory)
             
+            # Override pivot setting if provided via CLI
+            if pivot_enabled is not None:
+                if 'pivot_settings' not in current_selector.config:
+                    current_selector.config['pivot_settings'] = {}
+                current_selector.config['pivot_settings']['enabled'] = pivot_enabled
+                logger.info(f"⚙️ Pivot enabled overridden by CLI: {pivot_enabled}")
+
             # Refresh with correlation filter
             prices_until = prices[prices.index <= applicable_month_end]
             current_selector._refresh_sync(prices_until, max_correlation=max_correlation)
@@ -248,6 +257,13 @@ def run_phase2_simulation(prices: pd.DataFrame,
             row[f"{asset}_Pos"] = pos
             row[f"{asset}_Price"] = round(p_curr, 4)
             row[f"{asset}_CumPnL"] = round(cum_pnl[asset], 2)
+            
+        # Log portfolio-level pivot metadata (same for all assets, so we only need one set of columns)
+        # Use info from the first asset row which contains the broadcasted portfolio metrics
+        first_asset = all_assets[0]
+        first_info = sig_map.get(first_asset, {})
+        row["Portfolio_Rolling_Sharpe"] = round(first_info.get('portfolio_sharpe', 0), 2)
+        row["Portfolio_Pivot_Active"] = 1 if first_info.get('portfolio_pivot_active', False) else 0
         
         # Summary PnLs
         row['total_rates_cumpnl'] = round(sum(cum_pnl[a] for a in rates_assets), 2)
@@ -275,8 +291,9 @@ def run_phase2_simulation(prices: pd.DataFrame,
     print(f"✅ Phase 2 complete! Trading log saved to {output_path} ({len(df_log)} rows)")
     
     # Generate PnL plot
+    pivot_status = "pivot_on" if (pivot_enabled if pivot_enabled is not None else True) else "pivot_off"
     try:
-        plot_pnl(max_correlation=max_correlation, mode='backtest', start_date=start_date_str,
+        plot_pnl(max_correlation=max_correlation, mode=f'backtest_{pivot_status}', start_date=start_date_str,
                  end_date=prices.index[-1].strftime('%Y-%m-%d'))
     except Exception as e:
         print(f"⚠️ Could not generate plot: {e}")
@@ -295,6 +312,9 @@ def main():
                         help='Maximum correlation threshold')
     parser.add_argument('--skip-discovery', action='store_true',
                         help='Skip Phase 1 (use existing cached strategies)')
+    parser.add_argument('--pivot', dest='pivot', action='store_true', help='Force enable pivot logic')
+    parser.add_argument('--no-pivot', dest='pivot', action='store_false', help='Force disable pivot logic')
+    parser.set_defaults(pivot=None)
     
     args = parser.parse_args()
     
@@ -331,7 +351,8 @@ def main():
     run_phase2_simulation(
         prices, month_ends, factory_base,
         start_date_str=args.start_date,
-        max_correlation=args.max_corr
+        max_correlation=args.max_corr,
+        pivot_enabled=args.pivot
     )
 
 

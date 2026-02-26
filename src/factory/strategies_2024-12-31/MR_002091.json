@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_002091",
+  "created_at": "2026-02-24T11:42:20.403399",
+  "updated_at": "2026-02-26T16:38:42.812511",
+  "asset": "GDBR10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 60,
+    "low_percentile": 25,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "GBTPGR10 Index",
+  "performance": {
+    "sharpe_3y": 1.0568483432368152,
+    "sharpe_6m": 0.24893669757633693,
+    "sharpe_1m": -5.05857208513954,
+    "total_return": 0.3053768741459564,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08800127582671781,
+    "win_rate": 0.6341463414634146,
+    "num_trades": 42,
+    "calmar_ratio": 0.8800523877438866,
+    "sortino_ratio": 1.3608555974412369
+  },
+  "is_active": true,
+  "version": 1
+}

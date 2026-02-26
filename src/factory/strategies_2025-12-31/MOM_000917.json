@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000917",
   "created_at": "2026-02-13T17:10:13.685053",
-  "updated_at": "2026-02-23T09:50:29.827834",
+  "updated_at": "2026-02-26T16:48:37.424160",
   "asset": "NQ1 Index",
   "strategy_type": "momentum",
   "strategy_name": "breakout",

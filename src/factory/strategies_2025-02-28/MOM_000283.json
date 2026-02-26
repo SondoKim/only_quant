@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000283",
+  "created_at": "2026-02-24T11:48:13.595935",
+  "updated_at": "2026-02-26T16:42:00.927629",
+  "asset": "GTAUD3YR Corp",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 21,
+    "signal_period": 5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.3693455806327104,
+    "sharpe_6m": 1.2549969070789804,
+    "sharpe_1m": 2.0145465362914923,
+    "total_return": 4.39480800628115,
+    "annual_return": 0.0,
+    "max_drawdown": 0.7683946065837364,
+    "win_rate": 0.44565217391304346,
+    "num_trades": 92,
+    "calmar_ratio": 0.7533452403226459,
+    "sortino_ratio": 2.1126331605984383
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,4352 @@
+{
+  "strategies": {
+    "MOM_000004": {
+      "file": "MOM_000004.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0813272878237163,
+      "sharpe_6m": -1.566622197835397,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.435160"
+    },
+    "MOM_000005": {
+      "file": "MOM_000005.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5510168068049353,
+      "sharpe_6m": 1.6338418052412054,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.443188"
+    },
+    "MOM_000006": {
+      "file": "MOM_000006.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.117910890694096,
+      "sharpe_6m": 0.11912289163631085,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.452189"
+    },
+    "MOM_000007": {
+      "file": "MOM_000007.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1842730533734898,
+      "sharpe_6m": 2.0187128928022786,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.459188"
+    },
+    "MOM_000008": {
+      "file": "MOM_000008.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1607624762498407,
+      "sharpe_6m": 0.7476672412249225,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.468188"
+    },
+    "MOM_000016": {
+      "file": "MOM_000016.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7172953384072975,
+      "sharpe_6m": 2.116021340774588,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.475734"
+    },
+    "MOM_000017": {
+      "file": "MOM_000017.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3685161324756707,
+      "sharpe_6m": 1.4250428988019983,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.486262"
+    },
+    "MOM_000018": {
+      "file": "MOM_000018.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6667316122973062,
+      "sharpe_6m": 1.8432517681844185,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.493261"
+    },
+    "MOM_000019": {
+      "file": "MOM_000019.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5518739169191116,
+      "sharpe_6m": 0.900783148153907,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.505265"
+    },
+    "MOM_000022": {
+      "file": "MOM_000022.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.017153931030319,
+      "sharpe_6m": -1.001678956588833,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.513267"
+    },
+    "MOM_000036": {
+      "file": "MOM_000036.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7508055232589113,
+      "sharpe_6m": 1.2889822356446003,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.521264"
+    },
+    "MOM_000037": {
+      "file": "MOM_000037.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4198380375297812,
+      "sharpe_6m": 1.9491597317605225,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.532780"
+    },
+    "MOM_000038": {
+      "file": "MOM_000038.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.425804360720761,
+      "sharpe_6m": 0.7363793729739065,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.541574"
+    },
+    "MOM_000040": {
+      "file": "MOM_000040.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0318677685523154,
+      "sharpe_6m": 0.5163946723487125,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.550578"
+    },
+    "MOM_000041": {
+      "file": "MOM_000041.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.712586543560188,
+      "sharpe_6m": 1.1317689396508408,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.559706"
+    },
+    "MOM_000042": {
+      "file": "MOM_000042.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3914960795686027,
+      "sharpe_6m": 1.2676864001499157,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.567229"
+    },
+    "MOM_000043": {
+      "file": "MOM_000043.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.8861289391663985,
+      "sharpe_6m": 1.1036111767580867,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.577748"
+    },
+    "MOM_000044": {
+      "file": "MOM_000044.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.581621213803733,
+      "sharpe_6m": 1.0012190798878222,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.587301"
+    },
+    "MOM_000046": {
+      "file": "MOM_000046.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0273307575644022,
+      "sharpe_6m": -0.9596532712218289,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.595024"
+    },
+    "MOM_000049": {
+      "file": "MOM_000049.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.05020015653023,
+      "sharpe_6m": -0.5646119909962894,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.605026"
+    },
+    "MOM_000053": {
+      "file": "MOM_000053.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0836371767614381,
+      "sharpe_6m": 2.37227630273883,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.613093"
+    },
+    "MOM_000058": {
+      "file": "MOM_000058.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1212218224280053,
+      "sharpe_6m": 0.8648149267126622,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.622085"
+    },
+    "MOM_000067": {
+      "file": "MOM_000067.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0376333705846872,
+      "sharpe_6m": 0.7717838321489837,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.629597"
+    },
+    "MOM_000070": {
+      "file": "MOM_000070.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.331925445671903,
+      "sharpe_6m": 2.0064627429588686,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.639634"
+    },
+    "MOM_000080": {
+      "file": "MOM_000080.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.259586209643365,
+      "sharpe_6m": -0.5790292261771798,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.649148"
+    },
+    "MOM_000081": {
+      "file": "MOM_000081.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3975561279887236,
+      "sharpe_6m": -0.6608856963825671,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.659339"
+    },
+    "MOM_000082": {
+      "file": "MOM_000082.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4572064712841406,
+      "sharpe_6m": -0.9707739037904853,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.669057"
+    },
+    "MOM_000087": {
+      "file": "MOM_000087.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.697272504085816,
+      "sharpe_6m": 1.7285707504357346,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.677047"
+    },
+    "MOM_000088": {
+      "file": "MOM_000088.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1560944864725577,
+      "sharpe_6m": 1.4454103188907967,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.687183"
+    },
+    "MOM_000089": {
+      "file": "MOM_000089.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.240363382682105,
+      "sharpe_6m": 1.4033841969399348,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.696141"
+    },
+    "MOM_000091": {
+      "file": "MOM_000091.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0953613191173015,
+      "sharpe_6m": -1.632474834464326,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.706212"
+    },
+    "MOM_000092": {
+      "file": "MOM_000092.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0536108630417047,
+      "sharpe_6m": -0.5960431851760876,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.717947"
+    },
+    "MOM_000096": {
+      "file": "MOM_000096.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3973425431827078,
+      "sharpe_6m": 0.8984142756845219,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.726966"
+    },
+    "MOM_000097": {
+      "file": "MOM_000097.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1558141418349026,
+      "sharpe_6m": 0.07972635113443774,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.736487"
+    },
+    "MOM_000108": {
+      "file": "MOM_000108.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5671787711750302,
+      "sharpe_6m": 0.9828470962763293,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.745304"
+    },
+    "MOM_000109": {
+      "file": "MOM_000109.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6249021655909834,
+      "sharpe_6m": 1.1150423049060514,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.755636"
+    },
+    "MOM_000110": {
+      "file": "MOM_000110.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5998953581577895,
+      "sharpe_6m": 0.5819679319075329,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.767319"
+    },
+    "MOM_000111": {
+      "file": "MOM_000111.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.8048773915415586,
+      "sharpe_6m": 0.469966577967786,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.776417"
+    },
+    "MOM_000112": {
+      "file": "MOM_000112.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.8118931528606415,
+      "sharpe_6m": 0.6586362723316065,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.787618"
+    },
+    "MOM_000138": {
+      "file": "MOM_000138.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6270936386389498,
+      "sharpe_6m": 0.5584411235658412,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.796003"
+    },
+    "MOM_000139": {
+      "file": "MOM_000139.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.803640930637531,
+      "sharpe_6m": 1.179867366311153,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.805632"
+    },
+    "MOM_000140": {
+      "file": "MOM_000140.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.270818988109386,
+      "sharpe_6m": 0.6608640054046596,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.814248"
+    },
+    "MOM_000141": {
+      "file": "MOM_000141.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1761123296439608,
+      "sharpe_6m": 0.20653899141699064,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.824146"
+    },
+    "MOM_000142": {
+      "file": "MOM_000142.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.197264088244115,
+      "sharpe_6m": 0.23410134384103504,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.834210"
+    },
+    "MOM_000143": {
+      "file": "MOM_000143.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1287518764157092,
+      "sharpe_6m": 0.09689808447154867,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.842278"
+    },
+    "MOM_000192": {
+      "file": "MOM_000192.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2125039062462726,
+      "sharpe_6m": 1.6855313843347453,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.853030"
+    },
+    "MOM_000193": {
+      "file": "MOM_000193.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1931711858094538,
+      "sharpe_6m": 1.24861566086009,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.862031"
+    },
+    "MOM_000194": {
+      "file": "MOM_000194.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2241096870540664,
+      "sharpe_6m": 1.143892362339222,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.871029"
+    },
+    "MOM_000195": {
+      "file": "MOM_000195.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0913067079490126,
+      "sharpe_6m": 1.3631952977760058,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.880557"
+    },
+    "MOM_000196": {
+      "file": "MOM_000196.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1563283745150785,
+      "sharpe_6m": 1.4429602132495614,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.889605"
+    },
+    "MOM_000201": {
+      "file": "MOM_000201.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7065942081721936,
+      "sharpe_6m": 0.4005918067990932,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.900244"
+    },
+    "MOM_000202": {
+      "file": "MOM_000202.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5980976799849047,
+      "sharpe_6m": 0.30568706622794833,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.909243"
+    },
+    "MOM_000203": {
+      "file": "MOM_000203.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3494508023481695,
+      "sharpe_6m": 0.24959119293240803,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.920405"
+    },
+    "MOM_000208": {
+      "file": "MOM_000208.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.8853990723043625,
+      "sharpe_6m": 2.227720486957808,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.930699"
+    },
+    "MOM_000209": {
+      "file": "MOM_000209.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.849122219387332,
+      "sharpe_6m": 1.786689192009313,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.940000"
+    },
+    "MOM_000210": {
+      "file": "MOM_000210.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2172472583072342,
+      "sharpe_6m": -0.6086551427466615,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.949476"
+    },
+    "MOM_000222": {
+      "file": "MOM_000222.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1415132209225818,
+      "sharpe_6m": 1.1127178217601361,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.958423"
+    },
+    "MOM_000223": {
+      "file": "MOM_000223.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.682071207285424,
+      "sharpe_6m": 1.1957904143784537,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.969883"
+    },
+    "MOM_000224": {
+      "file": "MOM_000224.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7806113782404371,
+      "sharpe_6m": 0.8334323608888999,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.980000"
+    },
+    "MOM_000227": {
+      "file": "MOM_000227.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.071681777531602,
+      "sharpe_6m": -0.24227244379891713,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:16.990628"
+    },
+    "MOM_000237": {
+      "file": "MOM_000237.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2477568839703428,
+      "sharpe_6m": 0.31086553781977605,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.000648"
+    },
+    "MOM_000243": {
+      "file": "MOM_000243.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.119339225670745,
+      "sharpe_6m": -1.798237711671014,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.011310"
+    },
+    "MOM_000247": {
+      "file": "MOM_000247.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.327958582138686,
+      "sharpe_6m": -0.6087446651809059,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.025085"
+    },
+    "MOM_000251": {
+      "file": "MOM_000251.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2515173978204062,
+      "sharpe_6m": 1.54036408075184,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.037679"
+    },
+    "MOM_000278": {
+      "file": "MOM_000278.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0238322190076612,
+      "sharpe_6m": -2.059281273599651,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.049677"
+    },
+    "MOM_000279": {
+      "file": "MOM_000279.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6937152090511038,
+      "sharpe_6m": 0.25872081760511584,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.061197"
+    },
+    "MOM_000280": {
+      "file": "MOM_000280.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6642397552453834,
+      "sharpe_6m": 0.2776397575623063,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.073195"
+    },
+    "MOM_000281": {
+      "file": "MOM_000281.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6596063510019587,
+      "sharpe_6m": -0.3729136523306317,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.086597"
+    },
+    "MOM_000282": {
+      "file": "MOM_000282.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3517655071828338,
+      "sharpe_6m": -0.5907193381436218,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.100291"
+    },
+    "MOM_000283": {
+      "file": "MOM_000283.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.54429211352385,
+      "sharpe_6m": 0.06789068770368559,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.110401"
+    },
+    "MOM_000284": {
+      "file": "MOM_000284.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5881614549707117,
+      "sharpe_6m": 1.0019157458956505,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.122406"
+    },
+    "MOM_000285": {
+      "file": "MOM_000285.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4104044046049276,
+      "sharpe_6m": -0.5028036592380577,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.134462"
+    },
+    "MOM_000286": {
+      "file": "MOM_000286.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7671433057661636,
+      "sharpe_6m": 0.3883367537342905,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.149204"
+    },
+    "MOM_000287": {
+      "file": "MOM_000287.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5332752225377915,
+      "sharpe_6m": 1.0634840009202644,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.165404"
+    },
+    "MOM_000288": {
+      "file": "MOM_000288.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5246611831751933,
+      "sharpe_6m": -0.43480388052656316,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.181672"
+    },
+    "MOM_000289": {
+      "file": "MOM_000289.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6017862400628118,
+      "sharpe_6m": -0.41521908099424826,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.201004"
+    },
+    "MOM_000290": {
+      "file": "MOM_000290.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7524957771609655,
+      "sharpe_6m": 1.2524837514091138,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.213423"
+    },
+    "MOM_000291": {
+      "file": "MOM_000291.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6760401667379778,
+      "sharpe_6m": -0.02037656804343737,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.226178"
+    },
+    "MOM_000292": {
+      "file": "MOM_000292.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6329281269914846,
+      "sharpe_6m": 1.3082474331587046,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.239780"
+    },
+    "MOM_000293": {
+      "file": "MOM_000293.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4205394412760772,
+      "sharpe_6m": 1.067797917765542,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.253293"
+    },
+    "MOM_000294": {
+      "file": "MOM_000294.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.7423730641406567,
+      "sharpe_6m": 0.8058881498812044,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.266351"
+    },
+    "MOM_000295": {
+      "file": "MOM_000295.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6271035164151468,
+      "sharpe_6m": 1.179258664414003,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.278351"
+    },
+    "MOM_000296": {
+      "file": "MOM_000296.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4403236813993343,
+      "sharpe_6m": 1.2573391080240712,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.289874"
+    },
+    "MOM_000297": {
+      "file": "MOM_000297.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.585303094685493,
+      "sharpe_6m": -0.0516492867802691,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.302874"
+    },
+    "MOM_000298": {
+      "file": "MOM_000298.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.651138684488076,
+      "sharpe_6m": 1.249297255405901,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.317876"
+    },
+    "MOM_000299": {
+      "file": "MOM_000299.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4810029981481325,
+      "sharpe_6m": 1.0056387927728392,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.334614"
+    },
+    "MOM_000300": {
+      "file": "MOM_000300.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6745562006899175,
+      "sharpe_6m": 1.0909850299498633,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.349651"
+    },
+    "MOM_000301": {
+      "file": "MOM_000301.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4061030513896968,
+      "sharpe_6m": 1.0634840009202604,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.364042"
+    },
+    "MOM_000302": {
+      "file": "MOM_000302.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3724940890487083,
+      "sharpe_6m": 0.7616959513675611,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.381106"
+    },
+    "MOM_000303": {
+      "file": "MOM_000303.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6691912382701748,
+      "sharpe_6m": 1.2082390191530354,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.398106"
+    },
+    "MOM_000304": {
+      "file": "MOM_000304.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4518755299503077,
+      "sharpe_6m": 0.93773703193282,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.411696"
+    },
+    "MOM_000305": {
+      "file": "MOM_000305.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1167087544157814,
+      "sharpe_6m": 1.359429812633503,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.428971"
+    },
+    "MOM_000361": {
+      "file": "MOM_000361.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0521693687847242,
+      "sharpe_6m": 0.29684830604556367,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.444091"
+    },
+    "MOM_000366": {
+      "file": "MOM_000366.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.132851782780051,
+      "sharpe_6m": 0.7873216942368918,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.461088"
+    },
+    "MOM_000371": {
+      "file": "MOM_000371.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.056745003826236,
+      "sharpe_6m": -0.5378253437587874,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.476604"
+    },
+    "MOM_000374": {
+      "file": "MOM_000374.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0004731593129834,
+      "sharpe_6m": -0.30480917997688484,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.492632"
+    },
+    "MOM_000375": {
+      "file": "MOM_000375.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1658617478925362,
+      "sharpe_6m": 0.24026260714517966,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.508633"
+    },
+    "MOM_000380": {
+      "file": "MOM_000380.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0571058145952374,
+      "sharpe_6m": -0.30480917997689727,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.524043"
+    },
+    "MOM_000382": {
+      "file": "MOM_000382.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0100266615756908,
+      "sharpe_6m": -0.025231287836537775,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.539675"
+    },
+    "MOM_000383": {
+      "file": "MOM_000383.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0896257203513113,
+      "sharpe_6m": -0.4198648250665967,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.554187"
+    },
+    "MOM_000385": {
+      "file": "MOM_000385.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0779442619513324,
+      "sharpe_6m": -0.5345472458769647,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.568256"
+    },
+    "MOM_000386": {
+      "file": "MOM_000386.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0670014161154682,
+      "sharpe_6m": -0.41275818205083253,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.580773"
+    },
+    "MOM_000482": {
+      "file": "MOM_000482.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.044275725973256,
+      "sharpe_6m": 1.3343829146955861,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.593288"
+    },
+    "MOM_000485": {
+      "file": "MOM_000485.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1357191386853134,
+      "sharpe_6m": 1.412649480619244,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.606292"
+    },
+    "MOM_000491": {
+      "file": "MOM_000491.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.185187699044364,
+      "sharpe_6m": 0.9829642380523074,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.619370"
+    },
+    "MOM_000493": {
+      "file": "MOM_000493.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0920324712218172,
+      "sharpe_6m": 1.463957129480181,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.630889"
+    },
+    "MOM_000494": {
+      "file": "MOM_000494.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1149978294154081,
+      "sharpe_6m": 0.6333593192477536,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.643956"
+    },
+    "MOM_000603": {
+      "file": "MOM_000603.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1052488422171225,
+      "sharpe_6m": 0.4754502621521008,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.656192"
+    },
+    "MOM_000604": {
+      "file": "MOM_000604.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0237839822633632,
+      "sharpe_6m": 0.8206498856422011,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.669067"
+    },
+    "MOM_000607": {
+      "file": "MOM_000607.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.00788274425396,
+      "sharpe_6m": 1.1344384704502795,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.681312"
+    },
+    "MOM_000608": {
+      "file": "MOM_000608.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0931396626079637,
+      "sharpe_6m": 0.49325915575297646,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.692294"
+    },
+    "MOM_000610": {
+      "file": "MOM_000610.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0521798933786053,
+      "sharpe_6m": 1.1469908149933847,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.705470"
+    },
+    "MOM_000611": {
+      "file": "MOM_000611.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1374579045908755,
+      "sharpe_6m": 0.33116700005882677,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.718110"
+    },
+    "MOM_000614": {
+      "file": "MOM_000614.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1262773339987515,
+      "sharpe_6m": 0.49325915575297624,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.731191"
+    },
+    "MOM_000615": {
+      "file": "MOM_000615.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0950339292037232,
+      "sharpe_6m": 1.1344384704502843,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.745778"
+    },
+    "MOM_000618": {
+      "file": "MOM_000618.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0752652369927664,
+      "sharpe_6m": 0.8258032567363137,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.759461"
+    },
+    "MOM_000619": {
+      "file": "MOM_000619.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0557356122910595,
+      "sharpe_6m": 0.14432237549883345,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.772991"
+    },
+    "MOM_000625": {
+      "file": "MOM_000625.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0274512973956638,
+      "sharpe_6m": 0.43702399102385453,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.785155"
+    },
+    "MOM_000627": {
+      "file": "MOM_000627.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0185467674722788,
+      "sharpe_6m": 0.1574274540958106,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.799197"
+    },
+    "MOM_000657": {
+      "file": "MOM_000657.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.055653520413704,
+      "sharpe_6m": -0.6460731144096253,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.815240"
+    },
+    "MOM_000658": {
+      "file": "MOM_000658.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2777494437385564,
+      "sharpe_6m": 0.033557043659013304,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.828298"
+    },
+    "MOM_000659": {
+      "file": "MOM_000659.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.440983161223885,
+      "sharpe_6m": -1.041027718322302,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.841460"
+    },
+    "MOM_000660": {
+      "file": "MOM_000660.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.224862172321339,
+      "sharpe_6m": -0.29672541079035414,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.854461"
+    },
+    "MOM_000661": {
+      "file": "MOM_000661.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2106940292633646,
+      "sharpe_6m": -0.6459881456025002,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.869457"
+    },
+    "MOM_000662": {
+      "file": "MOM_000662.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1725761492523774,
+      "sharpe_6m": -1.290570749464197,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.881710"
+    },
+    "MOM_000663": {
+      "file": "MOM_000663.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1853236106124367,
+      "sharpe_6m": -0.7295844395146125,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.894223"
+    },
+    "MOM_000664": {
+      "file": "MOM_000664.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2600770844546183,
+      "sharpe_6m": -0.5124263367778357,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.906247"
+    },
+    "MOM_000665": {
+      "file": "MOM_000665.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0532101062720047,
+      "sharpe_6m": -1.484111671677147,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.918643"
+    },
+    "MOM_000666": {
+      "file": "MOM_000666.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1867672526935107,
+      "sharpe_6m": -0.46809166993577417,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.931419"
+    },
+    "MOM_000667": {
+      "file": "MOM_000667.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4772365523506275,
+      "sharpe_6m": -1.0410277183222743,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.943982"
+    },
+    "MOM_000668": {
+      "file": "MOM_000668.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2885099458673477,
+      "sharpe_6m": -1.454706829363207,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.957363"
+    },
+    "MOM_000669": {
+      "file": "MOM_000669.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.239696088814148,
+      "sharpe_6m": -0.6331059427333318,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.970917"
+    },
+    "MOM_000670": {
+      "file": "MOM_000670.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3847295264118833,
+      "sharpe_6m": -1.2905707494642054,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.984715"
+    },
+    "MOM_000672": {
+      "file": "MOM_000672.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.444379317040776,
+      "sharpe_6m": -0.6331059427333401,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:17.995945"
+    },
+    "MOM_000673": {
+      "file": "MOM_000673.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1184326865776808,
+      "sharpe_6m": -1.3166570186908968,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.009088"
+    },
+    "MOM_000675": {
+      "file": "MOM_000675.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.359054920958295,
+      "sharpe_6m": -0.46866595050058635,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.021174"
+    },
+    "MOM_000676": {
+      "file": "MOM_000676.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3839486954728781,
+      "sharpe_6m": -1.2905707494641918,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.035352"
+    },
+    "MOM_000677": {
+      "file": "MOM_000677.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0905077398342686,
+      "sharpe_6m": -1.8162470684411676,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.048841"
+    },
+    "MOM_000678": {
+      "file": "MOM_000678.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.211381112617723,
+      "sharpe_6m": -0.7156884133296904,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.061463"
+    },
+    "MOM_000679": {
+      "file": "MOM_000679.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.013175359350429,
+      "sharpe_6m": -1.630808298726314,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.075104"
+    },
+    "MOM_000681": {
+      "file": "MOM_000681.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0596933089494363,
+      "sharpe_6m": -1.097561356812647,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.088693"
+    },
+    "MOM_000685": {
+      "file": "MOM_000685.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2371118706292343,
+      "sharpe_6m": 0.06080740389525597,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.101646"
+    },
+    "MOM_000688": {
+      "file": "MOM_000688.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0438028934747672,
+      "sharpe_6m": -0.15742972850361134,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.115172"
+    },
+    "MOM_000690": {
+      "file": "MOM_000690.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1494662390177692,
+      "sharpe_6m": 0.055904590797032985,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.127466"
+    },
+    "MOM_000691": {
+      "file": "MOM_000691.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2255384709322579,
+      "sharpe_6m": -0.22246866912165938,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.140623"
+    },
+    "MOM_000693": {
+      "file": "MOM_000693.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1894689070004862,
+      "sharpe_6m": 0.06080740389525769,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.154037"
+    },
+    "MOM_000694": {
+      "file": "MOM_000694.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.02123828855819,
+      "sharpe_6m": -0.3178525770360934,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.167094"
+    },
+    "MOM_000696": {
+      "file": "MOM_000696.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1689728749519743,
+      "sharpe_6m": 0.05590459079703048,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.180670"
+    },
+    "MOM_000697": {
+      "file": "MOM_000697.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.018231968917741,
+      "sharpe_6m": -0.23538938773489165,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.192179"
+    },
+    "MOM_000698": {
+      "file": "MOM_000698.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2020490332692246,
+      "sharpe_6m": -0.4936345347297216,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.207298"
+    },
+    "MOM_000699": {
+      "file": "MOM_000699.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2291811448289713,
+      "sharpe_6m": -0.07583483481406315,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.220968"
+    },
+    "MOM_000701": {
+      "file": "MOM_000701.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1884898030409774,
+      "sharpe_6m": -0.8505618684052483,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.235244"
+    },
+    "MOM_000702": {
+      "file": "MOM_000702.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1046038523701998,
+      "sharpe_6m": 0.02549959435346571,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.248472"
+    },
+    "MOM_000703": {
+      "file": "MOM_000703.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0070393410432221,
+      "sharpe_6m": -0.47164377893377685,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.260730"
+    },
+    "MOM_000704": {
+      "file": "MOM_000704.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2374593138205097,
+      "sharpe_6m": -0.759229682948093,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.274135"
+    },
+    "MOM_000707": {
+      "file": "MOM_000707.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1816469952632074,
+      "sharpe_6m": -0.7557119560461458,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.287227"
+    },
+    "MOM_000709": {
+      "file": "MOM_000709.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0027088579817338,
+      "sharpe_6m": -0.9039092876433593,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.299048"
+    },
+    "MOM_000710": {
+      "file": "MOM_000710.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.220548875335239,
+      "sharpe_6m": -1.4420017771115659,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.314272"
+    },
+    "MOM_000742": {
+      "file": "MOM_000742.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6983514278702658,
+      "sharpe_6m": -0.4767985125721031,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.331952"
+    },
+    "MOM_000743": {
+      "file": "MOM_000743.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3717545225999186,
+      "sharpe_6m": 2.0398264439447757,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.351278"
+    },
+    "MOM_000744": {
+      "file": "MOM_000744.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3143212143543561,
+      "sharpe_6m": 1.5366092833887366,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.368902"
+    },
+    "MOM_000745": {
+      "file": "MOM_000745.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4034261806814436,
+      "sharpe_6m": 0.3338370177956569,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.384966"
+    },
+    "MOM_000753": {
+      "file": "MOM_000753.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6305583996217967,
+      "sharpe_6m": 1.4778710596878444,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.399652"
+    },
+    "MOM_000756": {
+      "file": "MOM_000756.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0842662254303923,
+      "sharpe_6m": -0.35037221657275724,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.413653"
+    },
+    "MOM_000766": {
+      "file": "MOM_000766.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.9406270295952919,
+      "sharpe_6m": 2.669743555709916,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.427172"
+    },
+    "MOM_000771": {
+      "file": "MOM_000771.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1832012640947924,
+      "sharpe_6m": 1.6873274335276127,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.442303"
+    },
+    "MOM_000773": {
+      "file": "MOM_000773.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2077892562935975,
+      "sharpe_6m": 0.8954784786660323,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.459337"
+    },
+    "MOM_000804": {
+      "file": "MOM_000804.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.2059932454559965,
+      "sharpe_6m": -1.0107261813528639,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.472336"
+    },
+    "MOM_000805": {
+      "file": "MOM_000805.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3529947603149608,
+      "sharpe_6m": -1.211084585867397,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.486862"
+    },
+    "MOM_000810": {
+      "file": "MOM_000810.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1914052063670906,
+      "sharpe_6m": -1.026796939528265,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.500374"
+    },
+    "MOM_000811": {
+      "file": "MOM_000811.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1822517425730565,
+      "sharpe_6m": 1.095322866034839,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.516990"
+    },
+    "MOM_000812": {
+      "file": "MOM_000812.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4097106457482846,
+      "sharpe_6m": -0.6865334868461773,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.530511"
+    },
+    "MOM_000813": {
+      "file": "MOM_000813.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5661964726039963,
+      "sharpe_6m": 0.5508928874441339,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.543510"
+    },
+    "MOM_000814": {
+      "file": "MOM_000814.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.8262668280449268,
+      "sharpe_6m": 1.1727819001095787,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.558513"
+    },
+    "MOM_000815": {
+      "file": "MOM_000815.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 2.106048478292932,
+      "sharpe_6m": 2.234718643042605,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.573448"
+    },
+    "MOM_000820": {
+      "file": "MOM_000820.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3995501183832282,
+      "sharpe_6m": 1.9818773838539108,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.589438"
+    },
+    "MOM_000823": {
+      "file": "MOM_000823.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0810467052391362,
+      "sharpe_6m": 1.3947965702725245,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.605284"
+    },
+    "MOM_000824": {
+      "file": "MOM_000824.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.075722439103047,
+      "sharpe_6m": 1.487425686086916,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.623253"
+    },
+    "MOM_000852": {
+      "file": "MOM_000852.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1914729294772572,
+      "sharpe_6m": -1.2560409488883002,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.638175"
+    },
+    "MOM_000853": {
+      "file": "MOM_000853.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1364787025212666,
+      "sharpe_6m": -1.3420891125204761,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.656220"
+    },
+    "MOM_000854": {
+      "file": "MOM_000854.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0365336487997885,
+      "sharpe_6m": -1.1279850135117995,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.671811"
+    },
+    "MOM_000863": {
+      "file": "MOM_000863.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0031301954674479,
+      "sharpe_6m": -0.018599407733406847,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.688244"
+    },
+    "MOM_000864": {
+      "file": "MOM_000864.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.1597405959984342,
+      "sharpe_6m": -2.3353009237172757,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.703042"
+    },
+    "MOM_000866": {
+      "file": "MOM_000866.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0502473724979482,
+      "sharpe_6m": -2.7617914084743838,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.717301"
+    },
+    "MOM_000867": {
+      "file": "MOM_000867.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.47060793072695,
+      "sharpe_6m": -0.773471155174777,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.732496"
+    },
+    "MOM_000871": {
+      "file": "MOM_000871.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0493910317003308,
+      "sharpe_6m": -1.536751710712366,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.747549"
+    },
+    "MOM_000873": {
+      "file": "MOM_000873.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5712286082098053,
+      "sharpe_6m": 1.5643375215789732,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.763556"
+    },
+    "MOM_000879": {
+      "file": "MOM_000879.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.699472297712295,
+      "sharpe_6m": 1.9859102918928035,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.777605"
+    },
+    "MOM_000880": {
+      "file": "MOM_000880.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.4649023253136313,
+      "sharpe_6m": 1.5079685860272638,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.793395"
+    },
+    "MOM_000891": {
+      "file": "MOM_000891.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.6690897473661626,
+      "sharpe_6m": 1.469304979993349,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.815951"
+    },
+    "MOM_000894": {
+      "file": "MOM_000894.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0098196086307503,
+      "sharpe_6m": -0.05080131242225172,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.839123"
+    },
+    "MOM_000895": {
+      "file": "MOM_000895.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.5247169685530582,
+      "sharpe_6m": 0.8615470754124589,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.860639"
+    },
+    "MOM_000896": {
+      "file": "MOM_000896.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.0301789397560277,
+      "sharpe_6m": 0.20194108650803297,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.888440"
+    },
+    "MOM_000918": {
+      "file": "MOM_000918.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.258309244085945,
+      "sharpe_6m": 0.06513730431111413,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.910124"
+    },
+    "MOM_000922": {
+      "file": "MOM_000922.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "momentum",
+      "sharpe_3y": 1.3210861185567437,
+      "sharpe_6m": 1.7406174896948392,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:40:18.928615"
+    },
+    "MR_001325": {
+      "file": "MR_001325.json",
+      "asset": "AUD Curncy",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0671374011782304,
+      "sharpe_6m": 0.7251041957991677,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.254319"
+    },
+    "MR_001572": {
+      "file": "MR_001572.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0597203224021488,
+      "sharpe_6m": 1.4702508448126972,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.267363"
+    },
+    "MR_001573": {
+      "file": "MR_001573.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0279514828670226,
+      "sharpe_6m": 0.8797962327574245,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.281874"
+    },
+    "MR_001593": {
+      "file": "MR_001593.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0732723171389125,
+      "sharpe_6m": -1.1757534002486654,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.295388"
+    },
+    "MR_001662": {
+      "file": "MR_001662.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.5332259656361478,
+      "sharpe_6m": 1.42765433409129,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.310462"
+    },
+    "MR_001663": {
+      "file": "MR_001663.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.8143642263106128,
+      "sharpe_6m": 1.8883442917472775,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.324479"
+    },
+    "MR_001664": {
+      "file": "MR_001664.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.2243201720788266,
+      "sharpe_6m": 1.0436619910295426,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.340614"
+    },
+    "MR_001665": {
+      "file": "MR_001665.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.5384213847095765,
+      "sharpe_6m": 1.7947873594250308,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.357655"
+    },
+    "MR_001666": {
+      "file": "MR_001666.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0699681232122344,
+      "sharpe_6m": 1.9111843248375537,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.372983"
+    },
+    "MR_001667": {
+      "file": "MR_001667.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0705369795036075,
+      "sharpe_6m": 0.982539567828096,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.388663"
+    },
+    "MR_001668": {
+      "file": "MR_001668.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.377961244459238,
+      "sharpe_6m": 0.7076311807628605,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.403661"
+    },
+    "MR_001669": {
+      "file": "MR_001669.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.4696482385142982,
+      "sharpe_6m": 1.0735799088408269,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.418528"
+    },
+    "MR_001670": {
+      "file": "MR_001670.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.198240114496682,
+      "sharpe_6m": 1.2909426166714275,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.433105"
+    },
+    "MR_001671": {
+      "file": "MR_001671.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1618444438753175,
+      "sharpe_6m": 1.9313277919058611,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.448200"
+    },
+    "MR_001674": {
+      "file": "MR_001674.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0379016848271487,
+      "sharpe_6m": 1.7135619992431659,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.463442"
+    },
+    "MR_001675": {
+      "file": "MR_001675.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.3410779236415054,
+      "sharpe_6m": 1.2669631477555536,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.482583"
+    },
+    "MR_001677": {
+      "file": "MR_001677.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0365317443369804,
+      "sharpe_6m": 1.5999950579127495,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.498691"
+    },
+    "MR_001698": {
+      "file": "MR_001698.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0947895423515617,
+      "sharpe_6m": 0.6826582702923705,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.519298"
+    },
+    "MR_001699": {
+      "file": "MR_001699.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.06935186831625,
+      "sharpe_6m": 1.4041869585926565,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.539656"
+    },
+    "MR_001702": {
+      "file": "MR_001702.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.044744617797859,
+      "sharpe_6m": 1.5014190589922085,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.556738"
+    },
+    "MR_001703": {
+      "file": "MR_001703.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0439370282986609,
+      "sharpe_6m": 1.2446853375790534,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.571978"
+    },
+    "MR_001704": {
+      "file": "MR_001704.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1655274930688313,
+      "sharpe_6m": 1.3288690472740488,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.594233"
+    },
+    "MR_001705": {
+      "file": "MR_001705.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1436958336419691,
+      "sharpe_6m": 1.2383726237690733,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.614996"
+    },
+    "MR_001710": {
+      "file": "MR_001710.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1485478734019872,
+      "sharpe_6m": 1.5801600222722916,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.634547"
+    },
+    "MR_001711": {
+      "file": "MR_001711.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.3058537107985626,
+      "sharpe_6m": 2.0209646043558034,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.655218"
+    },
+    "MR_001728": {
+      "file": "MR_001728.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0714248423459782,
+      "sharpe_6m": -1.087836129523033,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.671920"
+    },
+    "MR_001768": {
+      "file": "MR_001768.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0727203268942325,
+      "sharpe_6m": 1.1651333895302136,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.690378"
+    },
+    "MR_001824": {
+      "file": "MR_001824.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 2.5576326722753606,
+      "sharpe_6m": 3.183513275834947,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.706010"
+    },
+    "MR_001825": {
+      "file": "MR_001825.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 2.6045497691076567,
+      "sharpe_6m": 3.1044576131437416,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.721101"
+    },
+    "MR_001826": {
+      "file": "MR_001826.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 2.1594306073130816,
+      "sharpe_6m": 2.8693875228118397,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.734607"
+    },
+    "MR_001827": {
+      "file": "MR_001827.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 2.147874348323124,
+      "sharpe_6m": 2.7966915511791206,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.748169"
+    },
+    "MR_001828": {
+      "file": "MR_001828.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.5700509036641248,
+      "sharpe_6m": 2.1715736788780493,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.761269"
+    },
+    "MR_001829": {
+      "file": "MR_001829.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.5095749681332558,
+      "sharpe_6m": 1.8001748738170043,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.775321"
+    },
+    "MR_001830": {
+      "file": "MR_001830.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.63171492347347,
+      "sharpe_6m": 3.105906198799384,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.788370"
+    },
+    "MR_001831": {
+      "file": "MR_001831.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 2.370743315494961,
+      "sharpe_6m": 3.337159485290771,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.805567"
+    },
+    "MR_001832": {
+      "file": "MR_001832.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.3637771330955015,
+      "sharpe_6m": 2.785327981335182,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.819525"
+    },
+    "MR_001833": {
+      "file": "MR_001833.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.9970325208248982,
+      "sharpe_6m": 2.6463693560376007,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.832656"
+    },
+    "MR_001835": {
+      "file": "MR_001835.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.4186084116811108,
+      "sharpe_6m": 2.4202946956373843,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.846298"
+    },
+    "MR_001836": {
+      "file": "MR_001836.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.3554095282646,
+      "sharpe_6m": 2.591681214621513,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.859489"
+    },
+    "MR_001837": {
+      "file": "MR_001837.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.928029761862779,
+      "sharpe_6m": 2.9252475255703945,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.873773"
+    },
+    "MR_001839": {
+      "file": "MR_001839.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.5108116840991894,
+      "sharpe_6m": 2.5490865862096665,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.887341"
+    },
+    "MR_001841": {
+      "file": "MR_001841.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0492618849359259,
+      "sharpe_6m": 2.5748369387067322,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:41:19.901054"
+    },
+    "MR_002022": {
+      "file": "MR_002022.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1577292136554713,
+      "sharpe_6m": 1.0648712393526012,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.126829"
+    },
+    "MR_002023": {
+      "file": "MR_002023.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1920034562361204,
+      "sharpe_6m": 1.0162936749057647,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.147470"
+    },
+    "MR_002024": {
+      "file": "MR_002024.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1616893446792356,
+      "sharpe_6m": 1.0250870035551893,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.168097"
+    },
+    "MR_002025": {
+      "file": "MR_002025.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.238203447282285,
+      "sharpe_6m": 0.8851416847946371,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.188766"
+    },
+    "MR_002026": {
+      "file": "MR_002026.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.2725272054950254,
+      "sharpe_6m": 0.8374763810370126,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.209185"
+    },
+    "MR_002027": {
+      "file": "MR_002027.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.244430344565266,
+      "sharpe_6m": 0.8462898501350438,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.228699"
+    },
+    "MR_002028": {
+      "file": "MR_002028.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.174212789059257,
+      "sharpe_6m": 0.7663857333579991,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.247219"
+    },
+    "MR_002029": {
+      "file": "MR_002029.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.2077840650936889,
+      "sharpe_6m": 0.7188025736421084,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.268255"
+    },
+    "MR_002030": {
+      "file": "MR_002030.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1777927184623582,
+      "sharpe_6m": 0.7275531527850286,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.286767"
+    },
+    "MR_002038": {
+      "file": "MR_002038.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0108084119017262,
+      "sharpe_6m": 2.0848686698524155,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.305281"
+    },
+    "MR_002061": {
+      "file": "MR_002061.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.2028329009958978,
+      "sharpe_6m": 1.0625810274317382,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.322339"
+    },
+    "MR_002062": {
+      "file": "MR_002062.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0998626986916251,
+      "sharpe_6m": 1.0625810274317018,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.338906"
+    },
+    "MR_002064": {
+      "file": "MR_002064.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.2610566607414742,
+      "sharpe_6m": 1.4860807250947556,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.354986"
+    },
+    "MR_002065": {
+      "file": "MR_002065.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.1598613525249408,
+      "sharpe_6m": 1.486080725094727,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.372137"
+    },
+    "MR_002066": {
+      "file": "MR_002066.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0281941534167762,
+      "sharpe_6m": 1.1514948315865492,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.388449"
+    },
+    "MR_002091": {
+      "file": "MR_002091.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0568483432368152,
+      "sharpe_6m": 0.24893669757633693,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.403399"
+    },
+    "MR_002093": {
+      "file": "MR_002093.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.0273002358098926,
+      "sharpe_6m": 0.40180813353436656,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.418500"
+    },
+    "MR_002184": {
+      "file": "MR_002184.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.7163293725330457,
+      "sharpe_6m": 2.679957566853664,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.432757"
+    },
+    "MR_002185": {
+      "file": "MR_002185.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.7569570536784809,
+      "sharpe_6m": 2.883719064257185,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.446310"
+    },
+    "MR_002186": {
+      "file": "MR_002186.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.7298447464514273,
+      "sharpe_6m": 2.823469016378322,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.460827"
+    },
+    "MR_002187": {
+      "file": "MR_002187.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.8768673005291314,
+      "sharpe_6m": 2.896165289299795,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.475755"
+    },
+    "MR_002188": {
+      "file": "MR_002188.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.9164759310903718,
+      "sharpe_6m": 3.1010535697472457,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.489825"
+    },
+    "MR_002189": {
+      "file": "MR_002189.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.89257511952488,
+      "sharpe_6m": 3.0452226281159533,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.506468"
+    },
+    "MR_002190": {
+      "file": "MR_002190.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.8470891242182286,
+      "sharpe_6m": 2.8961652892998173,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.521006"
+    },
+    "MR_002191": {
+      "file": "MR_002191.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.8863162071605934,
+      "sharpe_6m": 3.101053569747221,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.536072"
+    },
+    "MR_002192": {
+      "file": "MR_002192.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "mean_reversion",
+      "sharpe_3y": 1.8614476077307813,
+      "sharpe_6m": 3.0452226281159764,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.549109"
+    },
+    "ADV_002259": {
+      "file": "ADV_002259.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.259675968020977,
+      "sharpe_6m": -0.46897384534240266,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.563198"
+    },
+    "ADV_002260": {
+      "file": "ADV_002260.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0125666615670283,
+      "sharpe_6m": -1.7109448687178601,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.577716"
+    },
+    "ADV_002261": {
+      "file": "ADV_002261.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0330784194151845,
+      "sharpe_6m": -3.944956800401081,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.592312"
+    },
+    "ADV_002264": {
+      "file": "ADV_002264.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1305433094717379,
+      "sharpe_6m": -3.1581164068014824,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.607215"
+    },
+    "ADV_002276": {
+      "file": "ADV_002276.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5118765724679095,
+      "sharpe_6m": 1.2721157855954008,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.622521"
+    },
+    "ADV_002278": {
+      "file": "ADV_002278.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0160080361113824,
+      "sharpe_6m": 0.5596121743620965,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.637944"
+    },
+    "ADV_002279": {
+      "file": "ADV_002279.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1554528500218249,
+      "sharpe_6m": 1.3324283937743258,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.653862"
+    },
+    "ADV_002282": {
+      "file": "ADV_002282.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1612305274866204,
+      "sharpe_6m": 1.5626720195748467,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.667531"
+    },
+    "ADV_002284": {
+      "file": "ADV_002284.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.337082497042015,
+      "sharpe_6m": -2.1956548642196476,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.683138"
+    },
+    "ADV_002285": {
+      "file": "ADV_002285.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1892218741338683,
+      "sharpe_6m": -1.4953949342177002,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.697200"
+    },
+    "ADV_002287": {
+      "file": "ADV_002287.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1318768156727053,
+      "sharpe_6m": -1.6754801877647663,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.712129"
+    },
+    "ADV_002288": {
+      "file": "ADV_002288.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3591931703190292,
+      "sharpe_6m": 1.9016700295721718,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.728603"
+    },
+    "ADV_002290": {
+      "file": "ADV_002290.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0303199592026,
+      "sharpe_6m": -1.6754801877647725,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.743298"
+    },
+    "ADV_002291": {
+      "file": "ADV_002291.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3293646786661175,
+      "sharpe_6m": 1.5626720195748462,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.758695"
+    },
+    "ADV_002310": {
+      "file": "ADV_002310.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6970444191917637,
+      "sharpe_6m": 2.4080013852108313,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.774415"
+    },
+    "ADV_002311": {
+      "file": "ADV_002311.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8752089350841024,
+      "sharpe_6m": 2.408001385210828,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.789701"
+    },
+    "ADV_002312": {
+      "file": "ADV_002312.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7139780142224212,
+      "sharpe_6m": 2.1339572849683703,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.808640"
+    },
+    "ADV_002313": {
+      "file": "ADV_002313.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.577097975861073,
+      "sharpe_6m": 1.7991016792037164,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.828427"
+    },
+    "ADV_002314": {
+      "file": "ADV_002314.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5244619649734024,
+      "sharpe_6m": 2.0511539798727583,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.846660"
+    },
+    "ADV_002315": {
+      "file": "ADV_002315.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.9318796399283589,
+      "sharpe_6m": 2.0512733544006885,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.863024"
+    },
+    "ADV_002317": {
+      "file": "ADV_002317.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6587823416183771,
+      "sharpe_6m": 1.7392698973661076,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.881273"
+    },
+    "ADV_002318": {
+      "file": "ADV_002318.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8453192218025476,
+      "sharpe_6m": 1.466492103871513,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.901734"
+    },
+    "ADV_002319": {
+      "file": "ADV_002319.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8964902230209613,
+      "sharpe_6m": 0.7701821496883634,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.922296"
+    },
+    "ADV_002320": {
+      "file": "ADV_002320.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.9389810401568857,
+      "sharpe_6m": 0.4560975139492327,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.940547"
+    },
+    "ADV_002321": {
+      "file": "ADV_002321.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8210007231967706,
+      "sharpe_6m": 0.038677366970542665,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.956344"
+    },
+    "ADV_002322": {
+      "file": "ADV_002322.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7747515390435278,
+      "sharpe_6m": 0.45609751394922765,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.975411"
+    },
+    "ADV_002323": {
+      "file": "ADV_002323.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7606795052633946,
+      "sharpe_6m": 0.4560975139492254,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:20.998850"
+    },
+    "ADV_002324": {
+      "file": "ADV_002324.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8794747460855423,
+      "sharpe_6m": -0.028396289457411326,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.014770"
+    },
+    "ADV_002326": {
+      "file": "ADV_002326.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8843854472077888,
+      "sharpe_6m": 0.4560975139492241,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.033855"
+    },
+    "ADV_002327": {
+      "file": "ADV_002327.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8743604515865002,
+      "sharpe_6m": 1.466492103871508,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.050378"
+    },
+    "ADV_002329": {
+      "file": "ADV_002329.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1360302124142965,
+      "sharpe_6m": 0.03897243020043397,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.069232"
+    },
+    "ADV_002330": {
+      "file": "ADV_002330.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0474963008580265,
+      "sharpe_6m": -0.4941230385746483,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.085302"
+    },
+    "ADV_002331": {
+      "file": "ADV_002331.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.17721127837107,
+      "sharpe_6m": -0.28526924108109597,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.100802"
+    },
+    "ADV_002332": {
+      "file": "ADV_002332.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1462722500421754,
+      "sharpe_6m": -0.5353763824838025,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.116126"
+    },
+    "ADV_002382": {
+      "file": "ADV_002382.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6665574813706696,
+      "sharpe_6m": 1.188881712093385,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.131649"
+    },
+    "ADV_002383": {
+      "file": "ADV_002383.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.515358298834544,
+      "sharpe_6m": 0.15249263327683227,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.146689"
+    },
+    "ADV_002384": {
+      "file": "ADV_002384.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6512383795464698,
+      "sharpe_6m": 1.054184880430702,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.162439"
+    },
+    "ADV_002386": {
+      "file": "ADV_002386.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6576355356568775,
+      "sharpe_6m": 0.039932148758740335,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.177700"
+    },
+    "ADV_002387": {
+      "file": "ADV_002387.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5995431742766406,
+      "sharpe_6m": 1.9947298932444932,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.192274"
+    },
+    "ADV_002388": {
+      "file": "ADV_002388.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.073360585323335,
+      "sharpe_6m": -1.717181086284314,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.207516"
+    },
+    "ADV_002389": {
+      "file": "ADV_002389.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2444192083619514,
+      "sharpe_6m": -1.308060857807933,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.221853"
+    },
+    "ADV_002390": {
+      "file": "ADV_002390.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3026777565794585,
+      "sharpe_6m": 1.174539244188951,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.236379"
+    },
+    "ADV_002400": {
+      "file": "ADV_002400.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3521366716247951,
+      "sharpe_6m": 1.1594126427298428,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.251360"
+    },
+    "ADV_002401": {
+      "file": "ADV_002401.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2409947447433536,
+      "sharpe_6m": 0.5850824807190859,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.264287"
+    },
+    "ADV_002402": {
+      "file": "ADV_002402.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.06506963987342,
+      "sharpe_6m": -0.5515934887640153,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.278477"
+    },
+    "ADV_002403": {
+      "file": "ADV_002403.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4228576086509725,
+      "sharpe_6m": 0.8699460293218011,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.298205"
+    },
+    "ADV_002404": {
+      "file": "ADV_002404.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6865564121924288,
+      "sharpe_6m": -0.07939894248494409,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.315203"
+    },
+    "ADV_002405": {
+      "file": "ADV_002405.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2190184642200006,
+      "sharpe_6m": 0.01256389670023282,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.331725"
+    },
+    "ADV_002407": {
+      "file": "ADV_002407.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.504675223252472,
+      "sharpe_6m": 0.010919608816643963,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.347941"
+    },
+    "ADV_002408": {
+      "file": "ADV_002408.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5666610319963712,
+      "sharpe_6m": 1.4541316420026544,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.364096"
+    },
+    "ADV_002413": {
+      "file": "ADV_002413.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6024055101362487,
+      "sharpe_6m": 1.7372698458833946,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.380614"
+    },
+    "ADV_002414": {
+      "file": "ADV_002414.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4081703205270562,
+      "sharpe_6m": 1.429153267915069,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.399652"
+    },
+    "ADV_002416": {
+      "file": "ADV_002416.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5191474853011713,
+      "sharpe_6m": 1.3473299226789615,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.420568"
+    },
+    "ADV_002417": {
+      "file": "ADV_002417.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6433992109141495,
+      "sharpe_6m": 1.4541316420026487,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.438394"
+    },
+    "ADV_002492": {
+      "file": "ADV_002492.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1593857918465704,
+      "sharpe_6m": 0.9713862024820834,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.457148"
+    },
+    "ADV_002493": {
+      "file": "ADV_002493.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2708659256774206,
+      "sharpe_6m": 0.8357925466704161,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.475431"
+    },
+    "ADV_002508": {
+      "file": "ADV_002508.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5281839599917244,
+      "sharpe_6m": -2.439045596075545,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.503429"
+    },
+    "ADV_002511": {
+      "file": "ADV_002511.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6054711089175318,
+      "sharpe_6m": 1.7363157257360637,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.524117"
+    },
+    "ADV_002515": {
+      "file": "ADV_002515.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3742751228994488,
+      "sharpe_6m": 1.3142496161139552,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.547888"
+    },
+    "ADV_002517": {
+      "file": "ADV_002517.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.063209972592899,
+      "sharpe_6m": -1.9799172220641401,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.566076"
+    },
+    "ADV_002520": {
+      "file": "ADV_002520.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1105288555306176,
+      "sharpe_6m": 0.0,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.586147"
+    },
+    "ADV_002521": {
+      "file": "ADV_002521.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1549651465490507,
+      "sharpe_6m": 0.14635898621317536,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.602185"
+    },
+    "ADV_002527": {
+      "file": "ADV_002527.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0979916717614044,
+      "sharpe_6m": -1.5536952092616167,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.620248"
+    },
+    "ADV_002544": {
+      "file": "ADV_002544.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1799599772464158,
+      "sharpe_6m": -0.9068640915069025,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.636772"
+    },
+    "ADV_002545": {
+      "file": "ADV_002545.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3848017556320606,
+      "sharpe_6m": -0.723943367206032,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.655291"
+    },
+    "ADV_002549": {
+      "file": "ADV_002549.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0390008057570148,
+      "sharpe_6m": -0.3793167562413532,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.676325"
+    },
+    "ADV_002554": {
+      "file": "ADV_002554.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1949814062883606,
+      "sharpe_6m": -0.40875691288117266,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.692396"
+    },
+    "ADV_002555": {
+      "file": "ADV_002555.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1147465802306318,
+      "sharpe_6m": 0.1290683487939239,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.713437"
+    },
+    "ADV_002570": {
+      "file": "ADV_002570.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.446219861166359,
+      "sharpe_6m": 1.8894898629263404,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.731556"
+    },
+    "ADV_002571": {
+      "file": "ADV_002571.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0042567744839512,
+      "sharpe_6m": 0.0,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.747602"
+    },
+    "ADV_002572": {
+      "file": "ADV_002572.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2543056019666854,
+      "sharpe_6m": 1.8498496235592947,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.766905"
+    },
+    "ADV_002574": {
+      "file": "ADV_002574.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1070800325042776,
+      "sharpe_6m": 1.9817741359993784,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.787515"
+    },
+    "ADV_002576": {
+      "file": "ADV_002576.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.370909702635046,
+      "sharpe_6m": 2.250608643200725,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.805586"
+    },
+    "ADV_002578": {
+      "file": "ADV_002578.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.006243348007821,
+      "sharpe_6m": 1.7132839699321527,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.830765"
+    },
+    "ADV_002579": {
+      "file": "ADV_002579.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4839988665563086,
+      "sharpe_6m": 1.8894898629263437,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.852763"
+    },
+    "ADV_002586": {
+      "file": "ADV_002586.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.614203598429607,
+      "sharpe_6m": 1.1647106142812547,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.875280"
+    },
+    "ADV_002587": {
+      "file": "ADV_002587.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6250269468046232,
+      "sharpe_6m": 1.0995289128216594,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.893958"
+    },
+    "ADV_002588": {
+      "file": "ADV_002588.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.415138881853006,
+      "sharpe_6m": 0.6053127526190437,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.913596"
+    },
+    "ADV_002601": {
+      "file": "ADV_002601.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3000997038909086,
+      "sharpe_6m": 1.6536224044696226,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.931676"
+    },
+    "ADV_002602": {
+      "file": "ADV_002602.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.197601756186876,
+      "sharpe_6m": 1.8446520814725411,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.950190"
+    },
+    "ADV_002613": {
+      "file": "ADV_002613.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.019580074423756,
+      "sharpe_6m": 0.05512913258916911,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.967191"
+    },
+    "ADV_002614": {
+      "file": "ADV_002614.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0505933565620251,
+      "sharpe_6m": 0.46464273889608626,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:21.986830"
+    },
+    "ADV_002615": {
+      "file": "ADV_002615.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0328050409697724,
+      "sharpe_6m": 0.464642738896089,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.010685"
+    },
+    "ADV_002628": {
+      "file": "ADV_002628.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1744735418916203,
+      "sharpe_6m": 1.1391841095754116,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.035685"
+    },
+    "ADV_002629": {
+      "file": "ADV_002629.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0912892505740328,
+      "sharpe_6m": 0.9110509552005192,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.061339"
+    },
+    "ADV_002630": {
+      "file": "ADV_002630.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2739267590943193,
+      "sharpe_6m": 0.7352716440665621,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.083904"
+    },
+    "ADV_002631": {
+      "file": "ADV_002631.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3378139124974096,
+      "sharpe_6m": 1.365356872953685,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.103232"
+    },
+    "ADV_002632": {
+      "file": "ADV_002632.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3631778935670225,
+      "sharpe_6m": 1.1400876191541625,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.122254"
+    },
+    "ADV_002633": {
+      "file": "ADV_002633.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.359065463015139,
+      "sharpe_6m": 1.0575777931858863,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.141769"
+    },
+    "ADV_002634": {
+      "file": "ADV_002634.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0257192660251935,
+      "sharpe_6m": -1.312977495748066,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.162344"
+    },
+    "ADV_002643": {
+      "file": "ADV_002643.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 2.0168065339400405,
+      "sharpe_6m": -0.9347988946848668,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.183922"
+    },
+    "ADV_002644": {
+      "file": "ADV_002644.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5885641738351268,
+      "sharpe_6m": -1.18849707308234,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.201643"
+    },
+    "ADV_002645": {
+      "file": "ADV_002645.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6387545958245255,
+      "sharpe_6m": -1.0014239122955781,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.218640"
+    },
+    "ADV_002646": {
+      "file": "ADV_002646.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3378923068701307,
+      "sharpe_6m": -0.22448810379143547,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.245294"
+    },
+    "ADV_002647": {
+      "file": "ADV_002647.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2652799750852388,
+      "sharpe_6m": -0.06057010994705985,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.263153"
+    },
+    "ADV_002648": {
+      "file": "ADV_002648.json",
+      "asset": "GDBR2 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2103020044772301,
+      "sharpe_6m": -0.19847089429566203,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.282153"
+    },
+    "ADV_002661": {
+      "file": "ADV_002661.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4067982394860776,
+      "sharpe_6m": 0.43123443115631077,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.301030"
+    },
+    "ADV_002662": {
+      "file": "ADV_002662.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.320648288396231,
+      "sharpe_6m": 1.0024460957686305,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.317481"
+    },
+    "ADV_002663": {
+      "file": "ADV_002663.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1039562444380817,
+      "sharpe_6m": 0.039563635431501966,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.335403"
+    },
+    "ADV_002666": {
+      "file": "ADV_002666.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.008332271874853,
+      "sharpe_6m": 0.7555438689455014,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.351957"
+    },
+    "ADV_002673": {
+      "file": "ADV_002673.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1010791109668732,
+      "sharpe_6m": -0.3131855179445053,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.368241"
+    },
+    "ADV_002674": {
+      "file": "ADV_002674.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2288194157620256,
+      "sharpe_6m": -0.49812397090390786,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.385294"
+    },
+    "ADV_002675": {
+      "file": "ADV_002675.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.17351136743498,
+      "sharpe_6m": -0.39048968843198245,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.401785"
+    },
+    "ADV_002703": {
+      "file": "ADV_002703.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0141432850868333,
+      "sharpe_6m": -1.2899374555877363,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.418152"
+    },
+    "ADV_002704": {
+      "file": "ADV_002704.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0784072349784495,
+      "sharpe_6m": -1.707264786923521,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.433372"
+    },
+    "ADV_002705": {
+      "file": "ADV_002705.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.07607138240685,
+      "sharpe_6m": -1.5856407242220432,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.449020"
+    },
+    "ADV_002706": {
+      "file": "ADV_002706.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2591585207488294,
+      "sharpe_6m": 1.7916749689628209,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.464179"
+    },
+    "ADV_002707": {
+      "file": "ADV_002707.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.466659697078376,
+      "sharpe_6m": 1.582999621099088,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.479701"
+    },
+    "ADV_002708": {
+      "file": "ADV_002708.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4860935035713299,
+      "sharpe_6m": 1.3985294084969793,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.494894"
+    },
+    "ADV_002709": {
+      "file": "ADV_002709.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.531252070765466,
+      "sharpe_6m": 0.7229691303248683,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.513955"
+    },
+    "ADV_002710": {
+      "file": "ADV_002710.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5307932168324851,
+      "sharpe_6m": 0.43719991327496444,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.534098"
+    },
+    "ADV_002711": {
+      "file": "ADV_002711.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5357919836700755,
+      "sharpe_6m": 1.5251747741513288,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.548985"
+    },
+    "ADV_002712": {
+      "file": "ADV_002712.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3925370555077088,
+      "sharpe_6m": 0.35239019743551675,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.564350"
+    },
+    "ADV_002713": {
+      "file": "ADV_002713.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4611142890348388,
+      "sharpe_6m": 0.4427112402575279,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.581459"
+    },
+    "ADV_002714": {
+      "file": "ADV_002714.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4644389956723947,
+      "sharpe_6m": 0.8764333489570775,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.597907"
+    },
+    "ADV_002715": {
+      "file": "ADV_002715.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4396749167161604,
+      "sharpe_6m": 2.8660291408828393,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.614339"
+    },
+    "ADV_002716": {
+      "file": "ADV_002716.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7668300249151572,
+      "sharpe_6m": 2.388823380564392,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.630788"
+    },
+    "ADV_002717": {
+      "file": "ADV_002717.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7686907101317184,
+      "sharpe_6m": 2.0466903540794874,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.647656"
+    },
+    "ADV_002718": {
+      "file": "ADV_002718.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3886171259854854,
+      "sharpe_6m": 0.8934491635427269,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.663269"
+    },
+    "ADV_002719": {
+      "file": "ADV_002719.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3312415168757545,
+      "sharpe_6m": 1.4218531909116219,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.679858"
+    },
+    "ADV_002720": {
+      "file": "ADV_002720.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2865077448036972,
+      "sharpe_6m": 1.5231841946860136,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.696099"
+    },
+    "ADV_002721": {
+      "file": "ADV_002721.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3680613519592024,
+      "sharpe_6m": 1.151313786949746,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.713070"
+    },
+    "ADV_002722": {
+      "file": "ADV_002722.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2829923087008106,
+      "sharpe_6m": 0.9545371363206261,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.728805"
+    },
+    "ADV_002723": {
+      "file": "ADV_002723.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.360611208027022,
+      "sharpe_6m": 0.954537136320637,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.744928"
+    },
+    "ADV_002724": {
+      "file": "ADV_002724.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 2.079186011905116,
+      "sharpe_6m": 2.3702708252584186,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.761817"
+    },
+    "ADV_002725": {
+      "file": "ADV_002725.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8630725775659307,
+      "sharpe_6m": 1.9518406117047455,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.781547"
+    },
+    "ADV_002726": {
+      "file": "ADV_002726.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.819756018906496,
+      "sharpe_6m": 2.09873551313612,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.798225"
+    },
+    "ADV_002727": {
+      "file": "ADV_002727.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5702548829429146,
+      "sharpe_6m": 1.664898573185325,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.813910"
+    },
+    "ADV_002728": {
+      "file": "ADV_002728.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.53052381357066,
+      "sharpe_6m": 2.1197850213696108,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.831446"
+    },
+    "ADV_002729": {
+      "file": "ADV_002729.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6834088998486627,
+      "sharpe_6m": 2.840160975123752,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.847107"
+    },
+    "ADV_002730": {
+      "file": "ADV_002730.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.9851055569823395,
+      "sharpe_6m": 3.2340445814543477,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.863559"
+    },
+    "ADV_002731": {
+      "file": "ADV_002731.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.9230576814223885,
+      "sharpe_6m": 3.079195698417217,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.878874"
+    },
+    "ADV_002732": {
+      "file": "ADV_002732.json",
+      "asset": "GJGB10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6873780551316722,
+      "sharpe_6m": 2.727850098821878,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.894637"
+    },
+    "ADV_002733": {
+      "file": "ADV_002733.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.9153917226801978,
+      "sharpe_6m": 2.29463461200076,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.911493"
+    },
+    "ADV_002734": {
+      "file": "ADV_002734.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6319506906154448,
+      "sharpe_6m": 2.0341988637252983,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.927511"
+    },
+    "ADV_002735": {
+      "file": "ADV_002735.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4570334283470125,
+      "sharpe_6m": 1.4968350129315777,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.943626"
+    },
+    "ADV_002738": {
+      "file": "ADV_002738.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3692259709592494,
+      "sharpe_6m": 2.0413467881226444,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.960677"
+    },
+    "ADV_002742": {
+      "file": "ADV_002742.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0505913461551781,
+      "sharpe_6m": 1.0849874315233794,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.977298"
+    },
+    "ADV_002761": {
+      "file": "ADV_002761.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0823770948159888,
+      "sharpe_6m": -2.6572599323316486,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:22.994254"
+    },
+    "ADV_002762": {
+      "file": "ADV_002762.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2862828740252827,
+      "sharpe_6m": -1.4059110984711942,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.010559"
+    },
+    "ADV_002763": {
+      "file": "ADV_002763.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.365230188782478,
+      "sharpe_6m": 0.19518451452551136,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.034294"
+    },
+    "ADV_002766": {
+      "file": "ADV_002766.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.836065169471336,
+      "sharpe_6m": 0.7910063971096375,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.050914"
+    },
+    "ADV_002767": {
+      "file": "ADV_002767.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.567695844848909,
+      "sharpe_6m": 1.906751807164585,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.067136"
+    },
+    "ADV_002774": {
+      "file": "ADV_002774.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1257267054391817,
+      "sharpe_6m": 1.8449891577192294,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.083499"
+    },
+    "ADV_002775": {
+      "file": "ADV_002775.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7252284271673088,
+      "sharpe_6m": 1.5097113866321483,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.099810"
+    },
+    "ADV_002776": {
+      "file": "ADV_002776.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4499351191666585,
+      "sharpe_6m": 0.5315434486204844,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.115957"
+    },
+    "ADV_002777": {
+      "file": "ADV_002777.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5385217194956637,
+      "sharpe_6m": 0.7785371870689278,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.133661"
+    },
+    "ADV_002779": {
+      "file": "ADV_002779.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0603998882055834,
+      "sharpe_6m": -1.0368551271428175,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.154355"
+    },
+    "ADV_002794": {
+      "file": "ADV_002794.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1554598149322273,
+      "sharpe_6m": 1.808246901443739,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.170641"
+    },
+    "ADV_002797": {
+      "file": "ADV_002797.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.111252416531267,
+      "sharpe_6m": -1.1604720529630388,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.187061"
+    },
+    "ADV_002798": {
+      "file": "ADV_002798.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2696531308840093,
+      "sharpe_6m": -1.3253557422686872,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.203016"
+    },
+    "ADV_002800": {
+      "file": "ADV_002800.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1771021664160493,
+      "sharpe_6m": -1.4666706424347284,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.219169"
+    },
+    "ADV_002801": {
+      "file": "ADV_002801.json",
+      "asset": "GVSK3YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0765419925349426,
+      "sharpe_6m": -0.24328207121255085,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.235536"
+    },
+    "ADV_002808": {
+      "file": "ADV_002808.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7299443277138953,
+      "sharpe_6m": 0.35045435737296915,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.252664"
+    },
+    "ADV_002809": {
+      "file": "ADV_002809.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.238677160523282,
+      "sharpe_6m": -0.07237889115284266,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.269512"
+    },
+    "ADV_002812": {
+      "file": "ADV_002812.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.736249196641358,
+      "sharpe_6m": 1.1770343738637064,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.286780"
+    },
+    "ADV_002813": {
+      "file": "ADV_002813.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3352236802770006,
+      "sharpe_6m": -0.29100944452843863,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.303729"
+    },
+    "ADV_002816": {
+      "file": "ADV_002816.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.9050981584517528,
+      "sharpe_6m": 0.3494325535069841,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.320629"
+    },
+    "ADV_002817": {
+      "file": "ADV_002817.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3200190814492432,
+      "sharpe_6m": 0.46301926049151665,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.338381"
+    },
+    "ADV_002833": {
+      "file": "ADV_002833.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7479591168479807,
+      "sharpe_6m": 0.9069706346334342,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.355127"
+    },
+    "ADV_002834": {
+      "file": "ADV_002834.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8590525580033828,
+      "sharpe_6m": 1.3744711819527962,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.371645"
+    },
+    "ADV_002835": {
+      "file": "ADV_002835.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5319078165907811,
+      "sharpe_6m": 1.907019163596448,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.389773"
+    },
+    "ADV_002836": {
+      "file": "ADV_002836.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4452935180120834,
+      "sharpe_6m": 0.632897128979088,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.407569"
+    },
+    "ADV_002837": {
+      "file": "ADV_002837.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7464162192753347,
+      "sharpe_6m": 1.7472442776721802,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.423813"
+    },
+    "ADV_002840": {
+      "file": "ADV_002840.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5060140834965492,
+      "sharpe_6m": 0.003618217868094237,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.439468"
+    },
+    "ADV_002841": {
+      "file": "ADV_002841.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8161817997307972,
+      "sharpe_6m": 1.3332867692110257,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.456241"
+    },
+    "ADV_002845": {
+      "file": "ADV_002845.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0103281188744957,
+      "sharpe_6m": 0.16566427230608563,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.471989"
+    },
+    "ADV_002880": {
+      "file": "ADV_002880.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5804133397042692,
+      "sharpe_6m": 1.8614533659065673,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.489163"
+    },
+    "ADV_002882": {
+      "file": "ADV_002882.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.456256967981037,
+      "sharpe_6m": 0.8501665474883867,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.506704"
+    },
+    "ADV_002885": {
+      "file": "ADV_002885.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.635112232806438,
+      "sharpe_6m": 0.38338439857332846,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.532659"
+    },
+    "ADV_002888": {
+      "file": "ADV_002888.json",
+      "asset": "GUKG10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.818735201141888,
+      "sharpe_6m": 1.743544394535285,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.548751"
+    },
+    "ADV_002893": {
+      "file": "ADV_002893.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4070523633212824,
+      "sharpe_6m": 0.5757840473203032,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.565426"
+    },
+    "ADV_002894": {
+      "file": "ADV_002894.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4953384193637842,
+      "sharpe_6m": 0.4838968829533836,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.583510"
+    },
+    "ADV_002897": {
+      "file": "ADV_002897.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0699702780509017,
+      "sharpe_6m": 0.9578215864224969,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.599971"
+    },
+    "ADV_002900": {
+      "file": "ADV_002900.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3223037279848868,
+      "sharpe_6m": 1.7617122986786562,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.617391"
+    },
+    "ADV_002905": {
+      "file": "ADV_002905.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0198937967400394,
+      "sharpe_6m": -0.5807998736659232,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.633408"
+    },
+    "ADV_002912": {
+      "file": "ADV_002912.json",
+      "asset": "GVSK10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0201436162111819,
+      "sharpe_6m": -0.06869038606960041,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.650573"
+    },
+    "ADV_002953": {
+      "file": "ADV_002953.json",
+      "asset": "GDBR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0538742302618438,
+      "sharpe_6m": 1.5732429123006932,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.667951"
+    },
+    "ADV_002966": {
+      "file": "ADV_002966.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.364055970893568,
+      "sharpe_6m": 1.027555372979099,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.685459"
+    },
+    "ADV_002990": {
+      "file": "ADV_002990.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2785702450539267,
+      "sharpe_6m": -1.4949475496596991,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.703499"
+    },
+    "ADV_002992": {
+      "file": "ADV_002992.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.403796442733717,
+      "sharpe_6m": 0.03347764970524452,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:42:23.721019"
+    },
+    "ADV_003001": {
+      "file": "ADV_003001.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5638351361158773,
+      "sharpe_6m": 0.7947639395794589,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:15.999203"
+    },
+    "ADV_003005": {
+      "file": "ADV_003005.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2119717961878067,
+      "sharpe_6m": 1.0534853395153148,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.024203"
+    },
+    "ADV_003009": {
+      "file": "ADV_003009.json",
+      "asset": "USGG10YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.569428353956477,
+      "sharpe_6m": 0.9498662100592925,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.051830"
+    },
+    "ADV_003035": {
+      "file": "ADV_003035.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.392164983707021,
+      "sharpe_6m": 0.3801947107929738,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.073355"
+    },
+    "ADV_003084": {
+      "file": "ADV_003084.json",
+      "asset": "NQ1 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1879343027447518,
+      "sharpe_6m": 1.6250174962307622,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.096086"
+    },
+    "ADV_003143": {
+      "file": "ADV_003143.json",
+      "asset": "GTAUD3YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1246548200710618,
+      "sharpe_6m": 1.656291919470317,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.122104"
+    },
+    "ADV_003175": {
+      "file": "ADV_003175.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4243920821198277,
+      "sharpe_6m": -0.9832542932338708,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.143339"
+    },
+    "ADV_003177": {
+      "file": "ADV_003177.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7186132353100891,
+      "sharpe_6m": 1.2806722776399402,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.162853"
+    },
+    "ADV_003178": {
+      "file": "ADV_003178.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.7914193033214527,
+      "sharpe_6m": 1.0695344153306026,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.184493"
+    },
+    "ADV_003179": {
+      "file": "ADV_003179.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3156012465250433,
+      "sharpe_6m": 0.23152433273665848,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.206530"
+    },
+    "ADV_003181": {
+      "file": "ADV_003181.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.317655023965505,
+      "sharpe_6m": -0.004698618645909011,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.228674"
+    },
+    "ADV_003183": {
+      "file": "ADV_003183.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.609758760457117,
+      "sharpe_6m": 1.6991892377047073,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.249199"
+    },
+    "ADV_003184": {
+      "file": "ADV_003184.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6033669359363871,
+      "sharpe_6m": 1.6991892377047138,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.269816"
+    },
+    "ADV_003185": {
+      "file": "ADV_003185.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3805056521163628,
+      "sharpe_6m": -0.1320434325154044,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.289485"
+    },
+    "ADV_003186": {
+      "file": "ADV_003186.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5121105754366682,
+      "sharpe_6m": 0.24729868204099592,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.309197"
+    },
+    "ADV_003189": {
+      "file": "ADV_003189.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.703938654971819,
+      "sharpe_6m": 1.699189237704707,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.330494"
+    },
+    "ADV_003190": {
+      "file": "ADV_003190.json",
+      "asset": "USGG2YR Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.306473936254359,
+      "sharpe_6m": 0.32978187594674524,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.354980"
+    },
+    "ADV_003193": {
+      "file": "ADV_003193.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.1411782590049713,
+      "sharpe_6m": 1.1752364853517363,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.381683"
+    },
+    "ADV_003198": {
+      "file": "ADV_003198.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.465951125584034,
+      "sharpe_6m": 1.5458120100721389,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.405128"
+    },
+    "ADV_003199": {
+      "file": "ADV_003199.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0138908949272554,
+      "sharpe_6m": 0.0,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.429771"
+    },
+    "ADV_003201": {
+      "file": "ADV_003201.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0967386082537793,
+      "sharpe_6m": 0.9608909900243995,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.457689"
+    },
+    "ADV_003205": {
+      "file": "ADV_003205.json",
+      "asset": "GFRN10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.2253129284301114,
+      "sharpe_6m": 0.0,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.475937"
+    },
+    "ADV_003378": {
+      "file": "ADV_003378.json",
+      "asset": "GTAUD10YR Corp",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.264277780823065,
+      "sharpe_6m": 1.0211573347755987,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.497134"
+    },
+    "ADV_003411": {
+      "file": "ADV_003411.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3411869413322361,
+      "sharpe_6m": 0.5346404139705134,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.516491"
+    },
+    "ADV_003414": {
+      "file": "ADV_003414.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3802419877130687,
+      "sharpe_6m": 0.4566338496707091,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.536152"
+    },
+    "ADV_003415": {
+      "file": "ADV_003415.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.151125849898888,
+      "sharpe_6m": 1.6669540715062328,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.556566"
+    },
+    "ADV_003417": {
+      "file": "ADV_003417.json",
+      "asset": "GBTPGR10 Index",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3373763174670583,
+      "sharpe_6m": 1.1951471658908848,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.575443"
+    },
+    "ADV_003471": {
+      "file": "ADV_003471.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.0275767395121425,
+      "sharpe_6m": 1.1950596073799606,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.599763"
+    },
+    "ADV_003472": {
+      "file": "ADV_003472.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3150709679164738,
+      "sharpe_6m": 1.6531782479301738,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.623329"
+    },
+    "ADV_003473": {
+      "file": "ADV_003473.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3837401422447975,
+      "sharpe_6m": 1.6926806040776523,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.643412"
+    },
+    "ADV_003474": {
+      "file": "ADV_003474.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8457311983348184,
+      "sharpe_6m": 2.765947279542935,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.664122"
+    },
+    "ADV_003475": {
+      "file": "ADV_003475.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.4854720231373282,
+      "sharpe_6m": 2.0435366803300674,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.684597"
+    },
+    "ADV_003477": {
+      "file": "ADV_003477.json",
+      "asset": "JPY Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.6827549786143428,
+      "sharpe_6m": 2.1782831449918647,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.704664"
+    },
+    "ADV_003480": {
+      "file": "ADV_003480.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 2.035267301484735,
+      "sharpe_6m": 2.0647324760016077,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.724372"
+    },
+    "ADV_003481": {
+      "file": "ADV_003481.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.954536292399094,
+      "sharpe_6m": 2.5780371975134573,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.743138"
+    },
+    "ADV_003482": {
+      "file": "ADV_003482.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.3710193976046947,
+      "sharpe_6m": 2.731653434259114,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.763408"
+    },
+    "ADV_003483": {
+      "file": "ADV_003483.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.8555424231534454,
+      "sharpe_6m": 3.728758304465165,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.785282"
+    },
+    "ADV_003484": {
+      "file": "ADV_003484.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.5432660084100267,
+      "sharpe_6m": 3.447535958081947,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.805808"
+    },
+    "ADV_003486": {
+      "file": "ADV_003486.json",
+      "asset": "KRW Curncy",
+      "strategy_type": "advanced",
+      "sharpe_3y": 1.358710065058981,
+      "sharpe_6m": 3.2762368737207463,
+      "is_active": true,
+      "updated_at": "2026-02-24T11:43:16.831326"
+    }
+  },
+  "last_updated": "2026-02-26T16:38:45.876392"
+}

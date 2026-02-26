@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002554",
+  "created_at": "2026-02-24T11:42:21.692396",
+  "updated_at": "2026-02-26T16:38:43.646844",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 50,
+    "rsi_period": 5,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1949814062883606,
+    "sharpe_6m": -0.40875691288117266,
+    "sharpe_1m": 0.0,
+    "total_return": 2.098876520714252,
+    "annual_return": 0.0,
+    "max_drawdown": 0.3916300002564998,
+    "win_rate": 0.3125,
+    "num_trades": 64,
+    "calmar_ratio": 0.950988580398255,
+    "sortino_ratio": 1.6689079061793695
+  },
+  "is_active": true,
+  "version": 1
+}

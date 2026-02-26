@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001572",
   "created_at": "2026-02-13T17:13:42.308045",
-  "updated_at": "2026-02-23T09:51:03.154244",
+  "updated_at": "2026-02-26T16:49:23.744633",
   "asset": "USGG10YR Index",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_zscore_reversion",

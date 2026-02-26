@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_003001",
+  "created_at": "2026-02-24T11:55:16.675190",
+  "updated_at": "2026-02-26T16:43:04.815214",
+  "asset": "USGG10YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.3727190184354057,
+    "sharpe_6m": 1.0591364985484413,
+    "sharpe_1m": -2.9000133925567995,
+    "total_return": 1.3026946811637024,
+    "annual_return": 0.0,
+    "max_drawdown": 0.5776121030604439,
+    "win_rate": 0.402439024390244,
+    "num_trades": 82,
+    "calmar_ratio": 0.4315177795210044,
+    "sortino_ratio": 1.028327637846912
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002329",
+  "created_at": "2026-02-24T11:54:19.671533",
+  "updated_at": "2026-02-26T16:43:04.356257",
+  "asset": "GFRN10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 20,
+    "rsi_period": 5,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1653813423725694,
+    "sharpe_6m": 2.059647772825661,
+    "sharpe_1m": 2.9290370146028595,
+    "total_return": 0.27074075179869356,
+    "annual_return": 0.0,
+    "max_drawdown": 0.07188534212550078,
+    "win_rate": 0.375,
+    "num_trades": 72,
+    "calmar_ratio": 0.9183517432883619,
+    "sortino_ratio": 1.5967491553547217
+  },
+  "is_active": true,
+  "version": 1
+}

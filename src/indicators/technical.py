@@ -371,4 +371,55 @@ class TechnicalIndicators:
             _, _, histogram = cls.macd(prices, **params)
             return histogram
         
+        if indicator_name == 'rolling_sharpe':
+            return cls.rolling_sharpe(prices, **params)
+        
+        if indicator_name == 'trailing_stop_signal':
+            return cls.trailing_stop_signal(prices, **params)
+        
         raise ValueError(f"Unknown indicator: {indicator_name}")
+
+    @staticmethod
+    def rolling_sharpe(prices: pd.Series, period: int = 20) -> pd.Series:
+        """
+        Calculates the annualized rolling Sharpe ratio.
+        
+        Args:
+            prices: Price series (e.g., bond yields or cumulative returns)
+            period: Lookback period
+            
+        Returns:
+            Rolling Sharpe ratio series
+        """
+        # For rates, returns are often bps or daily diff
+        returns = prices.diff().fillna(0)
+        
+        rolling_mean = returns.rolling(window=period).mean()
+        rolling_std = returns.rolling(window=period).std()
+        
+        # Annualization factor (approx 252 trading days)
+        sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+        
+        return sharpe.fillna(0)
+
+    @staticmethod
+    def trailing_stop_signal(series: pd.Series, stop_pct: float = 0.2, rolling_window: int = 60, abs_drop: float = 0.5) -> pd.Series:
+        """
+        Generates a signal when a series drops below its recent rolling high water mark.
+        
+        Args:
+            series: Data series to track (e.g., Rolling Sharpe)
+            stop_pct: Percentage drop from peak for signal (0.1 = 10%)
+            rolling_window: Window for calculating the High Water Mark
+            abs_drop: Minimum absolute drop to trigger (default: 0.5)
+            
+        Returns:
+            Boolean series: True if stop breached
+        """
+        # Calculate Rolling High Water Mark over the last N days
+        hwm = series.rolling(window=rolling_window, min_periods=1).max()
+        
+        breach_pct = (series < (hwm * (1 - stop_pct))) & (hwm > 0)
+        breach_abs = (series < (hwm - abs_drop))
+        
+        return breach_pct | breach_abs

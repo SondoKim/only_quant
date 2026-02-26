@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_003486",
+  "created_at": "2026-02-24T11:59:09.952242",
+  "updated_at": "2026-02-26T16:43:48.415328",
+  "asset": "KRW Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "carry_trade",
+  "params": {
+    "rate_asset": "USGG2YR Index",
+    "foreign_rate_asset": "GVSK3YR Index",
+    "period": 30,
+    "threshold": 0.5
+  },
+  "related_asset": "GVSK3YR Index",
+  "performance": {
+    "sharpe_3y": 1.0062849526589086,
+    "sharpe_6m": 0.6676442163076374,
+    "sharpe_1m": -2.9009944801982286,
+    "total_return": 0.30804486980969303,
+    "annual_return": 0.0,
+    "max_drawdown": 0.1273889752922674,
+    "win_rate": 0.6829268292682927,
+    "num_trades": 41,
+    "calmar_ratio": 0.5735175625820663,
+    "sortino_ratio": 1.414615319803982
+  },
+  "is_active": true,
+  "version": 1
+}

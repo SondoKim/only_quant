@@ -1,0 +1,26 @@
+{
+  "strategy_id": "MOM_000896",
+  "created_at": "2026-02-24T11:48:14.571383",
+  "updated_at": "2026-02-26T16:42:01.666344",
+  "asset": "JPY Curncy",
+  "strategy_type": "momentum",
+  "strategy_name": "breakout",
+  "params": {
+    "period": 30
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0179091566852811,
+    "sharpe_6m": 0.25231305701042295,
+    "sharpe_1m": 0.0,
+    "total_return": 0.2578004404508226,
+    "annual_return": 0.0,
+    "max_drawdown": 0.05582451239922033,
+    "win_rate": 0.45,
+    "num_trades": 20,
+    "calmar_ratio": 1.1486625891407003,
+    "sortino_ratio": 1.376423380279279
+  },
+  "is_active": true,
+  "version": 1
+}

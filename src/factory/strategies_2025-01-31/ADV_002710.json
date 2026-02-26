@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002710",
+  "created_at": "2026-02-24T11:46:22.046564",
+  "updated_at": "2026-02-26T16:40:44.758441",
+  "asset": "GTAUD3YR Corp",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0.5
+  },
+  "related_asset": "GTAUD10YR Corp",
+  "performance": {
+    "sharpe_3y": 1.1622314495085073,
+    "sharpe_6m": 0.21310109067851027,
+    "sharpe_1m": -1.8116928271011832,
+    "total_return": 2.3777212919479584,
+    "annual_return": 0.0,
+    "max_drawdown": 0.8127591796151324,
+    "win_rate": 0.3950617283950617,
+    "num_trades": 81,
+    "calmar_ratio": 0.4892711799280924,
+    "sortino_ratio": 1.742114425656903
+  },
+  "is_active": true,
+  "version": 1
+}

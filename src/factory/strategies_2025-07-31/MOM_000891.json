@@ -1,0 +1,26 @@
+{
+  "strategy_id": "MOM_000891",
+  "created_at": "2026-02-24T12:08:20.763089",
+  "updated_at": "2026-02-26T16:45:52.033201",
+  "asset": "GUKG10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "breakout",
+  "params": {
+    "period": 10
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.4603796788872239,
+    "sharpe_6m": -0.21477956854757912,
+    "sharpe_1m": -0.24336052426432642,
+    "total_return": 4.004711242056096,
+    "annual_return": 0.0,
+    "max_drawdown": 0.5593945113814656,
+    "win_rate": 0.3818181818181819,
+    "num_trades": 55,
+    "calmar_ratio": 0.8890972283487312,
+    "sortino_ratio": 1.5629997111384442
+  },
+  "is_active": true,
+  "version": 1
+}

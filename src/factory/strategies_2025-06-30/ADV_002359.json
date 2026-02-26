@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002359",
+  "created_at": "2026-02-24T12:06:29.341373",
+  "updated_at": "2026-02-26T16:45:06.614928",
+  "asset": "EUR Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 50,
+    "rsi_period": 10,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0980710014623192,
+    "sharpe_6m": 2.821332874991229,
+    "sharpe_1m": 6.317776943415307,
+    "total_return": 0.20523265118972872,
+    "annual_return": 0.0,
+    "max_drawdown": 0.04505881320813345,
+    "win_rate": 0.33333333333333326,
+    "num_trades": 34,
+    "calmar_ratio": 1.0807201677093814,
+    "sortino_ratio": 1.5783195701948944
+  },
+  "is_active": true,
+  "version": 1
+}

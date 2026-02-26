@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000108",
+  "created_at": "2026-02-24T11:40:16.745304",
+  "updated_at": "2026-02-26T16:38:39.993977",
+  "asset": "USGG2YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "ema_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 20
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.5671787711750302,
+    "sharpe_6m": 0.9828470962763293,
+    "sharpe_1m": -0.14000634262575087,
+    "total_return": 7.702065160148189,
+    "annual_return": 0.0,
+    "max_drawdown": 0.4661357277964024,
+    "win_rate": 0.30303030303030304,
+    "num_trades": 34,
+    "calmar_ratio": 1.7856328439316307,
+    "sortino_ratio": 2.044768008455878
+  },
+  "is_active": true,
+  "version": 1
+}

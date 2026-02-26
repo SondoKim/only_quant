@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002493",
+  "created_at": "2026-02-24T11:46:21.317335",
+  "updated_at": "2026-02-26T16:40:44.315629",
+  "asset": "GDBR10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 20,
+    "rsi_period": 10,
+    "rsi_entry": 45,
+    "rsi_exit": 45
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2356193471787487,
+    "sharpe_6m": 1.256183087676456,
+    "sharpe_1m": 1.6230797404124142,
+    "total_return": 0.26415005092007915,
+    "annual_return": 0.0,
+    "max_drawdown": 0.06555265569207583,
+    "win_rate": 0.44,
+    "num_trades": 25,
+    "calmar_ratio": 1.0159320539280028,
+    "sortino_ratio": 1.6143128028131304
+  },
+  "is_active": true,
+  "version": 1
+}

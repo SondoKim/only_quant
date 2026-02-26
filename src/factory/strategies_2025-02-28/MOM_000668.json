@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000668",
+  "created_at": "2026-02-24T11:48:14.075069",
+  "updated_at": "2026-02-26T16:42:01.374173",
+  "asset": "GDBR2 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 8,
+    "slow_period": 13,
+    "signal_period": 9
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2395469836475046,
+    "sharpe_6m": -1.1871523850590435,
+    "sharpe_1m": -2.512731568557011,
+    "total_return": 0.3110128410751058,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08396435391571691,
+    "win_rate": 0.4242424242424242,
+    "num_trades": 66,
+    "calmar_ratio": 0.9067979620258964,
+    "sortino_ratio": 1.7917301774634264
+  },
+  "is_active": true,
+  "version": 1
+}

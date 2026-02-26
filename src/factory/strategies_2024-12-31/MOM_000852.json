@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000852",
+  "created_at": "2026-02-24T11:40:18.638175",
+  "updated_at": "2026-02-26T16:38:41.747421",
+  "asset": "GTAUD3YR Corp",
+  "strategy_type": "momentum",
+  "strategy_name": "spread_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0
+  },
+  "related_asset": "GTAUD10YR Corp",
+  "performance": {
+    "sharpe_3y": 1.1914729294772572,
+    "sharpe_6m": -1.2560409488883002,
+    "sharpe_1m": -5.042527480964431,
+    "total_return": 1.4452054899744717,
+    "annual_return": 0.0,
+    "max_drawdown": 0.6038330272070684,
+    "win_rate": 0.5565217391304348,
+    "num_trades": 115,
+    "calmar_ratio": 0.4709532707087046,
+    "sortino_ratio": 1.1834652048379855
+  },
+  "is_active": true,
+  "version": 1
+}

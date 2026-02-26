@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002941",
+  "created_at": "2026-02-24T12:06:29.653993",
+  "updated_at": "2026-02-26T16:45:06.800258",
+  "asset": "NQ1 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1315322831824024,
+    "sharpe_6m": 0.8420922813643813,
+    "sharpe_1m": 4.78594378734634,
+    "total_return": 0.6645108408587369,
+    "annual_return": 0.0,
+    "max_drawdown": 0.20443863562257694,
+    "win_rate": 0.42045454545454547,
+    "num_trades": 89,
+    "calmar_ratio": 0.6778620409371391,
+    "sortino_ratio": 1.0053313594665065
+  },
+  "is_active": true,
+  "version": 1
+}

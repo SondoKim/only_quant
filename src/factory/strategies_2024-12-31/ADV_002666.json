@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002666",
+  "created_at": "2026-02-24T11:42:22.351957",
+  "updated_at": "2026-02-26T16:38:44.101847",
+  "asset": "GDBR10 Index",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 1.0
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 1.008332271874853,
+    "sharpe_6m": 0.7555438689455014,
+    "sharpe_1m": 4.461295023419764,
+    "total_return": 0.2347889003402477,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08743868389179109,
+    "win_rate": 0.4788732394366197,
+    "num_trades": 72,
+    "calmar_ratio": 0.6954567327127714,
+    "sortino_ratio": 1.1905123102636566
+  },
+  "is_active": true,
+  "version": 1
+}

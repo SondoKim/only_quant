@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000237",
+  "created_at": "2026-02-24T11:40:17.000648",
+  "updated_at": "2026-02-26T16:38:40.309372",
+  "asset": "GDBR10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 4,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2477568839703428,
+    "sharpe_6m": 0.31086553781977605,
+    "sharpe_1m": 6.1629897819613095,
+    "total_return": 0.23503588238794917,
+    "annual_return": 0.0,
+    "max_drawdown": 0.08835078933091095,
+    "win_rate": 0.3178294573643411,
+    "num_trades": 130,
+    "calmar_ratio": 0.688949235857429,
+    "sortino_ratio": 1.2740695371816968
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000159",
+  "created_at": "2026-02-24T11:52:15.629257",
+  "updated_at": "2026-02-26T16:43:03.810635",
+  "asset": "GJGB10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "ema_crossover",
+  "params": {
+    "fast_period": 10,
+    "slow_period": 26
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1012238521202327,
+    "sharpe_6m": 3.1935234967116193,
+    "sharpe_1m": 1.818232628845855,
+    "total_return": 0.08437092350361951,
+    "annual_return": 0.0,
+    "max_drawdown": 0.03003956800844559,
+    "win_rate": 0.34615384615384615,
+    "num_trades": 27,
+    "calmar_ratio": 0.7272766452805209,
+    "sortino_ratio": 1.188624822274817
+  },
+  "is_active": true,
+  "version": 1
+}

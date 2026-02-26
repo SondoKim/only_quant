@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001665",
+  "created_at": "2026-02-24T11:53:18.070429",
+  "updated_at": "2026-02-26T16:43:04.059984",
+  "asset": "GDBR2 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 1.5,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "USGG2YR Index",
+  "performance": {
+    "sharpe_3y": 1.1348281054489366,
+    "sharpe_6m": 0.6220030612865008,
+    "sharpe_1m": -3.8578668842583976,
+    "total_return": 0.4028350490836348,
+    "annual_return": 0.0,
+    "max_drawdown": 0.07228870983622361,
+    "win_rate": 0.6461538461538461,
+    "num_trades": 130,
+    "calmar_ratio": 1.3075191481609605,
+    "sortino_ratio": 2.2527139668647416
+  },
+  "is_active": true,
+  "version": 1
+}

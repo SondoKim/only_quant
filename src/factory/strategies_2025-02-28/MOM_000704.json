@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000704",
+  "created_at": "2026-02-24T11:48:14.242370",
+  "updated_at": "2026-02-26T16:42:01.473025",
+  "asset": "GBTPGR10 Index",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 12,
+    "slow_period": 13,
+    "signal_period": 9
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.018517250623754,
+    "sharpe_6m": 0.9534018213934567,
+    "sharpe_1m": 0.3947068609646154,
+    "total_return": 2.59504774933732,
+    "annual_return": 0.0,
+    "max_drawdown": 0.7222431432656774,
+    "win_rate": 0.3793103448275862,
+    "num_trades": 59,
+    "calmar_ratio": 0.5738061057917799,
+    "sortino_ratio": 1.462205183759723
+  },
+  "is_active": true,
+  "version": 1
+}
