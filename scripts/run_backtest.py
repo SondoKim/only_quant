@@ -201,11 +201,20 @@ def run_phase2_simulation(prices: pd.DataFrame,
                 continue
             
             factory = StrategyFactory(storage_dir=str(storage_dir))
-            # Activate all stored strategies (no 6M filter)
-            for sid in factory.index.get('strategies', {}):
-                factory.set_active(sid, True)
+            # Batch-activate all stored strategies in memory, then save once
+            for sid, info in factory.index.get('strategies', {}).items():
+                info['is_active'] = True
+                # Also update the individual JSON file's is_active field
+                strat = factory.load_strategy(sid)
+                if strat:
+                    strat['is_active'] = True
+                    strat_file = factory.storage_dir / f"{sid}.json"
+                    with open(strat_file, 'w', encoding='utf-8') as jf:
+                        import json as _json
+                        _json.dump(strat, jf, indent=2, ensure_ascii=False)
+            factory._save_index()  # single write
             
-            active_count = len(factory.get_active_strategies())
+            active_count = sum(1 for v in factory.index['strategies'].values() if v.get('is_active'))
             logger.info(f"📊 Rebalance at {date_str}: {active_count} active strategies")
             
             current_selector = StrategySelector(factory=factory)

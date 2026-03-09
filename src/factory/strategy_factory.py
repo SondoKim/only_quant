@@ -22,10 +22,15 @@ class StrategyFactory:
         Initialize strategy factory.
         
         Args:
-            storage_dir: Directory for storing strategy JSON files
+            storage_dir: Directory for storing strategy JSON files.
+                         Must be provided (auto-resolved by main.py).
         """
-        self.storage_dir = Path(storage_dir) if storage_dir else \
-            Path(__file__).parent / 'strategies_present'
+        if not storage_dir:
+            raise ValueError(
+                "storage_dir must be provided. "
+                "Use main.py --mode discover/signals to auto-resolve."
+            )
+        self.storage_dir = Path(storage_dir)
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         
         self.index_file = self.storage_dir / 'index.json'

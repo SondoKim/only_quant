@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001831",
+  "created_at": "2026-03-09T11:26:48.735208",
+  "updated_at": "2026-03-09T13:40:15.401661",
+  "asset": "GJGB10 Index",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 20,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "USGG10YR Index",
+  "performance": {
+    "sharpe_3y": 1.7441753425280377,
+    "sharpe_6m": -0.5339953246834047,
+    "sharpe_1m": 4.887857202720912,
+    "total_return": 0.2919278654981443,
+    "annual_return": 0.0,
+    "max_drawdown": 0.054324391517617726,
+    "win_rate": 0.5925925925925926,
+    "num_trades": 136,
+    "calmar_ratio": 1.102671382192617,
+    "sortino_ratio": 2.761035746343836
+  },
+  "is_active": true,
+  "version": 1
+}

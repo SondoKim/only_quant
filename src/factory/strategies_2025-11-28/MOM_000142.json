@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000142",
   "created_at": "2026-02-24T12:24:34.580578",
-  "updated_at": "2026-02-26T16:47:56.165681",
+  "updated_at": "2026-03-09T14:03:49.369965",
   "asset": "NQ1 Index",
   "strategy_type": "momentum",
   "strategy_name": "ema_crossover",

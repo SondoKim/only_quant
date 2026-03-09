@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002980",
   "created_at": "2026-02-24T11:46:23.074124",
-  "updated_at": "2026-02-26T16:40:45.247190",
+  "updated_at": "2026-03-09T13:59:31.268334",
   "asset": "GDBR2 Index",
   "strategy_type": "advanced",
   "strategy_name": "volatility_breakout",

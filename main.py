@@ -28,6 +28,46 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _get_last_business_day_of_prev_month() -> 'datetime.date':
+    """
+    Return the last business day (Mon-Fri) of the previous month.
+    Does not account for public holidays.
+    """
+    from datetime import timedelta
+
+    today = datetime.now().date()
+    # Last day of previous month = day before the 1st of this month
+    last_day = today.replace(day=1) - timedelta(days=1)
+    # Walk backwards from last_day until we hit a weekday
+    while last_day.weekday() >= 5:          # 5=Sat, 6=Sun
+        last_day -= timedelta(days=1)
+    return last_day
+
+
+def _resolve_discover_settings(
+    explicit_end_date: str = None,
+    explicit_storage_dir: str = None,
+) -> tuple:
+    """
+    Resolve end_date and storage_dir for discover mode.
+
+    Returns:
+        (end_date: str, storage_dir: str)
+    """
+    last_bday = _get_last_business_day_of_prev_month()
+    end_date = explicit_end_date or last_bday.strftime('%Y-%m-%d')
+
+    if explicit_storage_dir:
+        storage_dir = explicit_storage_dir
+    else:
+        factory_base = Path(__file__).parent / 'src' / 'factory'
+        storage_dir = str(factory_base / f'strategies_{end_date}')
+
+    logger.info(f"📂 [discover] end_date  = {end_date}")
+    logger.info(f"📂 [discover] storage   = {storage_dir}")
+    return end_date, storage_dir
+
+
 def _resolve_signals_storage_dir(explicit_storage_dir: str = None) -> str:
     """
     Resolve the strategy storage directory for signals mode.
@@ -37,7 +77,7 @@ def _resolve_signals_storage_dir(explicit_storage_dir: str = None) -> str:
       - Today is in month M  →  use last business day of month M-1
       - Looks for 'strategies_YYYY-MM-DD' directories inside src/factory/
         and picks the newest one whose date falls within month M-1.
-      - Falls back to 'strategies_present' if nothing is found.
+      - Raises FileNotFoundError if nothing is found.
     """
     if explicit_storage_dir:
         return explicit_storage_dir
@@ -76,11 +116,11 @@ def _resolve_signals_storage_dir(explicit_storage_dir: str = None) -> str:
         logger.info(f"📂 [signals] Auto-selected strategy folder: {chosen.name}")
         return str(chosen)
 
-    # Fallback
-    fallback = factory_base / 'strategies_present'
-    logger.warning(f"⚠️  [signals] No folder found for {prev_year}-{prev_month:02d}. "
-                   f"Falling back to strategies_present.")
-    return str(fallback)
+    # No folder found → error
+    raise FileNotFoundError(
+        f"No strategies folder found for {prev_year}-{prev_month:02d}. "
+        f"Run 'python main.py --mode discover' first to generate one."
+    )
 
 
 class GlobalMacroTradingSystem:
@@ -393,9 +433,16 @@ def main():
     
     args = parser.parse_args()
     
-    # For signals mode, auto-resolve the storage dir if not explicitly provided
+    # Auto-resolve storage_dir / end_date depending on mode
     storage_dir = args.storage_dir
-    if args.mode == 'signals' and not storage_dir:
+    end_date = args.end_date
+
+    if args.mode == 'discover':
+        end_date, storage_dir = _resolve_discover_settings(
+            explicit_end_date=args.end_date,
+            explicit_storage_dir=args.storage_dir,
+        )
+    elif args.mode == 'signals' and not storage_dir:
         storage_dir = _resolve_signals_storage_dir()
 
     system = GlobalMacroTradingSystem(storage_dir=storage_dir)
@@ -403,7 +450,7 @@ def main():
     if args.mode == 'discover':
         result = system.run_discovery(
             start_date=args.start_date,
-            end_date=args.end_date,
+            end_date=end_date,
             batch_size=args.batch_size,
             sample_ratio=args.sample_ratio,
             sample_count=args.sample_count,

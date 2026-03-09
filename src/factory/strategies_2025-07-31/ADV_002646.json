@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002646",
   "created_at": "2026-02-24T12:10:28.862546",
-  "updated_at": "2026-02-26T16:45:52.531294",
+  "updated_at": "2026-03-09T14:02:39.155318",
   "asset": "GDBR2 Index",
   "strategy_type": "advanced",
   "strategy_name": "lead_lag_momentum",

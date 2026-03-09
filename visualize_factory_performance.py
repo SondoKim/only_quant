@@ -20,8 +20,14 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 def visualize_factory():
+    import argparse
+    parser = argparse.ArgumentParser(description='Visualize strategy factory performance')
+    parser.add_argument('--storage-dir', required=True,
+                        help='Path to strategies folder (e.g. src/factory/strategies_2026-02-27)')
+    args = parser.parse_args()
+
     # 1. Initialize
-    factory = StrategyFactory()
+    factory = StrategyFactory(storage_dir=args.storage_dir)
     data_loader = DataLoader()
     
     # 2. Load Data (Last 3+ years)

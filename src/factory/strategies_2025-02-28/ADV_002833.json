@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002833",
   "created_at": "2026-02-24T11:50:24.313583",
-  "updated_at": "2026-02-26T16:42:03.285222",
+  "updated_at": "2026-03-09T14:00:19.356131",
   "asset": "USGG2YR Index",
   "strategy_type": "advanced",
   "strategy_name": "volatility_breakout",

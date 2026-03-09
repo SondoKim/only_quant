@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002332",
   "created_at": "2026-02-24T11:46:20.977035",
-  "updated_at": "2026-02-26T16:40:44.134570",
+  "updated_at": "2026-03-09T13:59:30.157952",
   "asset": "GFRN10 Index",
   "strategy_type": "advanced",
   "strategy_name": "filtered_momentum",

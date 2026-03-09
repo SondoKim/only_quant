@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000625",
   "created_at": "2026-02-24T11:44:18.534502",
-  "updated_at": "2026-02-26T16:40:42.585424",
+  "updated_at": "2026-03-09T13:59:28.718878",
   "asset": "GDBR10 Index",
   "strategy_type": "momentum",
   "strategy_name": "macd_crossover",

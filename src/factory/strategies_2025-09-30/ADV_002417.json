@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002417",
   "created_at": "2026-02-24T12:18:34.676758",
-  "updated_at": "2026-02-26T16:46:52.386286",
+  "updated_at": "2026-03-09T14:03:16.976418",
   "asset": "NQ1 Index",
   "strategy_type": "advanced",
   "strategy_name": "filtered_momentum",

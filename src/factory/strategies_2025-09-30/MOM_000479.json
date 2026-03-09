@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000479",
   "created_at": "2026-02-24T12:16:26.541614",
-  "updated_at": "2026-02-26T16:46:51.973958",
+  "updated_at": "2026-03-09T14:03:16.590557",
   "asset": "NQ1 Index",
   "strategy_type": "momentum",
   "strategy_name": "macd_crossover",

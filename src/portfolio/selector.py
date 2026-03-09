@@ -36,7 +36,9 @@ class StrategySelector:
             factory: Strategy factory instance
             config_path: Path to indicators.yaml
         """
-        self.factory = factory or StrategyFactory()
+        self.factory = factory
+        if not self.factory:
+            raise ValueError("StrategySelector requires a StrategyFactory instance.")
         self.config_path = config_path or self._get_default_config_path()
         self.config = self._load_config()
         self.active_strategies: List[Dict[str, Any]] = []

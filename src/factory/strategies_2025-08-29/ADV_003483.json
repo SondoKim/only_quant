@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_003483",
   "created_at": "2026-02-24T12:15:25.761940",
-  "updated_at": "2026-02-26T16:46:29.290123",
+  "updated_at": "2026-03-09T14:03:01.526630",
   "asset": "KRW Curncy",
   "strategy_type": "advanced",
   "strategy_name": "carry_trade",

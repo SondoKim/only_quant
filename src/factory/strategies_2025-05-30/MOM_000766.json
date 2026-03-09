@@ -1,7 +1,7 @@
 {
   "strategy_id": "MOM_000766",
   "created_at": "2026-02-24T12:00:14.051880",
-  "updated_at": "2026-02-26T16:44:27.289278",
+  "updated_at": "2026-03-09T14:01:40.190932",
   "asset": "GUKG10 Index",
   "strategy_type": "momentum",
   "strategy_name": "rate_of_change",

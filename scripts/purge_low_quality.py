@@ -55,7 +55,7 @@ def clean_corrupted_files():
     if deleted > 0:
         logger.info(f"✅ Cleaned {deleted} corrupted/empty files.")
 
-def purge_low_quality_strategies(sharpe_3y_threshold=None, sharpe_6m_threshold=None):
+def purge_low_quality_strategies(storage_dir, sharpe_3y_threshold=None, sharpe_6m_threshold=None):
     # 1. Clean corrupted files first to avoid factory crash
     clean_corrupted_files()
 
@@ -67,7 +67,7 @@ def purge_low_quality_strategies(sharpe_3y_threshold=None, sharpe_6m_threshold=N
 
     # 3. Initialize factory
     try:
-        factory = StrategyFactory()
+        factory = StrategyFactory(storage_dir=storage_dir)
     except Exception as e:
         logger.error(f"Failed to initialize factory: {e}")
         return
@@ -101,4 +101,9 @@ def purge_low_quality_strategies(sharpe_3y_threshold=None, sharpe_6m_threshold=N
     logger.info(f"📊 Remaining strategies in factory: {remaining}")
 
 if __name__ == "__main__":
-    purge_low_quality_strategies()
+    import argparse
+    parser = argparse.ArgumentParser(description='Purge low-quality strategies')
+    parser.add_argument('--storage-dir', required=True,
+                        help='Path to strategies folder (e.g. src/factory/strategies_2026-02-27)')
+    args = parser.parse_args()
+    purge_low_quality_strategies(storage_dir=args.storage_dir)

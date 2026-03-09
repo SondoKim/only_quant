@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002718",
   "created_at": "2026-02-24T11:50:23.954772",
-  "updated_at": "2026-02-26T16:42:03.075138",
+  "updated_at": "2026-03-09T14:00:19.191362",
   "asset": "GTAUD10YR Corp",
   "strategy_type": "advanced",
   "strategy_name": "lead_lag_momentum",

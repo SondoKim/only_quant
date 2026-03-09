@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_002287",
   "created_at": "2026-02-24T11:50:22.853017",
-  "updated_at": "2026-02-26T16:42:02.357777",
+  "updated_at": "2026-03-09T14:00:18.656161",
   "asset": "GTAUD3YR Corp",
   "strategy_type": "advanced",
   "strategy_name": "filtered_momentum",

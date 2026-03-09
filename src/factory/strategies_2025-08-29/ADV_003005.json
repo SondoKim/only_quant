@@ -1,7 +1,7 @@
 {
   "strategy_id": "ADV_003005",
   "created_at": "2026-02-24T12:15:25.692067",
-  "updated_at": "2026-02-26T16:46:29.253360",
+  "updated_at": "2026-03-09T14:03:01.496552",
   "asset": "GUKG10 Index",
   "strategy_type": "advanced",
   "strategy_name": "volatility_breakout",
