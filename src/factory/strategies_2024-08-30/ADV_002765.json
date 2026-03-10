@@ -1,0 +1,30 @@
+{
+  "strategy_id": "ADV_002765",
+  "created_at": "2026-03-10T12:06:49.640281",
+  "updated_at": "2026-03-10T12:06:49.647284",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "multi_tf_momentum",
+  "params": {
+    "periods": [
+      5,
+      10,
+      20
+    ]
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.4153977779315048,
+    "sharpe_6m": -0.7183160229699873,
+    "sharpe_1m": 2.281080032814788,
+    "total_return": 0.9904754776527903,
+    "annual_return": 0.0,
+    "max_drawdown": 0.3443466515116757,
+    "win_rate": 0.3442622950819672,
+    "num_trades": 62,
+    "calmar_ratio": 0.6683678802472768,
+    "sortino_ratio": 1.3831307926648317
+  },
+  "is_active": true,
+  "version": 1
+}

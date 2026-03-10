@@ -16,7 +16,6 @@ from ..strategies.momentum import MomentumStrategy
 from ..strategies.mean_reversion import MeanReversionStrategy
 from ..strategies.advanced import AdvancedStrategies
 from ..backtester.vectorbt_engine import VectorBTEngine
-from ..indicators.technical import TechnicalIndicators
 
 logger = logging.getLogger(__name__)
 
@@ -223,11 +222,10 @@ class StrategySelector:
             entries, exits = AdvancedStrategies.generate_signals(
                 prices, asset, strategy_name, params, related_asset
             )
-            # Treat advanced as long-only for now (consistent with vectorbt_engine update)
             position = self._calculate_position_momentum(entries, exits)
         else:
             raise ValueError(f"Unknown strategy category: {strategy_type}")
-        
+
         # Get signal for target date
         if target_date:
             target_idx = pd.to_datetime(target_date)
@@ -237,9 +235,12 @@ class StrategySelector:
                 current_position = position.iloc[-1]
         else:
             current_position = position.iloc[-1]
-        
-        # All assets use the original strategy signal direction (no reversal).
-        final_position = current_position
+
+        # ADV 전략은 역방향으로 매매 (백테스팅 결과 반대 신호가 더 우수)
+        if strategy_type == 'advanced':
+            final_position = -current_position
+        else:
+            final_position = current_position
             
         return {
             'strategy_id': strategy['strategy_id'],
@@ -376,70 +377,18 @@ class StrategySelector:
         asset_df = pd.DataFrame(asset_positions)
 
         # --- Aggregate Pivot Logic (Portfolio Level) ---
-        # Calculate single pivot for the whole portfolio based on aggregate performance of all active strategies.
-        portfolio_pivot_active = False
-        portfolio_sharpe_val = 0.0
-        
         if pivot_cfg.get('enabled', False) and not asset_df.empty:
             try:
-                # Collect returns for ALL strategies currently identified as active
-                group_returns = []
-                backtester = VectorBTEngine(prices)
-                
-                for strat_obj in self.active_strategies:
-                    res = backtester.run_backtest(strat_obj)
-                    if res.returns is not None:
-                        group_returns.append(res.returns)
-                
-                if group_returns:
-                    # Aggregate ALL active strategies performance
-                    # This represents the "Equity Curve" of the selected portfolio
-                    agg_rets = pd.concat(group_returns, axis=1).mean(axis=1)
-                    equity_curve = agg_rets.cumsum()
-                    
-                    period = pivot_cfg.get('rolling_period', 20)
-                    roll_sharpe = TechnicalIndicators.rolling_sharpe(equity_curve, period=period)
-                    
-                    portfolio_sharpe_val = float(roll_sharpe.iloc[-1])
-                    
-                    stop_pct = pivot_cfg.get('trailing_stop_pct', 0.2)
-                    hwm_window = pivot_cfg.get('hwm_window', 60)
-                    abs_drop = pivot_cfg.get('abs_drop_threshold', 3.0)
-                    
-                    current_sharpe = portfolio_sharpe_val
-                    recovery_thresh = pivot_cfg.get('recovery_sharpe', 3.0)
-                    abs_drop_thresh = pivot_cfg.get('abs_drop_threshold', 3.0)
-                    
-                    # Regime Logic:
-                    # 1. In Healthy Zone (Sharpe >= 3.0): Always Normal, track Peak.
-                    # 2. In Unhealthy Zone (Sharpe < 3.0): Check if we dropped significantly from the peak seen while healthy.
-                    
-                    if current_sharpe >= recovery_thresh:
-                        # We are healthy. Reset/Track HWM since we are in a good place.
-                        if self._portfolio_pivot_active:
-                            logger.info(f"✅ PORTFOLIO PIVOT CANCELLED (Sharpe: {current_sharpe:.2f} > {recovery_thresh})")
-                        
-                        self._portfolio_pivot_active = False
-                        self._hwm_since_recovery = max(self._hwm_since_recovery, current_sharpe)
-                    else:
-                        # We are in the potential pivot zone (< 3.0).
-                        # Only trigger if the drop from our last healthy peak is significant (> 3.0 points).
-                        if not self._portfolio_pivot_active:
-                            if current_sharpe < (self._hwm_since_recovery - abs_drop_thresh):
-                                self._portfolio_pivot_active = True
-                                logger.info(f"🚨 GLOBAL PORTFOLIO PIVOT TRIGGERED (Sharpe: {current_sharpe:.2f} < HWM {self._hwm_since_recovery:.2f} - {abs_drop_thresh})")
-                    
-                    if self._portfolio_pivot_active:
-                        action = pivot_cfg.get('action', 'reverse')
-                        if action == 'reverse':
-                            asset_df['position'] = -asset_df['position']
-                        elif action == 'exit':
-                            asset_df['position'] = 0
+                if self._portfolio_pivot_active:
+                    action = pivot_cfg.get('action', 'reverse')
+                    if action == 'reverse':
+                        asset_df['position'] = -asset_df['position']
+                    elif action == 'exit':
+                        asset_df['position'] = 0
             except Exception as e:
                 logger.warning(f"Portfolio pivot logic failed: {e}")
 
         # Add portfolio-level metadata to all asset rows for logging
-        asset_df['portfolio_sharpe'] = portfolio_sharpe_val
         asset_df['portfolio_pivot_active'] = self._portfolio_pivot_active
         
         return asset_df
@@ -468,18 +417,17 @@ class StrategySelector:
         asset_summary = []
         # Custom sort for assets: US, DE, UK, AU, JP, KR rates, then FX
         def asset_sort_key(ticker: str) -> tuple:
-            # Group priority
-            if 'USGG' in ticker: group = 1
-            elif 'GDBR' in ticker: group = 2
-            elif 'GUKG' in ticker: group = 3
-            elif 'GTAUD' in ticker: group = 4
-            elif 'GJGB' in ticker: group = 5
+            if ticker in ('TU1 Comdty', 'TY1 Comdty'): group = 1
+            elif ticker in ('DU1 Comdty', 'RX1 Comdty'): group = 2
+            elif ticker == 'G 1 Comdty': group = 3
+            elif ticker in ('YM1 Comdty', 'XM1 Comdty'): group = 4
+            elif ticker == 'JB1 Comdty': group = 5
             elif 'GVSK' in ticker: group = 6
-            elif 'Index' in ticker or 'Corp' in ticker: group = 7  # Other rates (FR, IT etc)
-            elif 'Curncy' in ticker: group = 8  # FX
-            elif 'NQ' in ticker: group = 9     # Indices
+            elif 'Comdty' in ticker: group = 7   # OAT1, IK1 등
+            elif 'NQ' in ticker: group = 9
+            elif 'Curncy' in ticker: group = 8
+            elif 'Index' in ticker or 'Corp' in ticker: group = 7
             else: group = 10
-            
             return (group, ticker)
 
         all_assets = sorted(list(prices.columns), key=asset_sort_key)
@@ -521,7 +469,6 @@ class StrategySelector:
             'raw_signals': signals.to_dict('records') if not signals.empty else [],
             'aggregated_positions': positions.to_dict('records') if not positions.empty else [],
             'portfolio_pivot_active': bool(positions['portfolio_pivot_active'].iloc[0]) if not positions.empty else False,
-            'portfolio_sharpe': float(positions['portfolio_sharpe'].iloc[0]) if not positions.empty else 0.0,
         }
     
     def get_position_for_asset(

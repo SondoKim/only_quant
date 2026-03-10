@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_001829",
+  "created_at": "2026-03-10T11:47:14.616698",
+  "updated_at": "2026-03-10T11:47:14.623697",
+  "asset": "JB1 Comdty",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_zscore_reversion",
+  "params": {
+    "period": 10,
+    "entry_threshold": 2.0,
+    "exit_threshold": 0.5
+  },
+  "related_asset": "TY1 Comdty",
+  "performance": {
+    "sharpe_3y": 1.4903838585479336,
+    "sharpe_6m": 1.1005235977043792,
+    "sharpe_1m": -3.979260099919847,
+    "total_return": 0.08521736629073744,
+    "annual_return": 0.0,
+    "max_drawdown": 0.01147588398967727,
+    "win_rate": 0.7073170731707318,
+    "num_trades": 41,
+    "calmar_ratio": 2.390395161679327,
+    "sortino_ratio": 3.3888732683175906
+  },
+  "is_active": true,
+  "version": 1
+}

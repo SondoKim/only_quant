@@ -82,27 +82,36 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     ax4.grid(True, linestyle='--', alpha=0.6)
     ax4.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
 
-    # --- Plot 4: Diagnostic - Portfolio Rolling Sharpe & Pivots ---
-    if 'Portfolio_Rolling_Sharpe' in df.columns:
-        # Plot Portfolio Rolling Sharpe
-        ax5.plot(df['Date'], df['Portfolio_Rolling_Sharpe'], color='purple', linewidth=2.5, label='Portfolio Rolling Sharpe')
-        ax5.axhline(y=0, color='black', linestyle='-', alpha=0.3)
-        
-        # Mark pivot points (Portfolio Level) - Only the first day of trigger
-        pivots = df[df['Portfolio_Pivot_Active'] == 1]
-        if not pivots.empty:
-            # Shift and check for the first 1 in a sequence
-            first_trigger = df[(df['Portfolio_Pivot_Active'] == 1) & (df['Portfolio_Pivot_Active'].shift(1) == 0)]
-            if not first_trigger.empty:
-                ax5.scatter(first_trigger['Date'], first_trigger['Portfolio_Rolling_Sharpe'], 
-                           marker='x', s=150, color='red', linewidth=3, label='PORTFOLIO PIVOT TRIGGER', zorder=5)
-            else:
-                # If it started as 1
-                ax5.scatter(pivots['Date'].iloc[0], pivots['Portfolio_Rolling_Sharpe'].iloc[0], 
-                           marker='x', s=150, color='red', linewidth=3, label='PORTFOLIO PIVOT TRIGGER', zorder=5)
-    
-    ax5.set_ylabel('Rolling Sharpe / Pivot', fontweight='bold')
-    ax5.set_title('Global Portfolio Pivot Diagnostic: Rolling Sharpe & Reversal Triggers', fontsize=14)
+    # --- Plot 4: Strategy-Type PnL (MOM / MR / ADV) ---
+    has_type_pnl = all(c in df.columns for c in ['total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl'])
+    if has_type_pnl:
+        sharpe_mom = calc_sharpe(df['total_mom_cumpnl'])
+        sharpe_mr  = calc_sharpe(df['total_mr_cumpnl'])
+        sharpe_adv = calc_sharpe(df['total_adv_cumpnl'])
+
+        ax5.plot(df['Date'], df['total_mom_cumpnl'], color='tab:blue',
+                 linewidth=2.5, label=f'Momentum (Sharpe: {sharpe_mom:.2f})')
+        ax5.plot(df['Date'], df['total_mr_cumpnl'],  color='tab:orange',
+                 linewidth=2.5, label=f'Mean-Reversion (Sharpe: {sharpe_mr:.2f})')
+        ax5.plot(df['Date'], df['total_adv_cumpnl'], color='tab:green',
+                 linewidth=2.5, label=f'Advanced (Sharpe: {sharpe_adv:.2f})')
+
+        for col, color, fmt in [
+            ('total_mom_cumpnl', 'tab:blue',   '{:.2f}'),
+            ('total_mr_cumpnl',  'tab:orange',  '{:.2f}'),
+            ('total_adv_cumpnl', 'tab:green',   '{:.2f}'),
+        ]:
+            last_val = df[col].iloc[-1]
+            ax5.text(last_date, last_val, f'  {fmt.format(last_val)}',
+                     color=color, fontsize=8, va='center')
+
+        ax5.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.4)
+    else:
+        ax5.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest to generate.',
+                 ha='center', va='center', transform=ax5.transAxes, fontsize=12, color='gray')
+
+    ax5.set_ylabel('Normalised Cum PnL', fontweight='bold')
+    ax5.set_title('Strategy-Type Performance: MOM vs MR vs ADV', fontsize=14)
     ax5.grid(True, linestyle='--', alpha=0.6)
     ax5.legend(loc='upper left')
 

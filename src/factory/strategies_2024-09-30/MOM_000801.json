@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000801",
+  "created_at": "2026-03-10T12:08:34.718586",
+  "updated_at": "2026-03-10T12:08:34.723583",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rate_of_change",
+  "params": {
+    "period": 10,
+    "entry_threshold": 0,
+    "exit_threshold": 0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0739028094267604,
+    "sharpe_6m": -0.32096830233845863,
+    "sharpe_1m": -2.8772017942836876,
+    "total_return": 0.9303212039493698,
+    "annual_return": 0.0,
+    "max_drawdown": 0.28696165768902804,
+    "win_rate": 0.3411764705882353,
+    "num_trades": 85,
+    "calmar_ratio": 0.7483416492946559,
+    "sortino_ratio": 1.2875985767368414
+  },
+  "is_active": true,
+  "version": 1
+}

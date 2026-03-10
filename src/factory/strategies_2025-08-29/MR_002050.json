@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_002050",
+  "created_at": "2026-03-10T12:50:36.267762",
+  "updated_at": "2026-03-10T12:50:36.272760",
+  "asset": "RX1 Comdty",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 60,
+    "low_percentile": 10,
+    "high_percentile": 80,
+    "exit_percentile": 50
+  },
+  "related_asset": "DU1 Comdty",
+  "performance": {
+    "sharpe_3y": 1.026842142352773,
+    "sharpe_6m": 2.6162638854266533,
+    "sharpe_1m": 2.0054154204959898,
+    "total_return": 0.18996098279997725,
+    "annual_return": 0.0,
+    "max_drawdown": 0.14299104205235505,
+    "win_rate": 0.7368421052631579,
+    "num_trades": 39,
+    "calmar_ratio": 0.3081948100328252,
+    "sortino_ratio": 1.0005653955554688
+  },
+  "is_active": true,
+  "version": 1
+}

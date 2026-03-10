@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002700",
+  "created_at": "2026-03-10T11:59:22.105136",
+  "updated_at": "2026-03-10T11:59:22.111137",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "lead_lag_momentum",
+  "params": {
+    "period": 10,
+    "threshold": 0
+  },
+  "related_asset": "GVSK3YR Index",
+  "performance": {
+    "sharpe_3y": 1.0052103984186154,
+    "sharpe_6m": 0.017083840749818148,
+    "sharpe_1m": -3.713822835773919,
+    "total_return": 0.8904992845607598,
+    "annual_return": 0.0,
+    "max_drawdown": 0.22049669123025983,
+    "win_rate": 0.4625,
+    "num_trades": 80,
+    "calmar_ratio": 0.9986434959808618,
+    "sortino_ratio": 1.356174099757832
+  },
+  "is_active": true,
+  "version": 1
+}

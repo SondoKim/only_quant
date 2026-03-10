@@ -1,0 +1,29 @@
+{
+  "strategy_id": "MR_002073",
+  "created_at": "2026-03-10T12:43:19.830862",
+  "updated_at": "2026-03-10T12:43:19.835866",
+  "asset": "RX1 Comdty",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "spread_percentile_reversion",
+  "params": {
+    "period": 60,
+    "low_percentile": 25,
+    "high_percentile": 75,
+    "exit_percentile": 50
+  },
+  "related_asset": "TY1 Comdty",
+  "performance": {
+    "sharpe_3y": 1.1371503805817846,
+    "sharpe_6m": 0.6422295323709984,
+    "sharpe_1m": -0.4382943917473631,
+    "total_return": 0.2392446842215209,
+    "annual_return": 0.0,
+    "max_drawdown": 0.13633169690255326,
+    "win_rate": 0.728813559322034,
+    "num_trades": 60,
+    "calmar_ratio": 0.4133893393646744,
+    "sortino_ratio": 1.1173448616194435
+  },
+  "is_active": true,
+  "version": 1
+}

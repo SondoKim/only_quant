@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MR_001485",
+  "created_at": "2026-03-10T13:15:37.090803",
+  "updated_at": "2026-03-10T13:15:37.095802",
+  "asset": "BP1 Curncy",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "bollinger_reversion",
+  "params": {
+    "period": 10,
+    "std_dev": 2.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.5072437746126217,
+    "sharpe_6m": 2.1025581119730408,
+    "sharpe_1m": 0.9536182676886096,
+    "total_return": 0.255388454156347,
+    "annual_return": 0.0,
+    "max_drawdown": 0.0875227961957482,
+    "win_rate": 0.6493506493506493,
+    "num_trades": 78,
+    "calmar_ratio": 0.6057569239602864,
+    "sortino_ratio": 1.2373388575230997
+  },
+  "is_active": true,
+  "version": 1
+}

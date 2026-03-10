@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002526",
+  "created_at": "2026-03-10T11:37:07.285002",
+  "updated_at": "2026-03-10T11:37:07.293002",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 20,
+    "rsi_period": 5,
+    "rsi_entry": 45,
+    "rsi_exit": 45
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.16919597372586,
+    "sharpe_6m": 0.46765605383150033,
+    "sharpe_1m": 0.0,
+    "total_return": 0.8341340628013494,
+    "annual_return": 0.0,
+    "max_drawdown": 0.21930507398511115,
+    "win_rate": 0.32608695652173914,
+    "num_trades": 46,
+    "calmar_ratio": 1.0829396705900505,
+    "sortino_ratio": 1.5315068138250887
+  },
+  "is_active": true,
+  "version": 1
+}

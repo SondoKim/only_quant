@@ -464,13 +464,12 @@ def main():
         result = system.run_daily_update(max_correlation=args.max_corr, pivot_enabled=args.pivot)
         print("\n📅 Daily Update Results:")
         
-        sharpe = result.get('portfolio_sharpe', 0.0)
         pivot_active = result.get('portfolio_pivot_active', False)
         pivot_status = "🚨 [PIVOT ACTIVE]" if pivot_active else "✅ [NORMAL]"
-        print(f"   Portfolio Rolling Sharpe: {sharpe:.2f} {pivot_status}")
+        print(f"   Portfolio Status: {pivot_status}")
         if pivot_active:
             print("   ⚠️  All positions are CURRENTLY REVERSED due to trend exhaustion.")
-        
+
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
         positions = result['asset_positions']
@@ -478,38 +477,52 @@ def main():
             positions = [p for p in positions if 'NQ' not in p['asset']]
         
         # Per-active-asset budget allocation
-        # Budget = 1,000만원 / active_count → max net = ±1,000만원 when all agree
-        rate_keywords = ['Index', 'Corp']
+        # Comdty 선물: 이미 선물 가격 기준 → 신호 방향 그대로
+        # GVSK (한국 yield): yield 방향 → 선물 방향 역전 필요
+        rate_keywords = ['Comdty', 'Index', 'Corp']
         fx_keywords = ['Curncy']
         LONG_KEYWORDS = ['🟢 LONG']
         SHORT_KEYWORDS = ['🔴 SHORT']
+
+        def rate_display_upd(pos_str, asset):
+            if 'GVSK' not in asset:
+                return pos_str
+            if pos_str == '🟢 LONG':  return '🔴 SHORT'
+            if pos_str == '🔴 SHORT': return '🟢 LONG'
+            return pos_str
+
         rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
+                         and 'NQ' not in p['asset']
                          and p['confidence'] > 0 and p['position'] not in ['🔘 NOSTR', '⚪ FLAT']]
         delta_map = {}
         net_delta = 0
         if rate_positions:
             per_budget = 1000 / len(rate_positions)
             for p in rate_positions:
-                sign = 1 if p['position'] in LONG_KEYWORDS else -1
+                display = rate_display_upd(p['position'], p['asset'])
+                sign = 1 if display in LONG_KEYWORDS else -1
                 d = round(p['confidence'] * per_budget * sign)
                 delta_map[p['asset']] = d
                 net_delta += d
-        
-        print("\n   📊 금리 포지션:")
+
+        print("\n   📊 금리 포지션 (선물 기준):")
         for pos in positions:
             if not any(k in pos['asset'] for k in rate_keywords):
                 continue
+            if 'NQ' in pos['asset']:
+                continue
+            display_pos = rate_display_upd(pos['position'], pos['asset']) if pos['position'] not in ['🔘 NOSTR', '⚪ FLAT'] else pos['position']
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
-            print(f"      {pos['asset']}: {pos['position']} "
+            print(f"      {pos['asset']}: {display_pos} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
-        
+
         if rate_positions:
-            long_cnt = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)
-            short_cnt = sum(1 for p in rate_positions if p['position'] in SHORT_KEYWORDS)
+            long_cnt  = sum(1 for p in rate_positions if rate_display_upd(p['position'], p['asset']) in LONG_KEYWORDS)
+            short_cnt = sum(1 for p in rate_positions if rate_display_upd(p['position'], p['asset']) in SHORT_KEYWORDS)
             gross = sum(abs(v) for v in delta_map.values())
             net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
-            print(f"\n      💰 금리 넷 델타: {net_delta:+d}만원 {net_sign} (롱 {long_cnt} / 숏 {short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")
+            print(f"\n      💰 선물 넷 델타: {net_delta:+d}만원 {net_sign} (선물롱 {long_cnt} / 선물숏 {short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")
         
         print("\n   💱 FX 포지션:")
         for pos in positions:
@@ -523,10 +536,9 @@ def main():
         result = system.get_trading_signals(max_correlation=args.max_corr, pivot_enabled=args.pivot)
         print("\n🎯 Trading Signals:")
         
-        sharpe = result.get('portfolio_sharpe', 0.0)
         pivot_active = result.get('portfolio_pivot_active', False)
         pivot_status = "🚨 [PIVOT ACTIVE]" if pivot_active else "✅ [NORMAL]"
-        print(f"   Portfolio Rolling Sharpe: {sharpe:.2f} {pivot_status}")
+        print(f"   Portfolio Status: {pivot_status}")
         if pivot_active:
             print("   ⚠️  All positions are CURRENTLY REVERSED due to trend exhaustion.")
 
@@ -537,43 +549,50 @@ def main():
             positions = [p for p in positions if 'NQ' not in p['asset']]
         
         # Per-active-asset budget allocation
-        # For rates: display is INVERTED (yield direction → futures direction)
-        rate_keywords = ['Index', 'Corp']
+        # Comdty 선물: 이미 선물 가격 기준 → 신호 방향 그대로
+        # GVSK (한국 yield): yield 방향 → 선물 방향 역전 필요
+        rate_keywords = ['Comdty', 'Index', 'Corp']   # 금리 자산 (Comdty 선물 + GVSK)
         fx_keywords = ['Curncy']
         LONG_KEYWORDS = ['🟢 LONG']
         SHORT_KEYWORDS = ['🔴 SHORT']
-        # Helper: flip yield signal → futures direction for display
-        def rate_futures_display(pos_str):
-            if pos_str == '🟢 LONG':  return '🔴 SHORT'  # yield up → futures short
-            if pos_str == '🔴 SHORT': return '🟢 LONG'   # yield down → futures long
+
+        # GVSK(한국 yield)만 역전, Comdty 선물은 방향 그대로
+        def rate_display(pos_str, asset):
+            if 'GVSK' not in asset:
+                return pos_str  # 선물 기준 → 그대로
+            if pos_str == '🟢 LONG':  return '🔴 SHORT'  # yield up → 선물 short
+            if pos_str == '🔴 SHORT': return '🟢 LONG'   # yield down → 선물 long
             return pos_str
+
         rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
+                         and 'NQ' not in p['asset']
                          and p['confidence'] > 0 and p['position'] not in ['🔘 NOSTR', '⚪ FLAT']]
         delta_map = {}
         net_delta = 0
         if rate_positions:
             per_budget = 1000 / len(rate_positions)
             for p in rate_positions:
-                # Futures delta: yield LONG → short futures → negative delta
-                sign = -1 if p['position'] in LONG_KEYWORDS else 1
+                display = rate_display(p['position'], p['asset'])
+                sign = 1 if display in LONG_KEYWORDS else -1
                 d = round(p['confidence'] * per_budget * sign)
                 delta_map[p['asset']] = d
                 net_delta += d
-        
-        print("\n   📊 금리 포지션 (국채선물 기준):")
+
+        print("\n   📊 금리 포지션 (선물 기준):")
         for pos in positions:
             if not any(k in pos['asset'] for k in rate_keywords):
                 continue
-            display_pos = rate_futures_display(pos['position']) if pos['position'] not in ['🔘 NOSTR', '⚪ FLAT'] else pos['position']
+            if 'NQ' in pos['asset']:
+                continue
+            display_pos = rate_display(pos['position'], pos['asset']) if pos['position'] not in ['🔘 NOSTR', '⚪ FLAT'] else pos['position']
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
             print(f"      {pos['asset']}: {display_pos} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
-        
+
         if rate_positions:
-            # Futures perspective: yield-LONG = futures-SHORT
-            fut_long_cnt  = sum(1 for p in rate_positions if p['position'] in SHORT_KEYWORDS)  # yield short → fut long
-            fut_short_cnt = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)   # yield long  → fut short
+            fut_long_cnt  = sum(1 for p in rate_positions if rate_display(p['position'], p['asset']) in LONG_KEYWORDS)
+            fut_short_cnt = sum(1 for p in rate_positions if rate_display(p['position'], p['asset']) in SHORT_KEYWORDS)
             gross = sum(abs(v) for v in delta_map.values())
             net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
             print(f"\n      💰 선물 넷 델타: {net_delta:+d}만원 {net_sign} (선물롱 {fut_long_cnt} / 선물숏 {fut_short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")

@@ -1,0 +1,27 @@
+{
+  "strategy_id": "MOM_000077",
+  "created_at": "2026-03-10T11:53:55.576579",
+  "updated_at": "2026-03-10T11:53:55.584579",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "ma_crossover",
+  "params": {
+    "fast_period": 5,
+    "slow_period": 10
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2256647262335274,
+    "sharpe_6m": 0.15297275796927381,
+    "sharpe_1m": 2.2924621629925452,
+    "total_return": 1.1121308021868248,
+    "annual_return": 0.0,
+    "max_drawdown": 0.23579485348469276,
+    "win_rate": 0.33333333333333326,
+    "num_trades": 61,
+    "calmar_ratio": 1.1381151129218532,
+    "sortino_ratio": 1.5807254850824426
+  },
+  "is_active": true,
+  "version": 1
+}

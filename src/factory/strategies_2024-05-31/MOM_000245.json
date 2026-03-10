@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000245",
+  "created_at": "2026-03-10T11:53:55.728578",
+  "updated_at": "2026-03-10T11:53:55.733578",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "rsi_momentum",
+  "params": {
+    "period": 14,
+    "entry_threshold": 50,
+    "exit_threshold": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2004424151708566,
+    "sharpe_6m": -0.6987627641398227,
+    "sharpe_1m": -5.302769025143139,
+    "total_return": 1.133383141653587,
+    "annual_return": 0.0,
+    "max_drawdown": 0.23899733303874002,
+    "win_rate": 0.2982456140350877,
+    "num_trades": 58,
+    "calmar_ratio": 1.139784858557236,
+    "sortino_ratio": 1.5377076598069706
+  },
+  "is_active": true,
+  "version": 1
+}

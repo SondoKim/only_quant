@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MR_000936",
+  "created_at": "2026-03-10T12:59:29.890828",
+  "updated_at": "2026-03-10T12:59:29.897826",
+  "asset": "G 1 Comdty",
+  "strategy_type": "mean_reversion",
+  "strategy_name": "zscore_reversion",
+  "params": {
+    "period": 30,
+    "entry_threshold": 1.0,
+    "exit_threshold": 0.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.2440160287783248,
+    "sharpe_6m": 2.3622409671993934,
+    "sharpe_1m": 5.766500129535925,
+    "total_return": 0.3609997848277666,
+    "annual_return": 0.0,
+    "max_drawdown": 0.19928853373142655,
+    "win_rate": 0.8170731707317073,
+    "num_trades": 82,
+    "calmar_ratio": 0.38105515600680623,
+    "sortino_ratio": 1.0916271347856201
+  },
+  "is_active": true,
+  "version": 1
+}

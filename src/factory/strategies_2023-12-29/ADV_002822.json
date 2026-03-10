@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_002822",
+  "created_at": "2026-03-10T11:37:07.626004",
+  "updated_at": "2026-03-10T11:37:07.632005",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.0565547120317098,
+    "sharpe_6m": 0.7615971488148596,
+    "sharpe_1m": 0.0,
+    "total_return": 1.215158891756537,
+    "annual_return": 0.0,
+    "max_drawdown": 0.24149694118518628,
+    "win_rate": 0.6363636363636364,
+    "num_trades": 22,
+    "calmar_ratio": 1.334724916371142,
+    "sortino_ratio": 1.7084505075212097
+  },
+  "is_active": true,
+  "version": 1
+}

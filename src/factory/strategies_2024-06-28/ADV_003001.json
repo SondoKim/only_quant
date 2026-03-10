@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_003001",
+  "created_at": "2026-03-10T12:00:09.106225",
+  "updated_at": "2026-03-10T12:00:09.114225",
+  "asset": "KRW Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "volatility_breakout",
+  "params": {
+    "period": 10,
+    "k": 1.0
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1222203617316246,
+    "sharpe_6m": 1.4252345463930307,
+    "sharpe_1m": 1.4579597490256675,
+    "total_return": 0.2038429571073678,
+    "annual_return": 0.0,
+    "max_drawdown": 0.10857373173428159,
+    "win_rate": 0.40625,
+    "num_trades": 64,
+    "calmar_ratio": 0.5497475245385215,
+    "sortino_ratio": 1.2055609861217098
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,8 +1,8 @@
 {
   "strategy_id": "ADV_002882",
-  "created_at": "2026-02-24T12:06:29.619079",
-  "updated_at": "2026-03-09T14:02:06.698976",
-  "asset": "GUKG10 Index",
+  "created_at": "2026-03-10T12:43:20.081863",
+  "updated_at": "2026-03-10T12:43:20.088862",
+  "asset": "NQ1 Index",
   "strategy_type": "advanced",
   "strategy_name": "volatility_breakout",
   "params": {
@@ -11,16 +11,16 @@
   },
   "related_asset": null,
   "performance": {
-    "sharpe_3y": 1.4360427624476193,
-    "sharpe_6m": -0.08036800523744207,
-    "sharpe_1m": 0.0,
-    "total_return": 3.293067102821259,
+    "sharpe_3y": 1.0640737324885252,
+    "sharpe_6m": 0.7760410594528354,
+    "sharpe_1m": 4.785943787346338,
+    "total_return": 1.0096238936416,
     "annual_return": 0.0,
-    "max_drawdown": 0.8869005239646431,
-    "win_rate": 0.5,
-    "num_trades": 34,
-    "calmar_ratio": 0.5066491947637236,
-    "sortino_ratio": 1.3541938460566443
+    "max_drawdown": 0.2072710970122724,
+    "win_rate": 0.5476190476190477,
+    "num_trades": 43,
+    "calmar_ratio": 0.9422429115109496,
+    "sortino_ratio": 1.6646758081266417
   },
   "is_active": true,
   "version": 1

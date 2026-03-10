@@ -1,8 +1,8 @@
 {
   "strategy_id": "MR_001827",
-  "created_at": "2026-02-13T17:10:58.914487",
-  "updated_at": "2026-03-09T13:38:43.513812",
-  "asset": "GJGB10 Index",
+  "created_at": "2026-03-10T13:04:15.089949",
+  "updated_at": "2026-03-10T13:04:15.098950",
+  "asset": "JB1 Comdty",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_zscore_reversion",
   "params": {
@@ -10,18 +10,18 @@
     "entry_threshold": 1.5,
     "exit_threshold": 0.5
   },
-  "related_asset": "USGG10YR Index",
+  "related_asset": "TY1 Comdty",
   "performance": {
-    "sharpe_3y": 1.928322705612736,
-    "sharpe_6m": -0.7531967911952575,
-    "sharpe_1m": -4.628878637296336,
-    "total_return": 0.2603386874714855,
+    "sharpe_3y": 2.069172461496495,
+    "sharpe_6m": -0.011820851972971504,
+    "sharpe_1m": -4.506939528948793,
+    "total_return": 0.2941323074884633,
     "annual_return": 0.0,
-    "max_drawdown": 0.031241964451936704,
-    "win_rate": 0.6301369863013698,
-    "num_trades": 146,
-    "calmar_ratio": 1.7747524071333798,
-    "sortino_ratio": 3.065259859028068
+    "max_drawdown": 0.022971774084656227,
+    "win_rate": 0.7393939393939394,
+    "num_trades": 166,
+    "calmar_ratio": 2.707015146014694,
+    "sortino_ratio": 4.532673551710782
   },
   "is_active": true,
   "version": 1

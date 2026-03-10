@@ -12,6 +12,7 @@ Usage:
 import sys
 import logging
 import argparse
+from collections import defaultdict, deque
 from typing import List, Dict, Any, Optional, Union
 import pandas as pd
 import numpy as np
@@ -37,17 +38,31 @@ logger = logging.getLogger(__name__)
 # Helpers
 # ─────────────────────────────────────────────────────────────────────────────
 def asset_sort_key(ticker: str) -> tuple:
-    """Sort assets into groups: Rates → FX → Index."""
-    if 'USGG' in ticker: group = 1
-    elif 'GDBR' in ticker: group = 2
-    elif 'GUKG' in ticker: group = 3
-    elif 'GTAUD' in ticker: group = 4
-    elif 'GJGB' in ticker: group = 5
+    """Sort assets into groups: Rates → FX → Index.
+
+    Groups:
+      1 = US rates (TU1, TY1)
+      2 = Germany rates (DU1, RX1)
+      3 = UK rates (G 1)
+      4 = Australia rates (YM1, XM1)
+      5 = Japan rates (JB1)
+      6 = Korea rates (GVSK - yield basis, kept as-is)
+      7 = Europe peripheral / other Comdty (OAT1, IK1)
+      8 = FX Curncy (EC1, BP1, JY1, AD1, KRW)
+      9 = Equity Index (NQ1)
+     10 = Other
+    """
+    if ticker in ('TU1 Comdty', 'TY1 Comdty'): group = 1
+    elif ticker in ('DU1 Comdty', 'RX1 Comdty'): group = 2
+    elif ticker == 'G 1 Comdty': group = 3
+    elif ticker in ('YM1 Comdty', 'XM1 Comdty'): group = 4
+    elif ticker == 'JB1 Comdty': group = 5
     elif 'GVSK' in ticker: group = 6
-    elif 'Index' in ticker or 'Corp' in ticker:
-        if 'NQ' in ticker: group = 9
-        else: group = 7
+    elif 'Comdty' in ticker: group = 7          # OAT1, IK1 등 기타 선물
+    elif 'NQ' in ticker: group = 9
     elif 'Curncy' in ticker: group = 8
+    elif 'Index' in ticker or 'Corp' in ticker:  # 잔여 yield 데이터 (혹시 남아있을 경우)
+        group = 7
     else: group = 10
     return (group, ticker)
 
@@ -97,6 +112,44 @@ def load_config() -> dict:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Signal Helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
+                            prev_date, curr_date) -> dict:
+    """
+    Re-aggregate a (possibly filtered) list of raw strategy signals into
+    per-asset {position, raw_position} using sharpe-weighted voting,
+    same logic as selector.aggregate_positions.
+
+    Returns dict: {asset: {'position': int, 'raw_position': float}}
+    """
+    from collections import defaultdict
+    by_asset = defaultdict(list)
+    for sig in raw_signals:
+        by_asset[sig['asset']].append(sig)
+
+    result = {}
+    for asset, sigs in by_asset.items():
+        weights = [s['sharpe_6m'] for s in sigs]
+        positions = [s['position'] for s in sigs]
+        total_w = sum(weights)
+        if total_w > 0:
+            avg = sum(p * w for p, w in zip(positions, weights)) / total_w
+        else:
+            avg = sum(positions) / len(positions) if positions else 0.0
+        avg = float(np.clip(avg, -1.0, 1.0))
+        if avg > 0.3:
+            final = 1
+        elif avg < -0.3:
+            final = -1
+        else:
+            final = 0
+        result[asset] = {'position': final, 'raw_position': avg}
+    return result
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Phase 1: Pre-Discovery
 # ─────────────────────────────────────────────────────────────────────────────
 def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: Path):
@@ -139,10 +192,15 @@ def run_phase2_simulation(prices: pd.DataFrame,
                            factory_base: Path,
                            start_date_str: str,
                            max_correlation: float = 0.3,
-                           pivot_enabled: Optional[bool] = None):
+                           pivot_enabled: Optional[bool] = None,
+                           pnl_ma: int = 0):
     """
     Simulate monthly trading using pre-cached strategies.
     Each month uses the previous month-end's strategies.
+
+    pnl_ma: MA period for per-strategy PnL filter (0 = disabled).
+            Strategies whose cumulative PnL is below its own N-day MA are
+            silenced (position set to 0) before position aggregation.
     """
     cfg = load_config()
     
@@ -167,9 +225,18 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Track state
     cum_pnl = {asset: 0.0 for asset in all_assets}
+    cum_pnl_mom = 0.0   # Momentum strategies
+    cum_pnl_mr  = 0.0   # Mean-Reversion strategies
+    cum_pnl_adv = 0.0   # Advanced strategies
     log_data = []
     current_selector = None
     current_strategy_date = None
+
+    # Per-strategy PnL MA filter state
+    # strat_cum_pnl[sid]     : running cumulative PnL of that strategy
+    # strat_cum_history[sid] : deque of last `pnl_ma` cumulative PnL values
+    strat_cum_pnl: Dict[str, float] = defaultdict(float)
+    strat_cum_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=pnl_ma if pnl_ma > 0 else 1))
     
     print(f"🚀 Running Phase 2 Simulation (Start: {start_date_str}, MaxCorr: {max_correlation})...")
     
@@ -242,7 +309,29 @@ def run_phase2_simulation(prices: pd.DataFrame,
             target_date=str(date.date()),
             max_correlation=max_correlation
         )
-        sig_map = {item['asset']: item for item in report['aggregated_positions']}
+        raw = report.get('raw_signals', [])
+
+        # ── Per-strategy PnL MA filter ────────────────────────────────────
+        pnl_ma_off_count = 0
+        if pnl_ma > 0 and raw:
+            passing = []
+            for sig in raw:
+                sid = sig['strategy_id']
+                hist = strat_cum_history[sid]
+                # Need at least pnl_ma observations to make a judgment
+                if len(hist) < pnl_ma:
+                    passing.append(sig)   # warm-up: always include
+                else:
+                    ma_val = sum(hist) / len(hist)
+                    if strat_cum_pnl[sid] >= ma_val:
+                        passing.append(sig)  # ON: above MA
+                    else:
+                        pnl_ma_off_count += 1  # OFF: below MA
+            # Re-aggregate from passing signals only
+            filtered_map = _aggregate_raw_signals(passing, prices, prev_date, date)
+            sig_map = {asset: info for asset, info in filtered_map.items()}
+        else:
+            sig_map = {item['asset']: item for item in report['aggregated_positions']}
         
         # Calculate daily PnL
         row = {'Date': date.date()}
@@ -254,12 +343,11 @@ def run_phase2_simulation(prices: pd.DataFrame,
             sig_info = sig_map.get(asset, {'position': 0})
             pos = sig_info.get('position', 0)
             
-            # Rates: bps change
+            # 한국 금리(GVSK)만 yield → bps 변화로 계산; 선물(Comdty)/FX/Index는 % 수익률
             if ("Index" in asset or "Corp" in asset) and "NQ" not in asset:
-                daily_pnl = (p_curr - p_prev) * 100 * pos  # bps
-            # FX & Equity Index: % change
+                daily_pnl = (p_curr - p_prev) * 100 * pos  # bps (GVSK yield 기반)
             else:
-                daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # %
+                daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # % (선물 가격 기반)
             
             cum_pnl[asset] += daily_pnl
             
@@ -271,7 +359,6 @@ def run_phase2_simulation(prices: pd.DataFrame,
         # Use info from the first asset row which contains the broadcasted portfolio metrics
         first_asset = all_assets[0]
         first_info = sig_map.get(first_asset, {})
-        row["Portfolio_Rolling_Sharpe"] = round(first_info.get('portfolio_sharpe', 0), 2)
         row["Portfolio_Pivot_Active"] = 1 if first_info.get('portfolio_pivot_active', False) else 0
         
         # Summary PnLs
@@ -279,6 +366,57 @@ def run_phase2_simulation(prices: pd.DataFrame,
         row['total_fx_cumpnl'] = round(sum(cum_pnl[a] for a in fx_assets), 2)
         row['total_index_cumpnl'] = round(sum(cum_pnl[a] for a in index_assets), 2)
         
+        # ------------------------------------------------------------------
+        # Update per-strategy cumulative PnL history (for MA filter on next day)
+        # ------------------------------------------------------------------
+        for sig in raw:
+            sid   = sig['strategy_id']
+            asset = sig['asset']
+            if asset not in prices.columns:
+                continue
+            p_p = prices.loc[prev_date, asset]
+            p_c = prices.loc[date, asset]
+            pos_s   = sig['position']
+            is_rate = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
+            dpnl_s  = (p_c - p_p) * 100 * pos_s if is_rate else (p_c / p_p - 1) * 100 * pos_s
+            strat_cum_pnl[sid] += dpnl_s
+            strat_cum_history[sid].append(strat_cum_pnl[sid])
+
+        row['pnl_ma_off_count'] = pnl_ma_off_count
+
+        # ------------------------------------------------------------------
+        # Per-strategy-type daily PnL  (MOM / MR / ADV)
+        # ------------------------------------------------------------------
+        daily_mom = daily_mr = daily_adv = 0.0
+        n_mom = n_mr = n_adv = 0
+        for sig in raw:
+            asset = sig['asset']
+            if asset not in prices.columns:
+                continue
+            p_prev_s = prices.loc[prev_date, asset]
+            p_curr_s = prices.loc[date, asset]
+            pos_s    = sig['position']
+            is_rate  = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
+            if is_rate:
+                dpnl = (p_curr_s - p_prev_s) * 100 * pos_s
+            else:
+                dpnl = (p_curr_s / p_prev_s - 1) * 100 * pos_s
+            stype = sig.get('strategy_type', '')
+            if stype == 'momentum':
+                daily_mom += dpnl; n_mom += 1
+            elif stype == 'mean_reversion':
+                daily_mr  += dpnl; n_mr  += 1
+            elif stype == 'advanced':
+                daily_adv += dpnl; n_adv += 1
+        # Normalise by number of strategies (so scale is comparable to per-asset PnL)
+        cum_pnl_mom += (daily_mom / n_mom if n_mom else 0.0)
+        cum_pnl_mr  += (daily_mr  / n_mr  if n_mr  else 0.0)
+        cum_pnl_adv += (daily_adv / n_adv if n_adv else 0.0)
+
+        row['total_mom_cumpnl'] = round(cum_pnl_mom, 4)
+        row['total_mr_cumpnl']  = round(cum_pnl_mr,  4)
+        row['total_adv_cumpnl'] = round(cum_pnl_adv, 4)
+
         log_data.append(row)
     
     # ─── Save Results ────────────────────────────────────────────────────────
@@ -290,7 +428,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
     df_log.set_index('Date', inplace=True)
     
     # Reorder columns
-    total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl', 'total_index_cumpnl']
+    total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl', 'total_index_cumpnl',
+                      'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl']
     cum_pnl_cols = [c for c in df_log.columns if '_CumPnL' in c]
     other_cols = [c for c in df_log.columns if c not in total_pnl_cols + cum_pnl_cols]
     df_log = df_log[total_pnl_cols + cum_pnl_cols + other_cols]
@@ -301,8 +440,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Generate PnL plot
     pivot_status = "pivot_on" if (pivot_enabled if pivot_enabled is not None else True) else "pivot_off"
+    ma_status    = f"_ma{pnl_ma}" if pnl_ma > 0 else ""
     try:
-        plot_pnl(max_correlation=max_correlation, mode=f'backtest_{pivot_status}', start_date=start_date_str,
+        plot_pnl(max_correlation=max_correlation, mode=f'backtest_{pivot_status}{ma_status}',
+                 start_date=start_date_str,
                  end_date=prices.index[-1].strftime('%Y-%m-%d'))
     except Exception as e:
         print(f"⚠️ Could not generate plot: {e}")
@@ -324,6 +465,9 @@ def main():
     parser.add_argument('--pivot', dest='pivot', action='store_true', help='Force enable pivot logic')
     parser.add_argument('--no-pivot', dest='pivot', action='store_false', help='Force disable pivot logic')
     parser.set_defaults(pivot=None)
+    parser.add_argument('--pnl-ma', type=int, default=0,
+                        help='Per-strategy PnL MA filter period (0 = disabled). '
+                             'Strategies below their own N-day cumulative-PnL MA are silenced.')
     
     args = parser.parse_args()
     
@@ -357,11 +501,14 @@ def main():
     print(f"\n{'='*60}")
     print(f"  PHASE 2: Trading Simulation")
     print(f"{'='*60}")
+    if args.pnl_ma > 0:
+        print(f"🔍 PnL MA filter enabled: period = {args.pnl_ma} days")
     run_phase2_simulation(
         prices, month_ends, factory_base,
         start_date_str=args.start_date,
         max_correlation=args.max_corr,
-        pivot_enabled=args.pivot
+        pivot_enabled=args.pivot,
+        pnl_ma=args.pnl_ma,
     )
 
 

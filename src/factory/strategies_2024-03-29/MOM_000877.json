@@ -1,0 +1,26 @@
+{
+  "strategy_id": "MOM_000877",
+  "created_at": "2026-03-10T11:46:18.639887",
+  "updated_at": "2026-03-10T11:46:18.645885",
+  "asset": "GVSK10YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "breakout",
+  "params": {
+    "period": 20
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1418383748072416,
+    "sharpe_6m": -0.2706113852974199,
+    "sharpe_1m": -1.0929544300708267,
+    "total_return": 0.965785066980705,
+    "annual_return": 0.0,
+    "max_drawdown": 0.20383794848270406,
+    "win_rate": 0.43478260869565216,
+    "num_trades": 23,
+    "calmar_ratio": 1.2296517078716414,
+    "sortino_ratio": 1.6352298876963305
+  },
+  "is_active": true,
+  "version": 1
+}

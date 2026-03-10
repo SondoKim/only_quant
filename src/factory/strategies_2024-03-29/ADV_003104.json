@@ -1,0 +1,27 @@
+{
+  "strategy_id": "ADV_003104",
+  "created_at": "2026-03-10T11:49:01.330228",
+  "updated_at": "2026-03-10T11:49:01.337228",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "advanced",
+  "strategy_name": "relative_strength_rank",
+  "params": {
+    "period": 10,
+    "top_n": 3
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.102204605919093,
+    "sharpe_6m": -1.7803881249075257,
+    "sharpe_1m": -4.542281466800349,
+    "total_return": 0.9216240861006599,
+    "annual_return": 0.0,
+    "max_drawdown": 0.1942535297620978,
+    "win_rate": 0.39473684210526316,
+    "num_trades": 76,
+    "calmar_ratio": 1.2420965863852071,
+    "sortino_ratio": 1.4410772249538473
+  },
+  "is_active": true,
+  "version": 1
+}

@@ -1,0 +1,29 @@
+{
+  "strategy_id": "ADV_002482",
+  "created_at": "2026-03-10T12:43:20.042864",
+  "updated_at": "2026-03-10T12:43:20.048864",
+  "asset": "EC1 Curncy",
+  "strategy_type": "advanced",
+  "strategy_name": "filtered_momentum",
+  "params": {
+    "ma_period": 50,
+    "rsi_period": 5,
+    "rsi_entry": 50,
+    "rsi_exit": 50
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.1098443650518444,
+    "sharpe_6m": 2.578815342972044,
+    "sharpe_1m": 6.750047931337827,
+    "total_return": 0.2049087277056148,
+    "annual_return": 0.0,
+    "max_drawdown": 0.03965390083827319,
+    "win_rate": 0.34615384615384615,
+    "num_trades": 53,
+    "calmar_ratio": 1.2306106130375079,
+    "sortino_ratio": 1.720032954693116
+  },
+  "is_active": true,
+  "version": 1
+}

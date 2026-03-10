@@ -1,55 +1,57 @@
 # Global Macro Trading - Asset Configuration
+# 금리: 국채선물 기준 (한국만 yield 기준 유지)
+# FX: 선물 기준 (KRW만 spot 유지)
 
 rates:
   US:
     tickers:
-      - USGG2YR Index
-      - USGG10YR Index
+      - TU1 Comdty   # 미국 2Y T-Note 선물
+      - TY1 Comdty   # 미국 10Y T-Note 선물
     spreads:
-      - [USGG2YR Index, USGG10YR Index]  # 2s10s curve
+      - [TU1 Comdty, TY1 Comdty]  # US 2s10s
   UK:
     tickers:
-      - GUKG10 Index
+      - G 1 Comdty   # 영국 Gilt 선물
   Australia:
     tickers:
-      - GTAUD3YR Corp
-      - GTAUD10YR Corp
+      - YM1 Comdty   # 호주 3Y Bond 선물
+      - XM1 Comdty   # 호주 10Y Bond 선물
     spreads:
-      - [GTAUD3YR Corp, GTAUD10YR Corp]
+      - [YM1 Comdty, XM1 Comdty]
   Korea:
     tickers:
       - GVSK3YR Index
       - GVSK10YR Index
     spreads:
-      - [GVSK3YR Index, GVSK10YR Index]
+      - [GVSK3YR Index, GVSK10YR Index]  # KR 3s10s
   Germany:
     tickers:
-      - GDBR2 Index
-      - GDBR10 Index
+      - DU1 Comdty   # 독일 2Y Schatz 선물
+      - RX1 Comdty   # 독일 10Y Bund 선물
     spreads:
-      - [GDBR2 Index, GDBR10 Index]
+      - [DU1 Comdty, RX1 Comdty]
   France:
     tickers:
-      - GFRN10 Index
+      - OAT1 Comdty  # 프랑스 OAT 선물
   Italy:
     tickers:
-      - GBTPGR10 Index
+      - IK1 Comdty   # 이탈리아 BTP 선물
   Japan:
     tickers:
-      - GJGB10 Index
+      - JB1 Comdty   # 일본 JGB 선물
 
 fx:
   GBP:
-    ticker: GBP Curncy
+    ticker: BP1 Curncy  # GBP 선물
   AUD:
-    ticker: AUD Curncy
+    ticker: AD1 Curncy  # AUD 선물
   EUR:
-    ticker: EUR Curncy
+    ticker: EC1 Curncy  # EUR 선물
   JPY:
-    ticker: JPY Curncy
+    ticker: JY1 Curncy  # JPY 선물
   KRW:
-    ticker: KRW Curncy
-    
+    ticker: KRW Curncy  # 한국 원화 (spot 유지)
+
 indices:
   Nasdaq:
     ticker: NQ1 Index
@@ -57,35 +59,35 @@ indices:
 # Cross-asset relationships for spread indicators
 cross_asset_pairs:
   rates_curves:
-    - [USGG2YR Index, USGG10YR Index]      # US 2s10s
-    - [GDBR2 Index, GDBR10 Index]          # DE 2s10s
-    - [GVSK3YR Index, GVSK10YR Index]      # KR 3s10s
-    - [GTAUD3YR Corp, GTAUD10YR Corp]      # AU 3s10s
-  
+    - [TU1 Comdty, TY1 Comdty]              # US 2s10s
+    - [DU1 Comdty, RX1 Comdty]              # DE 2s10s
+    - [GVSK3YR Index, GVSK10YR Index]       # KR 3s10s
+    - [YM1 Comdty, XM1 Comdty]              # AU 3s10s
+
   rates_cross_country:
-    - [USGG2YR Index, GDBR2 Index]         # US-DE 2Y spread
-    - [USGG10YR Index, GDBR10 Index]       # US-DE 10Y spread
-    - [USGG10YR Index, GJGB10 Index]       # US-JP 10Y spread
-    - [USGG10YR Index, GUKG10 Index]       # US-UK 10Y spread
-  
+    - [TU1 Comdty, DU1 Comdty]              # US-DE 2Y spread
+    - [TY1 Comdty, RX1 Comdty]              # US-DE 10Y spread
+    - [TY1 Comdty, JB1 Comdty]              # US-JP 10Y spread
+    - [TY1 Comdty, G 1 Comdty]              # US-UK 10Y spread
+
   rates_peripheral:
-    - [GBTPGR10 Index, GDBR10 Index]       # Italy-Germany spread
-    - [GFRN10 Index, GDBR10 Index]         # France-Germany spread
+    - [IK1 Comdty, RX1 Comdty]              # Italy-Germany spread
+    - [OAT1 Comdty, RX1 Comdty]             # France-Germany spread
 
 # Carry trade pairs: [FX asset, US rate, Foreign rate]
 carry_pairs:
-  - fx: EUR Curncy
-    us_rate: USGG2YR Index
-    foreign_rate: GDBR2 Index
-  - fx: GBP Curncy
-    us_rate: USGG10YR Index
-    foreign_rate: GUKG10 Index
-  - fx: AUD Curncy
-    us_rate: USGG2YR Index
-    foreign_rate: GTAUD3YR Corp
-  - fx: JPY Curncy
-    us_rate: USGG10YR Index
-    foreign_rate: GJGB10 Index
+  - fx: EC1 Curncy
+    us_rate: TU1 Comdty
+    foreign_rate: DU1 Comdty
+  - fx: BP1 Curncy
+    us_rate: TY1 Comdty
+    foreign_rate: G 1 Comdty
+  - fx: AD1 Curncy
+    us_rate: TU1 Comdty
+    foreign_rate: YM1 Comdty
+  - fx: JY1 Curncy
+    us_rate: TY1 Comdty
+    foreign_rate: JB1 Comdty
   - fx: KRW Curncy
-    us_rate: USGG2YR Index
+    us_rate: TU1 Comdty
     foreign_rate: GVSK3YR Index

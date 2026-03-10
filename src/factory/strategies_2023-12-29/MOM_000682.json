@@ -1,0 +1,28 @@
+{
+  "strategy_id": "MOM_000682",
+  "created_at": "2026-03-10T11:35:16.849852",
+  "updated_at": "2026-03-10T11:35:16.862853",
+  "asset": "GVSK3YR Index",
+  "strategy_type": "momentum",
+  "strategy_name": "macd_crossover",
+  "params": {
+    "fast_period": 12,
+    "slow_period": 26,
+    "signal_period": 5
+  },
+  "related_asset": null,
+  "performance": {
+    "sharpe_3y": 1.3206579813961725,
+    "sharpe_6m": -2.3155931701983916,
+    "sharpe_1m": -4.319204063927705,
+    "total_return": 1.529695769278826,
+    "annual_return": 0.0,
+    "max_drawdown": 0.2541334498160036,
+    "win_rate": 0.3137254901960784,
+    "num_trades": 52,
+    "calmar_ratio": 1.5168077091386531,
+    "sortino_ratio": 1.9941043290833413
+  },
+  "is_active": true,
+  "version": 1
+}
