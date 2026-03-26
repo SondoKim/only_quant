@@ -332,22 +332,16 @@ class GlobalMacroTradingSystem:
         
         return related
     
-    def run_daily_update(self, max_correlation: float = 0.3, pivot_enabled: bool = None) -> Dict[str, Any]:
+    def run_daily_update(self, max_correlation: float = 0.3) -> Dict[str, Any]:
         """
         Run daily update pipeline.
-        
+
         Updates performance metrics and generates trading signals.
-        
+
         Returns:
             Daily update results
         """
         logger.info("📅 Running daily update...")
-        
-        if pivot_enabled is not None:
-            if 'pivot_settings' not in self.strategy_selector.config:
-                self.strategy_selector.config['pivot_settings'] = {}
-            self.strategy_selector.config['pivot_settings']['enabled'] = pivot_enabled
-            logger.info(f"⚙️ Pivot enabled overridden by caller: {pivot_enabled}")
 
         # 1. Load latest data
         prices = self.data_loader.load_data()
@@ -374,23 +368,16 @@ class GlobalMacroTradingSystem:
         logger.info("✅ Daily update complete!")
         return report
     
-    def get_trading_signals(self, max_correlation: float = 0.3, pivot_enabled: bool = None) -> Dict[str, Any]:
+    def get_trading_signals(self, max_correlation: float = 0.3) -> Dict[str, Any]:
         """
         Get current trading signals.
-        
+
         Args:
             max_correlation: Maximum allowed correlation between strategies
-            pivot_enabled: Optional override for pivot enabled setting
-            
+
         Returns:
             Trading signal report
         """
-        if pivot_enabled is not None:
-            if 'pivot_settings' not in self.strategy_selector.config:
-                self.strategy_selector.config['pivot_settings'] = {}
-            self.strategy_selector.config['pivot_settings']['enabled'] = pivot_enabled
-            logger.info(f"⚙️ Pivot enabled overridden by caller: {pivot_enabled}")
-
         prices = self.data_loader.load_data()
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
@@ -427,10 +414,6 @@ def main():
                          help='Include index assets (e.g. NQ1 Index) in signal output')
     parser.add_argument('--verbose', action='store_true',
                          help='Show per-strategy details for each asset in signals/update mode')
-    parser.add_argument('--pivot', dest='pivot', action='store_true', help='Force enable pivot logic')
-    parser.add_argument('--no-pivot', dest='pivot', action='store_false', help='Force disable pivot logic')
-    parser.set_defaults(pivot=None)
-    
     args = parser.parse_args()
     
     # Auto-resolve storage_dir / end_date depending on mode
@@ -461,15 +444,8 @@ def main():
             print(f"   {key}: {value}")
     
     elif args.mode == 'update':
-        result = system.run_daily_update(max_correlation=args.max_corr, pivot_enabled=args.pivot)
+        result = system.run_daily_update(max_correlation=args.max_corr)
         print("\n📅 Daily Update Results:")
-        
-        pivot_active = result.get('portfolio_pivot_active', False)
-        pivot_status = "🚨 [PIVOT ACTIVE]" if pivot_active else "✅ [NORMAL]"
-        print(f"   Portfolio Status: {pivot_status}")
-        if pivot_active:
-            print("   ⚠️  All positions are CURRENTLY REVERSED due to trend exhaustion.")
-
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
         positions = result['asset_positions']
@@ -533,15 +509,8 @@ def main():
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
     
     elif args.mode == 'signals':
-        result = system.get_trading_signals(max_correlation=args.max_corr, pivot_enabled=args.pivot)
+        result = system.get_trading_signals(max_correlation=args.max_corr)
         print("\n🎯 Trading Signals:")
-        
-        pivot_active = result.get('portfolio_pivot_active', False)
-        pivot_status = "🚨 [PIVOT ACTIVE]" if pivot_active else "✅ [NORMAL]"
-        print(f"   Portfolio Status: {pivot_status}")
-        if pivot_active:
-            print("   ⚠️  All positions are CURRENTLY REVERSED due to trend exhaustion.")
-
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
         positions = result['asset_positions']

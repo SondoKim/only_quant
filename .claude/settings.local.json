@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python main.py --mode signals)",
+      "Bash(python -c \"import sys; sys.stdout.reconfigure\\(encoding=''''utf-8''''\\)\")",
+      "Bash(python -c \"import sys; sys.stdout.buffer.write\\(sys.stdin.buffer.read\\(\\)\\)\")",
+      "Bash(set PYTHONIOENCODING=utf-8)",
+      "Bash(python -W ignore -c \":*)",
+      "Bash(find /D/김선도/Python/only_quant -name *.json -type f)",
+      "Bash(xargs cat:*)"
+    ]
+  }
+}

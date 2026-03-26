@@ -41,8 +41,7 @@ class StrategySelector:
         self.config_path = config_path or self._get_default_config_path()
         self.config = self._load_config()
         self.active_strategies: List[Dict[str, Any]] = []
-        self._portfolio_pivot_active = False
-        self._hwm_since_recovery = 0.0
+        self._carry_positions: Dict[str, float] = {}  # asset → last non-zero position
 
     def _get_default_config_path(self) -> str:
         """Get default path to indicators.yaml."""
@@ -88,9 +87,45 @@ class StrategySelector:
         # 3. Filter by correlation
         logger.info(f"🔍 Filtering {len(potential_strategies)} potential strategies by correlation (threshold: {max_correlation})...")
         self.active_strategies = self._filter_by_correlation(potential_strategies, prices, max_correlation)
-        
+        self.active_strategies = self._ensure_min_assets(self.active_strategies, potential_strategies, min_assets=3)
+
         logger.info(f"🎯 {len(self.active_strategies)} active strategies loaded after correlation filtering")
         return len(self.active_strategies)
+
+    def _ensure_min_assets(
+        self,
+        selected: List[Dict[str, Any]],
+        all_candidates: List[Dict[str, Any]],
+        min_assets: int = 3
+    ) -> List[Dict[str, Any]]:
+        """
+        After correlation filtering, ensure at least min_assets unique assets
+        are represented. Adds the best strategy (by sharpe_6m) per missing asset.
+        """
+        covered = {s['asset'] for s in selected}
+        if len(covered) >= min_assets:
+            return selected
+
+        # Best uncovered strategy per asset, sorted by sharpe_6m descending
+        asset_best: Dict[str, Dict[str, Any]] = {}
+        for s in all_candidates:
+            asset = s['asset']
+            if asset in covered:
+                continue
+            sharpe = s['performance']['sharpe_6m']
+            if asset not in asset_best or sharpe > asset_best[asset]['performance']['sharpe_6m']:
+                asset_best[asset] = s
+
+        extras = sorted(asset_best.values(), key=lambda x: x['performance']['sharpe_6m'], reverse=True)
+        result = list(selected)
+        for extra in extras:
+            if len(covered) >= min_assets:
+                break
+            result.append(extra)
+            covered.add(extra['asset'])
+            logger.info(f"   ➕ Min-asset enforcement: added {extra['asset']} ({extra['strategy_id']}, Sharpe6M={extra['performance']['sharpe_6m']:.2f})")
+
+        return result
 
     def _filter_by_correlation(
         self,
@@ -299,7 +334,8 @@ class StrategySelector:
         self,
         signals: pd.DataFrame,
         prices: pd.DataFrame,
-        method: str = 'sharpe_weighted'
+        method: str = 'sharpe_weighted',
+        min_assets: int = 3
     ) -> pd.DataFrame:
         """
         Aggregate signals into asset-level positions.
@@ -316,7 +352,6 @@ class StrategySelector:
         
         # Group by asset
         asset_positions = []
-        pivot_cfg = self.config.get('pivot_settings', {})
         
         for asset in signals['asset'].unique():
             asset_signals = signals[signals['asset'] == asset]
@@ -354,18 +389,10 @@ class StrategySelector:
             
             # Cap to [-1, 1] — confidence never exceeds 1.0
             avg_position = float(np.clip(avg_position, -1.0, 1.0))
-            
-            # Discretize to -1, 0, 1
-            if avg_position > 0.3:
-                final_position = 1
-            elif avg_position < -0.3:
-                final_position = -1
-            else:
-                final_position = 0
-            
+
             asset_positions.append({
                 'asset': asset,
-                'position': final_position,
+                'position': avg_position,
                 'raw_position': avg_position,
                 'num_strategies': len(asset_signals),
                 'momentum_count': (asset_signals['strategy_type'] == 'momentum').sum(),
@@ -376,23 +403,35 @@ class StrategySelector:
         
         asset_df = pd.DataFrame(asset_positions)
 
-        # --- Aggregate Pivot Logic (Portfolio Level) ---
-        if pivot_cfg.get('enabled', False) and not asset_df.empty:
-            try:
-                if self._portfolio_pivot_active:
-                    action = pivot_cfg.get('action', 'reverse')
-                    if action == 'reverse':
-                        asset_df['position'] = -asset_df['position']
-                    elif action == 'exit':
-                        asset_df['position'] = 0
-            except Exception as e:
-                logger.warning(f"Portfolio pivot logic failed: {e}")
+        # --- Minimum asset enforcement with carry-forward ---
+        # Update carry state: remember last non-zero position per asset
+        for _, row in asset_df.iterrows():
+            if abs(row['position']) > 0.01:
+                self._carry_positions[row['asset']] = row['position']
 
-        # Add portfolio-level metadata to all asset rows for logging
-        asset_df['portfolio_pivot_active'] = self._portfolio_pivot_active
-        
+        if min_assets > 0:
+            nonzero_count = (asset_df['position'].abs() > 0.01).sum()
+            if nonzero_count < min_assets:
+                flat_mask = asset_df['position'].abs() <= 0.01
+                flat_df = asset_df[flat_mask].copy()
+                flat_df['_carry'] = flat_df['asset'].map(
+                    lambda a: self._carry_positions.get(a, 0.0)
+                )
+                # Only fill from assets that have carry history, best Sharpe first
+                fill_candidates = (
+                    flat_df[flat_df['_carry'].abs() > 0.01]
+                    .sort_values('avg_sharpe_6m', ascending=False)
+                )
+                needed = int(min_assets - nonzero_count)
+                filled = 0
+                for idx in fill_candidates.head(needed).index:
+                    asset_df.at[idx, 'position'] = fill_candidates.at[idx, '_carry']
+                    filled += 1
+                if filled:
+                    logger.debug(f"   📌 Carry-forward: filled {filled} flat asset(s) to meet min {min_assets}")
+
         return asset_df
-    
+
     def get_trading_report(
         self,
         prices: pd.DataFrame,
@@ -438,8 +477,8 @@ class StrategySelector:
         for asset in all_assets:
             if asset in pos_lookup:
                 row = pos_lookup[asset]
-                pos_str = '🟢 LONG' if row['position'] == 1 else \
-                          '🔴 SHORT' if row['position'] == -1 else '⚪ FLAT'
+                pos_str = '🟢 LONG' if row['position'] > 0 else \
+                          '🔴 SHORT' if row['position'] < 0 else '⚪ FLAT'
                 asset_summary.append({
                     'asset': asset,
                     'position': pos_str,
@@ -468,7 +507,6 @@ class StrategySelector:
             'asset_positions': asset_summary,
             'raw_signals': signals.to_dict('records') if not signals.empty else [],
             'aggregated_positions': positions.to_dict('records') if not positions.empty else [],
-            'portfolio_pivot_active': bool(positions['portfolio_pivot_active'].iloc[0]) if not positions.empty else False,
         }
     
     def get_position_for_asset(
@@ -476,7 +514,7 @@ class StrategySelector:
         prices: pd.DataFrame,
         asset: str,
         target_date: str = None
-    ) -> Tuple[int, float]:
+    ) -> Tuple[float, float]:
         """
         Get aggregated position for a specific asset.
         
@@ -504,7 +542,7 @@ class StrategySelector:
             return 0, 0.0
         
         row = positions.iloc[0]
-        return int(row['position']), abs(row['raw_position'])
+        return float(row['position']), abs(row['position'])
     
     def _refresh_sync(self, prices: pd.DataFrame, max_correlation: float = 0.3):
         """Internal synchronous refresh."""
@@ -520,3 +558,4 @@ class StrategySelector:
             return
 
         self.active_strategies = self._filter_by_correlation(potential_strategies, prices, max_correlation)
+        self.active_strategies = self._ensure_min_assets(self.active_strategies, potential_strategies, min_assets=3)

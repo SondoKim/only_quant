@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_002190",
-  "created_at": "2026-03-10T13:12:54.355993",
-  "updated_at": "2026-03-10T13:12:54.361996",
+  "created_at": "2026-03-26T16:20:11.902346",
+  "updated_at": "2026-03-26T16:20:11.908346",
   "asset": "JB1 Comdty",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_percentile_reversion",

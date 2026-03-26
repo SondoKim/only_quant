@@ -1,7 +1,7 @@
 {
   "strategy_id": "MR_001830",
-  "created_at": "2026-03-10T13:11:56.662989",
-  "updated_at": "2026-03-10T13:11:56.667990",
+  "created_at": "2026-03-26T16:18:54.366906",
+  "updated_at": "2026-03-26T16:18:54.374908",
   "asset": "JB1 Comdty",
   "strategy_type": "mean_reversion",
   "strategy_name": "spread_zscore_reversion",

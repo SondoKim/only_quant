@@ -114,15 +114,6 @@ cross_asset_indicators:
       exit:
       - 0.0
       - 0.5
-pivot_settings:
-  action: reverse
-  enabled: true
-  method: rolling_sharpe_ts
-  rolling_period: 20
-  trailing_stop_pct: 1.0  # Disable percentage-based triggers to avoid noise
-  hwm_window: 30          # Shorter window to focus on recent trend breaks (e.g. forget Dec peak by late Jan)
-  abs_drop_threshold: 3.0
-  recovery_sharpe: 3.0
 strategy_types:
   mean_reversion:
     description: Trade against extremes

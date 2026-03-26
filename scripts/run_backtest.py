@@ -139,13 +139,7 @@ def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
         else:
             avg = sum(positions) / len(positions) if positions else 0.0
         avg = float(np.clip(avg, -1.0, 1.0))
-        if avg > 0.3:
-            final = 1
-        elif avg < -0.3:
-            final = -1
-        else:
-            final = 0
-        result[asset] = {'position': final, 'raw_position': avg}
+        result[asset] = {'position': avg, 'raw_position': avg}
     return result
 
 
@@ -187,17 +181,19 @@ def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: P
 # ─────────────────────────────────────────────────────────────────────────────
 # Phase 2: Simulation
 # ─────────────────────────────────────────────────────────────────────────────
-def run_phase2_simulation(prices: pd.DataFrame, 
-                           month_ends: list, 
+def run_phase2_simulation(prices: pd.DataFrame,
+                           month_ends: list,
                            factory_base: Path,
                            start_date_str: str,
                            max_correlation: float = 0.3,
-                           pivot_enabled: Optional[bool] = None,
+                           dd_threshold: float = 10.0,
                            pnl_ma: int = 0):
     """
     Simulate monthly trading using pre-cached strategies.
     Each month uses the previous month-end's strategies.
 
+    dd_threshold: Portfolio drawdown (in PnL units) at which positions scale to 0.
+                  Scale = max(0, 1 - drawdown / dd_threshold). 0 = disabled.
     pnl_ma: MA period for per-strategy PnL filter (0 = disabled).
             Strategies whose cumulative PnL is below its own N-day MA are
             silenced (position set to 0) before position aggregation.
@@ -229,6 +225,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
     cum_pnl_mr  = 0.0   # Mean-Reversion strategies
     cum_pnl_adv = 0.0   # Advanced strategies
     log_data = []
+
+    # Drawdown scaling state
+    portfolio_cum_pnl = 0.0
+    portfolio_hwm = 0.0
     current_selector = None
     current_strategy_date = None
 
@@ -284,14 +284,9 @@ def run_phase2_simulation(prices: pd.DataFrame,
             active_count = sum(1 for v in factory.index['strategies'].values() if v.get('is_active'))
             logger.info(f"📊 Rebalance at {date_str}: {active_count} active strategies")
             
+            prev_carry = current_selector._carry_positions.copy() if current_selector else {}
             current_selector = StrategySelector(factory=factory)
-            
-            # Override pivot setting if provided via CLI
-            if pivot_enabled is not None:
-                if 'pivot_settings' not in current_selector.config:
-                    current_selector.config['pivot_settings'] = {}
-                current_selector.config['pivot_settings']['enabled'] = pivot_enabled
-                logger.info(f"⚙️ Pivot enabled overridden by CLI: {pivot_enabled}")
+            current_selector._carry_positions = prev_carry  # carry-forward across month boundaries
 
             # Refresh with correlation filter
             prices_until = prices[prices.index <= applicable_month_end]
@@ -333,34 +328,42 @@ def run_phase2_simulation(prices: pd.DataFrame,
         else:
             sig_map = {item['asset']: item for item in report['aggregated_positions']}
         
+        # Drawdown scaling: compute scale from prior day's portfolio PnL
+        if dd_threshold > 0:
+            drawdown = max(0.0, portfolio_hwm - portfolio_cum_pnl)
+            dd_scale = max(0.0, 1.0 - drawdown / dd_threshold)
+        else:
+            dd_scale = 1.0
+
         # Calculate daily PnL
         row = {'Date': date.date()}
-        
+        day_total_pnl = 0.0
+
         for asset in all_assets:
             p_prev = prices.loc[prev_date, asset]
             p_curr = prices.loc[date, asset]
-            
+
             sig_info = sig_map.get(asset, {'position': 0})
-            pos = sig_info.get('position', 0)
-            
+            pos = sig_info.get('position', 0) * dd_scale
+
             # 한국 금리(GVSK)만 yield → bps 변화로 계산; 선물(Comdty)/FX/Index는 % 수익률
             if ("Index" in asset or "Corp" in asset) and "NQ" not in asset:
                 daily_pnl = (p_curr - p_prev) * 100 * pos  # bps (GVSK yield 기반)
             else:
                 daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # % (선물 가격 기반)
-            
+
             cum_pnl[asset] += daily_pnl
-            
-            row[f"{asset}_Pos"] = pos
+            day_total_pnl += daily_pnl
+
+            row[f"{asset}_Pos"] = round(pos, 4)
             row[f"{asset}_Price"] = round(p_curr, 4)
             row[f"{asset}_CumPnL"] = round(cum_pnl[asset], 2)
-            
-        # Log portfolio-level pivot metadata (same for all assets, so we only need one set of columns)
-        # Use info from the first asset row which contains the broadcasted portfolio metrics
-        first_asset = all_assets[0]
-        first_info = sig_map.get(first_asset, {})
-        row["Portfolio_Pivot_Active"] = 1 if first_info.get('portfolio_pivot_active', False) else 0
-        
+
+        # Update portfolio HWM
+        portfolio_cum_pnl += day_total_pnl
+        portfolio_hwm = max(portfolio_hwm, portfolio_cum_pnl)
+        row['dd_scale'] = round(dd_scale, 4)
+
         # Summary PnLs
         row['total_rates_cumpnl'] = round(sum(cum_pnl[a] for a in rates_assets), 2)
         row['total_fx_cumpnl'] = round(sum(cum_pnl[a] for a in fx_assets), 2)
@@ -439,10 +442,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
     print(f"✅ Phase 2 complete! Trading log saved to {output_path} ({len(df_log)} rows)")
     
     # Generate PnL plot
-    pivot_status = "pivot_on" if (pivot_enabled if pivot_enabled is not None else True) else "pivot_off"
-    ma_status    = f"_ma{pnl_ma}" if pnl_ma > 0 else ""
+    dd_tag = f"_dd{int(dd_threshold)}" if dd_threshold > 0 else ""
+    ma_tag = f"_ma{pnl_ma}" if pnl_ma > 0 else ""
     try:
-        plot_pnl(max_correlation=max_correlation, mode=f'backtest_{pivot_status}{ma_status}',
+        plot_pnl(max_correlation=max_correlation, mode=f'backtest{dd_tag}{ma_tag}',
                  start_date=start_date_str,
                  end_date=prices.index[-1].strftime('%Y-%m-%d'))
     except Exception as e:
@@ -462,9 +465,9 @@ def main():
                         help='Maximum correlation threshold')
     parser.add_argument('--skip-discovery', action='store_true',
                         help='Skip Phase 1 (use existing cached strategies)')
-    parser.add_argument('--pivot', dest='pivot', action='store_true', help='Force enable pivot logic')
-    parser.add_argument('--no-pivot', dest='pivot', action='store_false', help='Force disable pivot logic')
-    parser.set_defaults(pivot=None)
+    parser.add_argument('--dd-threshold', type=float, default=0.0,
+                        help='Drawdown scaling threshold in PnL units (0 = disabled). '
+                             'Positions scale linearly to 0 as portfolio drawdown reaches this value.')
     parser.add_argument('--pnl-ma', type=int, default=0,
                         help='Per-strategy PnL MA filter period (0 = disabled). '
                              'Strategies below their own N-day cumulative-PnL MA are silenced.')
@@ -501,13 +504,15 @@ def main():
     print(f"\n{'='*60}")
     print(f"  PHASE 2: Trading Simulation")
     print(f"{'='*60}")
+    if args.dd_threshold > 0:
+        print(f"📉 Drawdown scaling enabled: threshold = {args.dd_threshold}")
     if args.pnl_ma > 0:
         print(f"🔍 PnL MA filter enabled: period = {args.pnl_ma} days")
     run_phase2_simulation(
         prices, month_ends, factory_base,
         start_date_str=args.start_date,
         max_correlation=args.max_corr,
-        pivot_enabled=args.pivot,
+        dd_threshold=args.dd_threshold,
         pnl_ma=args.pnl_ma,
     )
 
