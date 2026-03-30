@@ -29,96 +29,155 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     sharpe_fx = calc_sharpe(df['total_fx_cumpnl'])
 
     last_date = df['Date'].iloc[-1]
-
-    # === Main Plot: Rates + FX only (4 subplots) ===
-    fig, (ax1, ax3, ax4, ax5) = plt.subplots(4, 1, figsize=(14, 24), sharex=True)
-
-    # --- Plot 1: Aggregate Rates vs FX (Dual Y) ---
-    color_rates = 'tab:blue'
-    ax1.set_ylabel('Total Rates Cum PnL (bps)', color=color_rates, fontweight='bold')
-    ax1.plot(df['Date'], df['total_rates_cumpnl'], color=color_rates, linewidth=3, label=f'Total Rates (Sharpe: {sharpe_rates:.2f})')
-    ax1.tick_params(axis='y', labelcolor=color_rates)
-    ax1.grid(True, linestyle='--', alpha=0.6)
-    
-    # Annotate last value
-    last_val_rates = df['total_rates_cumpnl'].iloc[-1]
-    ax1.text(last_date, last_val_rates, f" {last_val_rates:.1f}", color=color_rates, fontweight='bold', va='center')
-
-    ax2 = ax1.twinx()
-    color_fx = 'tab:orange'
-    ax2.set_ylabel('Total FX Cum PnL (%)', color=color_fx, fontweight='bold')
-    ax2.plot(df['Date'], df['total_fx_cumpnl'], color=color_fx, linewidth=3, label=f'Total FX (Sharpe: {sharpe_fx:.2f})')
-    ax2.tick_params(axis='y', labelcolor=color_fx)
-    
-    # Annotate last values for ax2
-    last_val_fx = df['total_fx_cumpnl'].iloc[-1]
-    ax2.text(last_date, last_val_fx, f" {last_val_fx:.2f}%", color=color_fx, fontweight='bold', va='center')
-    
     title_mode = f" (Mode: {mode.upper()})" if mode else ""
-    ax1.set_title(f'Global Macro Strategy: Rates + FX Performance{title_mode}', fontsize=16, pad=20)
 
-    # Legend for top plot
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    # Check if split strategy-type columns exist
+    has_split = all(c in df.columns for c in [
+        'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
+        'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
+    ])
+    has_type_pnl = all(c in df.columns for c in [
+        'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+    ])
 
-    # --- Plot 2: Individual Rates (BPS) ---
+    # =====================================================================
+    # Layout: 1 top (full width) + 2x2 grid below
+    # =====================================================================
+    fig = plt.figure(figsize=(18, 22))
+
+    # GridSpec: 3 rows, 2 cols. Top row spans both columns.
+    gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.3, wspace=0.25)
+    ax_top = fig.add_subplot(gs[0, :])       # Total Return (full width)
+    ax_ir  = fig.add_subplot(gs[1, 0])       # Individual Rates
+    ax_ifx = fig.add_subplot(gs[1, 1])       # Individual FX
+    ax_sr  = fig.add_subplot(gs[2, 0])       # Strategy-Type Rates
+    ax_sfx = fig.add_subplot(gs[2, 1])       # Strategy-Type FX
+
+    # -----------------------------------------------------------------
+    # Top: Total Return (Rates + FX dual Y-axis)
+    # -----------------------------------------------------------------
+    color_rates = 'tab:blue'
+    ax_top.set_ylabel('Total Rates Cum PnL (bps)', color=color_rates, fontweight='bold')
+    ax_top.plot(df['Date'], df['total_rates_cumpnl'], color=color_rates, linewidth=2.5,
+                label=f'Total Rates (Sharpe: {sharpe_rates:.2f})')
+    ax_top.tick_params(axis='y', labelcolor=color_rates)
+    ax_top.grid(True, linestyle='--', alpha=0.6)
+    last_val_rates = df['total_rates_cumpnl'].iloc[-1]
+    ax_top.text(last_date, last_val_rates, f" {last_val_rates:.1f}",
+                color=color_rates, fontweight='bold', va='center', fontsize=9)
+
+    ax_top2 = ax_top.twinx()
+    color_fx = 'tab:orange'
+    ax_top2.set_ylabel('Total FX Cum PnL (%)', color=color_fx, fontweight='bold')
+    ax_top2.plot(df['Date'], df['total_fx_cumpnl'], color=color_fx, linewidth=2.5,
+                 label=f'Total FX (Sharpe: {sharpe_fx:.2f})')
+    ax_top2.tick_params(axis='y', labelcolor=color_fx)
+    last_val_fx = df['total_fx_cumpnl'].iloc[-1]
+    ax_top2.text(last_date, last_val_fx, f" {last_val_fx:.2f}%",
+                 color=color_fx, fontweight='bold', va='center', fontsize=9)
+
+    ax_top.set_title(f'Global Macro Strategy: Total Return{title_mode}', fontsize=16, pad=15)
+    lines1, labels1 = ax_top.get_legend_handles_labels()
+    lines2, labels2 = ax_top2.get_legend_handles_labels()
+    ax_top.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+
+    # -----------------------------------------------------------------
+    # Bottom-left (1,0): Individual Rates
+    # -----------------------------------------------------------------
     for col in rate_cols:
         label = col.replace('_CumPnL', '')
-        line = ax3.plot(df['Date'], df[col], label=label, alpha=0.8)[0]
-        ax3.text(last_date, df[col].iloc[-1], f" {df[col].iloc[-1]:.1f}", color=line.get_color(), fontsize=8, va='center')
-    ax3.set_ylabel('Individual Rates (bps)', fontweight='bold')
-    ax3.set_title('Individual Rates Performance', fontsize=14)
-    ax3.grid(True, linestyle='--', alpha=0.6)
-    ax3.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
+        line = ax_ir.plot(df['Date'], df[col], label=label, alpha=0.8, linewidth=1.2)[0]
+        ax_ir.text(last_date, df[col].iloc[-1], f" {df[col].iloc[-1]:.1f}",
+                   color=line.get_color(), fontsize=7, va='center')
+    ax_ir.set_ylabel('Individual Rates (bps)', fontweight='bold')
+    ax_ir.set_title('Individual Rates Performance', fontsize=13)
+    ax_ir.grid(True, linestyle='--', alpha=0.6)
+    ax_ir.legend(loc='upper left', bbox_to_anchor=(1.01, 1), fontsize='x-small')
 
-    # --- Plot 3: Individual FX (%) ---
+    # -----------------------------------------------------------------
+    # Bottom-right (1,1): Individual FX
+    # -----------------------------------------------------------------
     for col in fx_cols:
         label = col.replace('_CumPnL', '')
-        line = ax4.plot(df['Date'], df[col], label=label, alpha=0.8)[0]
-        ax4.text(last_date, df[col].iloc[-1], f" {df[col].iloc[-1]:.2f}%", color=line.get_color(), fontsize=8, va='center')
-    ax4.set_ylabel('Individual FX (%)', fontweight='bold')
-    ax4.set_title('Individual FX Performance', fontsize=14)
-    ax4.grid(True, linestyle='--', alpha=0.6)
-    ax4.legend(loc='upper left', bbox_to_anchor=(1, 1), fontsize='small')
+        line = ax_ifx.plot(df['Date'], df[col], label=label, alpha=0.8, linewidth=1.2)[0]
+        ax_ifx.text(last_date, df[col].iloc[-1], f" {df[col].iloc[-1]:.2f}%",
+                    color=line.get_color(), fontsize=7, va='center')
+    ax_ifx.set_ylabel('Individual FX (%)', fontweight='bold')
+    ax_ifx.set_title('Individual FX Performance', fontsize=13)
+    ax_ifx.grid(True, linestyle='--', alpha=0.6)
+    ax_ifx.legend(loc='upper left', bbox_to_anchor=(1.01, 1), fontsize='x-small')
 
-    # --- Plot 4: Strategy-Type PnL (MOM / MR / ADV) ---
-    has_type_pnl = all(c in df.columns for c in ['total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl'])
-    if has_type_pnl:
-        sharpe_mom = calc_sharpe(df['total_mom_cumpnl'])
-        sharpe_mr  = calc_sharpe(df['total_mr_cumpnl'])
-        sharpe_adv = calc_sharpe(df['total_adv_cumpnl'])
+    # -----------------------------------------------------------------
+    # Helper: plot strategy-type lines on an axis
+    # -----------------------------------------------------------------
+    def _plot_strategy_type(ax, mom_col, mr_col, adv_col, unit_fmt, title):
+        if mom_col not in df.columns:
+            ax.text(0.5, 0.5, 'Data not available.\nRe-run backtest.',
+                    ha='center', va='center', transform=ax.transAxes, fontsize=11, color='gray')
+            ax.set_title(title, fontsize=13)
+            return
 
-        ax5.plot(df['Date'], df['total_mom_cumpnl'], color='tab:blue',
-                 linewidth=2.5, label=f'Momentum (Sharpe: {sharpe_mom:.2f})')
-        ax5.plot(df['Date'], df['total_mr_cumpnl'],  color='tab:orange',
-                 linewidth=2.5, label=f'Mean-Reversion (Sharpe: {sharpe_mr:.2f})')
-        ax5.plot(df['Date'], df['total_adv_cumpnl'], color='tab:green',
-                 linewidth=2.5, label=f'Advanced (Sharpe: {sharpe_adv:.2f})')
+        sharpe_m = calc_sharpe(df[mom_col])
+        sharpe_r = calc_sharpe(df[mr_col])
+        sharpe_a = calc_sharpe(df[adv_col])
 
-        for col, color, fmt in [
-            ('total_mom_cumpnl', 'tab:blue',   '{:.2f}'),
-            ('total_mr_cumpnl',  'tab:orange',  '{:.2f}'),
-            ('total_adv_cumpnl', 'tab:green',   '{:.2f}'),
-        ]:
+        ax.plot(df['Date'], df[mom_col], color='tab:blue', linewidth=2,
+                label=f'Momentum (Sharpe: {sharpe_m:.2f})')
+        ax.plot(df['Date'], df[mr_col],  color='tab:orange', linewidth=2,
+                label=f'Mean-Rev (Sharpe: {sharpe_r:.2f})')
+        ax.plot(df['Date'], df[adv_col], color='tab:green', linewidth=2,
+                label=f'Advanced (Sharpe: {sharpe_a:.2f})')
+
+        for col, color in [(mom_col, 'tab:blue'), (mr_col, 'tab:orange'), (adv_col, 'tab:green')]:
             last_val = df[col].iloc[-1]
-            ax5.text(last_date, last_val, f'  {fmt.format(last_val)}',
-                     color=color, fontsize=8, va='center')
+            ax.text(last_date, last_val, f'  {unit_fmt.format(last_val)}',
+                    color=color, fontsize=8, va='center')
 
-        ax5.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.4)
+        ax.axhline(y=0, color='black', linestyle='-', linewidth=0.8, alpha=0.4)
+        ax.set_title(title, fontsize=13)
+        ax.grid(True, linestyle='--', alpha=0.6)
+        ax.legend(loc='upper left', fontsize='small')
+
+    # -----------------------------------------------------------------
+    # Bottom-left (2,0): Strategy-Type Rates
+    # -----------------------------------------------------------------
+    if has_split:
+        _plot_strategy_type(ax_sr,
+                            'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
+                            '{:.2f}', 'Strategy-Type: Rates (MOM / MR / ADV)')
+        ax_sr.set_ylabel('Normalised Cum PnL (bps)', fontweight='bold')
+    elif has_type_pnl:
+        # Fallback: show combined if split columns don't exist
+        _plot_strategy_type(ax_sr,
+                            'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+                            '{:.2f}', 'Strategy-Type: Combined (MOM / MR / ADV)')
+        ax_sr.set_ylabel('Normalised Cum PnL', fontweight='bold')
     else:
-        ax5.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest to generate.',
-                 ha='center', va='center', transform=ax5.transAxes, fontsize=12, color='gray')
+        ax_sr.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest.',
+                   ha='center', va='center', transform=ax_sr.transAxes, fontsize=11, color='gray')
+        ax_sr.set_title('Strategy-Type: Rates', fontsize=13)
 
-    ax5.set_ylabel('Normalised Cum PnL', fontweight='bold')
-    ax5.set_title('Strategy-Type Performance: MOM vs MR vs ADV', fontsize=14)
-    ax5.grid(True, linestyle='--', alpha=0.6)
-    ax5.legend(loc='upper left')
+    # -----------------------------------------------------------------
+    # Bottom-right (2,1): Strategy-Type FX
+    # -----------------------------------------------------------------
+    if has_split:
+        _plot_strategy_type(ax_sfx,
+                            'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
+                            '{:.2f}', 'Strategy-Type: FX (MOM / MR / ADV)')
+        ax_sfx.set_ylabel('Normalised Cum PnL (%)', fontweight='bold')
+    elif has_type_pnl:
+        _plot_strategy_type(ax_sfx,
+                            'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+                            '{:.2f}', 'Strategy-Type: Combined (MOM / MR / ADV)')
+        ax_sfx.set_ylabel('Normalised Cum PnL', fontweight='bold')
+    else:
+        ax_sfx.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest.',
+                    ha='center', va='center', transform=ax_sfx.transAxes, fontsize=11, color='gray')
+        ax_sfx.set_title('Strategy-Type: FX', fontsize=13)
 
-    # Global Formatting
-    plt.xlabel('Date')
-    fig.tight_layout()
-
+    # -----------------------------------------------------------------
+    # Save
+    # -----------------------------------------------------------------
     _end_date = end_date or df['Date'].iloc[-1].strftime('%Y-%m-%d')
     suffix_start = f"_{start_date}" if start_date else ""
     suffix_end   = f"_to{_end_date}"
@@ -126,15 +185,16 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     suffix_mode = f"_{mode}" if mode else ""
     suffix_sharpe = f"_rates{sharpe_rates:.2f}_fx{sharpe_fx:.2f}"
     output_path = f"trading_pnl{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
+
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
-    
-    print(f"✅ Rates+FX PnL plot saved to {output_path}")
+
+    print(f"Rates+FX PnL plot saved to {output_path}")
 
     # === Separate Index Plot ===
     if index_cols and 'total_index_cumpnl' in df.columns:
         sharpe_idx = calc_sharpe(df['total_index_cumpnl'])
-        
+
         fig_idx, (ax_agg, ax_ind) = plt.subplots(2, 1, figsize=(14, 12), sharex=True)
 
         # Aggregate index
@@ -163,8 +223,8 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
         index_output = f"trading_pnl_index{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}_idx{sharpe_idx:.2f}.png"
         plt.savefig(index_output, dpi=300, bbox_inches='tight')
         plt.close()
-        
-        print(f"✅ Index PnL plot saved to {index_output}")
+
+        print(f"Index PnL plot saved to {index_output}")
 
 if __name__ == "__main__":
     plot_pnl()

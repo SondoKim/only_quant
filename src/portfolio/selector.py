@@ -461,7 +461,7 @@ class StrategySelector:
             elif ticker == 'G 1 Comdty': group = 3
             elif ticker in ('YM1 Comdty', 'XM1 Comdty'): group = 4
             elif ticker == 'JB1 Comdty': group = 5
-            elif 'GVSK' in ticker: group = 6
+            elif ticker in ('KE1 Comdty', 'KAA1 Comdty'): group = 6
             elif 'Comdty' in ticker: group = 7   # OAT1, IK1 등
             elif 'NQ' in ticker: group = 9
             elif 'Curncy' in ticker: group = 8

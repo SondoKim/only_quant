@@ -6,10 +6,11 @@ LLM-Free automated trading strategy discovery, backtesting, and signal generatio
 
 import argparse
 import logging
+import re
 import numpy as np
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 
 import yaml
 
@@ -123,9 +124,39 @@ def _resolve_signals_storage_dir(explicit_storage_dir: str = None) -> str:
     )
 
 
+def _find_previous_factory_dir(current_storage_dir: str) -> Optional[str]:
+    """Find the most recent strategy folder BEFORE the current one.
+    Used by incremental discovery to load previous month's strategies."""
+    current = Path(current_storage_dir)
+    factory_base = current.parent
+    current_name = current.name
+
+    pattern = re.compile(r'^strategies_(\d{4}-\d{2}-\d{2})$')
+    candidates = []
+    for d in factory_base.iterdir():
+        if not d.is_dir():
+            continue
+        m = pattern.match(d.name)
+        if m and d.name < current_name:
+            if (d / 'strategies.db').exists() or (d / 'index.json').exists():
+                candidates.append(d)
+
+    if not candidates:
+        return None
+    candidates.sort(key=lambda x: x.name)
+    return str(candidates[-1])
+
+
+def _should_full_scan(current_end_date: str, full_scan_interval_months: int = 3) -> bool:
+    """Determine if this month requires a full scan based on interval.
+    Full scan on months where (month number) % interval == 0."""
+    dt = datetime.strptime(current_end_date, '%Y-%m-%d')
+    return dt.month % full_scan_interval_months == 0
+
+
 class GlobalMacroTradingSystem:
     """Main orchestrator for the trading system."""
-    
+
     def __init__(self, config_dir: str = None, storage_dir: str = None):
         """
         Initialize trading system.
@@ -276,9 +307,169 @@ class GlobalMacroTradingSystem:
         logger.info("✅ Discovery complete!")
         logger.info(f"   Tested: {tested_count}/{total_possible}")
         logger.info(f"   Stored: {stored_count} (Sharpe 3Y >= {self.sharpe_3y_threshold}, Sortino 3Y >= {self.sortino_3y_threshold})")
-        
+
         return summary
-    
+
+    def run_incremental_discovery(
+        self,
+        start_date: str = "2020-01-01",
+        end_date: str = None,
+        batch_size: int = 1000,
+        new_sample_ratio: float = 0.1,
+        near_threshold_band: float = 0.2,
+        target_tickers: List[str] = None,
+        full_scan_interval: int = 3,
+    ) -> Dict[str, Any]:
+        """
+        Incremental strategy discovery.
+
+        1. Re-backtest previous month's stored strategies with new data window
+        2. Full re-test strategies near the threshold (sharpe within band)
+        3. Sample-test remaining new strategies
+        4. Every full_scan_interval months, run full scan instead
+
+        Args:
+            start_date: Data start date
+            end_date: Data end date
+            batch_size: Batch size for processing
+            new_sample_ratio: Ratio of new strategies to sample (0.0 to 1.0)
+            near_threshold_band: Re-test strategies with sharpe_3y in
+                                 [threshold - band, threshold). e.g. 0.2 means 0.8~1.0
+            target_tickers: Optional ticker filter
+            full_scan_interval: Full scan every N months (default 3)
+        """
+        # Check if full scan is needed (every N months)
+        if end_date and _should_full_scan(end_date, full_scan_interval):
+            logger.info(f"📅 Full scan month (every {full_scan_interval} months). Running full discovery.")
+            return self.run_discovery(
+                start_date=start_date,
+                end_date=end_date,
+                batch_size=batch_size,
+                sample_ratio=1.0,
+                target_tickers=target_tickers,
+            )
+
+        # Find previous month's factory
+        prev_dir = _find_previous_factory_dir(str(self.strategy_factory.storage_dir))
+        if prev_dir is None:
+            logger.info("📂 No previous factory found. Running full discovery.")
+            return self.run_discovery(
+                start_date=start_date,
+                end_date=end_date,
+                batch_size=batch_size,
+                sample_ratio=1.0,
+                target_tickers=target_tickers,
+            )
+
+        logger.info(f"🔄 Incremental discovery (prev: {Path(prev_dir).name})")
+
+        # 1. Load data
+        prices = self.data_loader.load_data(start_date=start_date, end_date=end_date)
+        preprocessor = DataPreprocessor(prices)
+        prices = preprocessor.clean().get_data()
+
+        if target_tickers:
+            available_tickers = [t for t in target_tickers if t in prices.columns]
+            if not available_tickers:
+                return {'error': 'No valid tickers found'}
+            prices = prices[available_tickers]
+
+        assets = list(prices.columns)
+        related_assets = self._build_related_assets_map()
+        backtester = VectorBTEngine(prices)
+
+        # 2. Load previous month's strategies
+        prev_factory = StrategyFactory(storage_dir=prev_dir)
+        prev_configs = prev_factory.get_all_strategy_configs()
+        prev_factory.close()
+
+        logger.info(f"   Previous month: {len(prev_configs)} strategies loaded")
+
+        # Separate into: (a) previously passed, (b) near-threshold candidates
+        prev_passed = [c for c in prev_configs
+                       if c.get('_prev_sharpe_3y', 0) >= self.sharpe_3y_threshold]
+        near_threshold = [c for c in prev_configs
+                          if self.sharpe_3y_threshold - near_threshold_band
+                          <= c.get('_prev_sharpe_3y', 0)
+                          < self.sharpe_3y_threshold]
+
+        # 3. Re-backtest previous winners
+        tested_count = 0
+        stored_count = 0
+        active_count = 0
+
+        logger.info(f"   Phase A: Re-testing {len(prev_passed)} previous winners...")
+        for i in range(0, len(prev_passed), batch_size):
+            batch = prev_passed[i:i + batch_size]
+            stored, active = self._process_batch(batch, backtester)
+            tested_count += len(batch)
+            stored_count += stored
+            active_count += active
+
+        # 4. Re-test near-threshold strategies
+        if near_threshold:
+            logger.info(f"   Phase B: Re-testing {len(near_threshold)} near-threshold strategies...")
+            for i in range(0, len(near_threshold), batch_size):
+                batch = near_threshold[i:i + batch_size]
+                stored, active = self._process_batch(batch, backtester)
+                tested_count += len(batch)
+                stored_count += stored
+                active_count += active
+
+        # 5. Sample new strategies (not in previous month's DB)
+        prev_ids = {c['id'] for c in prev_configs}
+        logger.info(f"   Phase C: Sampling new strategies (ratio: {new_sample_ratio:.0%})...")
+
+        new_batch = []
+        new_tested = 0
+        generator = self.strategy_generator.generate_all_strategies(
+            assets, related_assets, sample_ratio=1.0
+        )
+        import random
+        for strategy in generator:
+            if strategy.get('id') in prev_ids:
+                continue  # Skip already-tested strategies
+            if random.random() > new_sample_ratio:
+                continue
+            new_batch.append(strategy)
+            new_tested += 1
+
+            if len(new_batch) >= batch_size:
+                stored, active = self._process_batch(new_batch, backtester)
+                tested_count += len(new_batch)
+                stored_count += stored
+                active_count += active
+                new_batch = []
+
+        if new_batch:
+            stored, active = self._process_batch(new_batch, backtester)
+            tested_count += len(new_batch)
+            stored_count += stored
+            active_count += active
+
+        logger.info(f"   Phase C: {new_tested} new strategies sampled")
+
+        # Summary
+        total_possible = self.strategy_generator.count_strategies(assets, related_assets)['total']
+        summary = {
+            'mode': 'incremental',
+            'total_tested': tested_count,
+            'total_possible': total_possible,
+            'prev_winners_retested': len(prev_passed),
+            'near_threshold_retested': len(near_threshold),
+            'new_sampled': new_tested,
+            'stored_strategies': stored_count,
+            'active_strategies': active_count,
+            'discovery_rate': (tested_count / total_possible) if total_possible > 0 else 0,
+            'storage_rate': (stored_count / tested_count) if tested_count > 0 else 0,
+        }
+
+        logger.info("✅ Incremental discovery complete!")
+        logger.info(f"   Tested: {tested_count} (prev: {len(prev_passed)}, near: {len(near_threshold)}, new: {new_tested})")
+        logger.info(f"   Stored: {stored_count}")
+
+        return summary
+
     def _process_batch(
         self,
         strategies: List[Dict[str, Any]],
@@ -414,6 +605,12 @@ def main():
                          help='Include index assets (e.g. NQ1 Index) in signal output')
     parser.add_argument('--verbose', action='store_true',
                          help='Show per-strategy details for each asset in signals/update mode')
+    parser.add_argument('--incremental', action='store_true',
+                         help='Use incremental discovery (reuse previous month strategies)')
+    parser.add_argument('--full-scan-interval', type=int, default=3,
+                         help='Full scan every N months in incremental mode (default: 3)')
+    parser.add_argument('--new-sample-ratio', type=float, default=0.1,
+                         help='Ratio of new strategies to sample in incremental mode (default: 0.1)')
     args = parser.parse_args()
     
     # Auto-resolve storage_dir / end_date depending on mode
@@ -431,14 +628,24 @@ def main():
     system = GlobalMacroTradingSystem(storage_dir=storage_dir)
     
     if args.mode == 'discover':
-        result = system.run_discovery(
-            start_date=args.start_date,
-            end_date=end_date,
-            batch_size=args.batch_size,
-            sample_ratio=args.sample_ratio,
-            sample_count=args.sample_count,
-            target_tickers=args.tickers
-        )
+        if args.incremental:
+            result = system.run_incremental_discovery(
+                start_date=args.start_date,
+                end_date=end_date,
+                batch_size=args.batch_size,
+                new_sample_ratio=args.new_sample_ratio,
+                target_tickers=args.tickers,
+                full_scan_interval=args.full_scan_interval,
+            )
+        else:
+            result = system.run_discovery(
+                start_date=args.start_date,
+                end_date=end_date,
+                batch_size=args.batch_size,
+                sample_ratio=args.sample_ratio,
+                sample_count=args.sample_count,
+                target_tickers=args.tickers,
+            )
         print("\n📊 Discovery Results:")
         for key, value in result.items():
             print(f"   {key}: {value}")
@@ -452,20 +659,11 @@ def main():
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
         
-        # Per-active-asset budget allocation
-        # Comdty 선물: 이미 선물 가격 기준 → 신호 방향 그대로
-        # GVSK (한국 yield): yield 방향 → 선물 방향 역전 필요
-        rate_keywords = ['Comdty', 'Index', 'Corp']
+        # Per-active-asset budget allocation (전체 선물 기준, 방향 역전 불필요)
+        rate_keywords = ['Comdty']
         fx_keywords = ['Curncy']
         LONG_KEYWORDS = ['🟢 LONG']
         SHORT_KEYWORDS = ['🔴 SHORT']
-
-        def rate_display_upd(pos_str, asset):
-            if 'GVSK' not in asset:
-                return pos_str
-            if pos_str == '🟢 LONG':  return '🔴 SHORT'
-            if pos_str == '🔴 SHORT': return '🟢 LONG'
-            return pos_str
 
         rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
                          and 'NQ' not in p['asset']
@@ -475,8 +673,7 @@ def main():
         if rate_positions:
             per_budget = 1000 / len(rate_positions)
             for p in rate_positions:
-                display = rate_display_upd(p['position'], p['asset'])
-                sign = 1 if display in LONG_KEYWORDS else -1
+                sign = 1 if p['position'] in LONG_KEYWORDS else -1
                 d = round(p['confidence'] * per_budget * sign)
                 delta_map[p['asset']] = d
                 net_delta += d
@@ -487,15 +684,14 @@ def main():
                 continue
             if 'NQ' in pos['asset']:
                 continue
-            display_pos = rate_display_upd(pos['position'], pos['asset']) if pos['position'] not in ['🔘 NOSTR', '⚪ FLAT'] else pos['position']
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
-            print(f"      {pos['asset']}: {display_pos} "
+            print(f"      {pos['asset']}: {pos['position']} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
 
         if rate_positions:
-            long_cnt  = sum(1 for p in rate_positions if rate_display_upd(p['position'], p['asset']) in LONG_KEYWORDS)
-            short_cnt = sum(1 for p in rate_positions if rate_display_upd(p['position'], p['asset']) in SHORT_KEYWORDS)
+            long_cnt  = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)
+            short_cnt = sum(1 for p in rate_positions if p['position'] in SHORT_KEYWORDS)
             gross = sum(abs(v) for v in delta_map.values())
             net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
             print(f"\n      💰 선물 넷 델타: {net_delta:+d}만원 {net_sign} (선물롱 {long_cnt} / 선물숏 {short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")
@@ -517,21 +713,11 @@ def main():
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
         
-        # Per-active-asset budget allocation
-        # Comdty 선물: 이미 선물 가격 기준 → 신호 방향 그대로
-        # GVSK (한국 yield): yield 방향 → 선물 방향 역전 필요
-        rate_keywords = ['Comdty', 'Index', 'Corp']   # 금리 자산 (Comdty 선물 + GVSK)
+        # Per-active-asset budget allocation (전체 선물 기준, 방향 역전 불필요)
+        rate_keywords = ['Comdty']
         fx_keywords = ['Curncy']
         LONG_KEYWORDS = ['🟢 LONG']
         SHORT_KEYWORDS = ['🔴 SHORT']
-
-        # GVSK(한국 yield)만 역전, Comdty 선물은 방향 그대로
-        def rate_display(pos_str, asset):
-            if 'GVSK' not in asset:
-                return pos_str  # 선물 기준 → 그대로
-            if pos_str == '🟢 LONG':  return '🔴 SHORT'  # yield up → 선물 short
-            if pos_str == '🔴 SHORT': return '🟢 LONG'   # yield down → 선물 long
-            return pos_str
 
         rate_positions = [p for p in positions if any(k in p['asset'] for k in rate_keywords)
                          and 'NQ' not in p['asset']
@@ -541,8 +727,7 @@ def main():
         if rate_positions:
             per_budget = 1000 / len(rate_positions)
             for p in rate_positions:
-                display = rate_display(p['position'], p['asset'])
-                sign = 1 if display in LONG_KEYWORDS else -1
+                sign = 1 if p['position'] in LONG_KEYWORDS else -1
                 d = round(p['confidence'] * per_budget * sign)
                 delta_map[p['asset']] = d
                 net_delta += d
@@ -553,15 +738,14 @@ def main():
                 continue
             if 'NQ' in pos['asset']:
                 continue
-            display_pos = rate_display(pos['position'], pos['asset']) if pos['position'] not in ['🔘 NOSTR', '⚪ FLAT'] else pos['position']
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
-            print(f"      {pos['asset']}: {display_pos} "
+            print(f"      {pos['asset']}: {pos['position']} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
                   f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
 
         if rate_positions:
-            fut_long_cnt  = sum(1 for p in rate_positions if rate_display(p['position'], p['asset']) in LONG_KEYWORDS)
-            fut_short_cnt = sum(1 for p in rate_positions if rate_display(p['position'], p['asset']) in SHORT_KEYWORDS)
+            fut_long_cnt  = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)
+            fut_short_cnt = sum(1 for p in rate_positions if p['position'] in SHORT_KEYWORDS)
             gross = sum(abs(v) for v in delta_map.values())
             net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
             print(f"\n      💰 선물 넷 델타: {net_delta:+d}만원 {net_sign} (선물롱 {fut_long_cnt} / 선물숏 {fut_short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")

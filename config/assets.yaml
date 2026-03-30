@@ -1,5 +1,5 @@
 # Global Macro Trading - Asset Configuration
-# 금리: 국채선물 기준 (한국만 yield 기준 유지)
+# 금리: 국채선물 기준 (전체 통일)
 # FX: 선물 기준 (KRW만 spot 유지)
 
 rates:
@@ -20,10 +20,10 @@ rates:
       - [YM1 Comdty, XM1 Comdty]
   Korea:
     tickers:
-      - GVSK3YR Index
-      - GVSK10YR Index
+      - KE1 Comdty    # 한국 3Y 국채선물
+      - KAA1 Comdty   # 한국 10Y 국채선물
     spreads:
-      - [GVSK3YR Index, GVSK10YR Index]  # KR 3s10s
+      - [KE1 Comdty, KAA1 Comdty]  # KR 3s10s
   Germany:
     tickers:
       - DU1 Comdty   # 독일 2Y Schatz 선물
@@ -61,7 +61,7 @@ cross_asset_pairs:
   rates_curves:
     - [TU1 Comdty, TY1 Comdty]              # US 2s10s
     - [DU1 Comdty, RX1 Comdty]              # DE 2s10s
-    - [GVSK3YR Index, GVSK10YR Index]       # KR 3s10s
+    - [KE1 Comdty, KAA1 Comdty]             # KR 3s10s
     - [YM1 Comdty, XM1 Comdty]              # AU 3s10s
 
   rates_cross_country:
@@ -90,4 +90,4 @@ carry_pairs:
     foreign_rate: JB1 Comdty
   - fx: KRW Curncy
     us_rate: TU1 Comdty
-    foreign_rate: GVSK3YR Index
+    foreign_rate: KE1 Comdty

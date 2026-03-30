@@ -46,7 +46,7 @@ def asset_sort_key(ticker: str) -> tuple:
       3 = UK rates (G 1)
       4 = Australia rates (YM1, XM1)
       5 = Japan rates (JB1)
-      6 = Korea rates (GVSK - yield basis, kept as-is)
+      6 = Korea rates (KE1, KAA1 futures)
       7 = Europe peripheral / other Comdty (OAT1, IK1)
       8 = FX Curncy (EC1, BP1, JY1, AD1, KRW)
       9 = Equity Index (NQ1)
@@ -57,7 +57,7 @@ def asset_sort_key(ticker: str) -> tuple:
     elif ticker == 'G 1 Comdty': group = 3
     elif ticker in ('YM1 Comdty', 'XM1 Comdty'): group = 4
     elif ticker == 'JB1 Comdty': group = 5
-    elif 'GVSK' in ticker: group = 6
+    elif ticker in ('KE1 Comdty', 'KAA1 Comdty'): group = 6
     elif 'Comdty' in ticker: group = 7          # OAT1, IK1 등 기타 선물
     elif 'NQ' in ticker: group = 9
     elif 'Curncy' in ticker: group = 8
@@ -146,35 +146,51 @@ def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
 # ─────────────────────────────────────────────────────────────────────────────
 # Phase 1: Pre-Discovery
 # ─────────────────────────────────────────────────────────────────────────────
-def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: Path):
+def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: Path,
+                          incremental: bool = False, full_scan_interval: int = 3):
     """
     Pre-discover strategies at each month-end business day.
     Uses main.py's GlobalMacroTradingSystem for reliable discovery.
+
+    Args:
+        incremental: If True, use incremental discovery (reuse previous month).
+        full_scan_interval: Full scan every N months in incremental mode.
     """
     from main import GlobalMacroTradingSystem
-    
+
     total = len(month_ends)
     for i, month_end in enumerate(month_ends, 1):
         date_str = month_end.strftime('%Y-%m-%d')
         storage_dir = factory_base / f"strategies_{date_str}"
-        
-        # Skip if already cached
-        if storage_dir.exists() and (storage_dir / 'index.json').exists():
+
+        # Skip if already cached (check for SQLite DB or legacy index.json)
+        if storage_dir.exists() and (
+            (storage_dir / 'strategies.db').exists() or (storage_dir / 'index.json').exists()
+        ):
             existing = StrategyFactory(storage_dir=str(storage_dir))
-            count = len(existing.index.get('strategies', {}))
+            count = existing.strategy_count()
+            existing.close()
             logger.info(f"[{i}/{total}] 📂 Cache exists for {date_str}: {count} strategies. Skipping.")
             continue
-        
+
         logger.info(f"[{i}/{total}] 🔍 Discovering strategies for {date_str}...")
-        
+
         system = GlobalMacroTradingSystem(storage_dir=str(storage_dir))
-        result = system.run_discovery(
-            start_date="2020-01-01",
-            end_date=date_str,
-        )
-        
+
+        if incremental:
+            result = system.run_incremental_discovery(
+                start_date="2020-01-01",
+                end_date=date_str,
+                full_scan_interval=full_scan_interval,
+            )
+        else:
+            result = system.run_discovery(
+                start_date="2020-01-01",
+                end_date=date_str,
+            )
+
         logger.info(f"[{i}/{total}] ✅ {date_str}: Stored {result['stored_strategies']}, Active {result['active_strategies']}")
-    
+
     print(f"\n✅ Phase 1 complete! Strategies pre-discovered for {total} month-end dates.")
 
 
@@ -224,6 +240,9 @@ def run_phase2_simulation(prices: pd.DataFrame,
     cum_pnl_mom = 0.0   # Momentum strategies
     cum_pnl_mr  = 0.0   # Mean-Reversion strategies
     cum_pnl_adv = 0.0   # Advanced strategies
+    # Per-type per-class cumulative PnL
+    cum_pnl_mom_rates = 0.0; cum_pnl_mr_rates = 0.0; cum_pnl_adv_rates = 0.0
+    cum_pnl_mom_fx = 0.0;    cum_pnl_mr_fx = 0.0;    cum_pnl_adv_fx = 0.0
     log_data = []
 
     # Drawdown scaling state
@@ -263,23 +282,14 @@ def run_phase2_simulation(prices: pd.DataFrame,
             date_str = applicable_month_end.strftime('%Y-%m-%d')
             storage_dir = factory_base / f"strategies_{date_str}"
             
-            if not storage_dir.exists() or not (storage_dir / 'index.json').exists():
+            if not storage_dir.exists() or not (
+                (storage_dir / 'strategies.db').exists() or (storage_dir / 'index.json').exists()
+            ):
                 logger.warning(f"⚠️ No strategies found for {date_str}. Run Phase 1 first!")
                 continue
             
             factory = StrategyFactory(storage_dir=str(storage_dir))
-            # Batch-activate all stored strategies in memory, then save once
-            for sid, info in factory.index.get('strategies', {}).items():
-                info['is_active'] = True
-                # Also update the individual JSON file's is_active field
-                strat = factory.load_strategy(sid)
-                if strat:
-                    strat['is_active'] = True
-                    strat_file = factory.storage_dir / f"{sid}.json"
-                    with open(strat_file, 'w', encoding='utf-8') as jf:
-                        import json as _json
-                        _json.dump(strat, jf, indent=2, ensure_ascii=False)
-            factory._save_index()  # single write
+            factory.set_all_active(True)
             
             active_count = sum(1 for v in factory.index['strategies'].values() if v.get('is_active'))
             logger.info(f"📊 Rebalance at {date_str}: {active_count} active strategies")
@@ -346,11 +356,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
             sig_info = sig_map.get(asset, {'position': 0})
             pos = sig_info.get('position', 0) * dd_scale
 
-            # 한국 금리(GVSK)만 yield → bps 변화로 계산; 선물(Comdty)/FX/Index는 % 수익률
-            if ("Index" in asset or "Corp" in asset) and "NQ" not in asset:
-                daily_pnl = (p_curr - p_prev) * 100 * pos  # bps (GVSK yield 기반)
-            else:
-                daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # % (선물 가격 기반)
+            daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # % 수익률 (전체 선물 기준)
 
             cum_pnl[asset] += daily_pnl
             day_total_pnl += daily_pnl
@@ -380,18 +386,22 @@ def run_phase2_simulation(prices: pd.DataFrame,
             p_p = prices.loc[prev_date, asset]
             p_c = prices.loc[date, asset]
             pos_s   = sig['position']
-            is_rate = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
-            dpnl_s  = (p_c - p_p) * 100 * pos_s if is_rate else (p_c / p_p - 1) * 100 * pos_s
+            dpnl_s  = (p_c / p_p - 1) * 100 * pos_s
             strat_cum_pnl[sid] += dpnl_s
             strat_cum_history[sid].append(strat_cum_pnl[sid])
 
         row['pnl_ma_off_count'] = pnl_ma_off_count
 
         # ------------------------------------------------------------------
-        # Per-strategy-type daily PnL  (MOM / MR / ADV)
+        # Per-strategy-type daily PnL  (MOM / MR / ADV) split by Rates / FX
         # ------------------------------------------------------------------
         daily_mom = daily_mr = daily_adv = 0.0
         n_mom = n_mr = n_adv = 0
+        daily_mom_rates = daily_mr_rates = daily_adv_rates = 0.0
+        daily_mom_fx = daily_mr_fx = daily_adv_fx = 0.0
+        n_mom_rates = n_mr_rates = n_adv_rates = 0
+        n_mom_fx = n_mr_fx = n_adv_fx = 0
+
         for sig in raw:
             asset = sig['asset']
             if asset not in prices.columns:
@@ -399,26 +409,55 @@ def run_phase2_simulation(prices: pd.DataFrame,
             p_prev_s = prices.loc[prev_date, asset]
             p_curr_s = prices.loc[date, asset]
             pos_s    = sig['position']
-            is_rate  = ("Index" in asset or "Corp" in asset) and "NQ" not in asset
-            if is_rate:
-                dpnl = (p_curr_s - p_prev_s) * 100 * pos_s
-            else:
-                dpnl = (p_curr_s / p_prev_s - 1) * 100 * pos_s
+            is_fx    = "Curncy" in asset
+            is_rates_asset = asset in rates_assets
+            dpnl = (p_curr_s / p_prev_s - 1) * 100 * pos_s
+
             stype = sig.get('strategy_type', '')
+            # Total (combined)
             if stype == 'momentum':
                 daily_mom += dpnl; n_mom += 1
             elif stype == 'mean_reversion':
                 daily_mr  += dpnl; n_mr  += 1
             elif stype == 'advanced':
                 daily_adv += dpnl; n_adv += 1
+
+            # Split by asset class
+            if is_fx:
+                if stype == 'momentum':
+                    daily_mom_fx += dpnl; n_mom_fx += 1
+                elif stype == 'mean_reversion':
+                    daily_mr_fx += dpnl; n_mr_fx += 1
+                elif stype == 'advanced':
+                    daily_adv_fx += dpnl; n_adv_fx += 1
+            elif is_rates_asset:
+                if stype == 'momentum':
+                    daily_mom_rates += dpnl; n_mom_rates += 1
+                elif stype == 'mean_reversion':
+                    daily_mr_rates += dpnl; n_mr_rates += 1
+                elif stype == 'advanced':
+                    daily_adv_rates += dpnl; n_adv_rates += 1
+
         # Normalise by number of strategies (so scale is comparable to per-asset PnL)
         cum_pnl_mom += (daily_mom / n_mom if n_mom else 0.0)
         cum_pnl_mr  += (daily_mr  / n_mr  if n_mr  else 0.0)
         cum_pnl_adv += (daily_adv / n_adv if n_adv else 0.0)
+        cum_pnl_mom_rates += (daily_mom_rates / n_mom_rates if n_mom_rates else 0.0)
+        cum_pnl_mr_rates  += (daily_mr_rates  / n_mr_rates  if n_mr_rates  else 0.0)
+        cum_pnl_adv_rates += (daily_adv_rates / n_adv_rates if n_adv_rates else 0.0)
+        cum_pnl_mom_fx += (daily_mom_fx / n_mom_fx if n_mom_fx else 0.0)
+        cum_pnl_mr_fx  += (daily_mr_fx  / n_mr_fx  if n_mr_fx  else 0.0)
+        cum_pnl_adv_fx += (daily_adv_fx / n_adv_fx if n_adv_fx else 0.0)
 
         row['total_mom_cumpnl'] = round(cum_pnl_mom, 4)
         row['total_mr_cumpnl']  = round(cum_pnl_mr,  4)
         row['total_adv_cumpnl'] = round(cum_pnl_adv, 4)
+        row['mom_rates_cumpnl'] = round(cum_pnl_mom_rates, 4)
+        row['mr_rates_cumpnl']  = round(cum_pnl_mr_rates,  4)
+        row['adv_rates_cumpnl'] = round(cum_pnl_adv_rates, 4)
+        row['mom_fx_cumpnl']    = round(cum_pnl_mom_fx, 4)
+        row['mr_fx_cumpnl']     = round(cum_pnl_mr_fx,  4)
+        row['adv_fx_cumpnl']    = round(cum_pnl_adv_fx, 4)
 
         log_data.append(row)
     
@@ -432,7 +471,9 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Reorder columns
     total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl', 'total_index_cumpnl',
-                      'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl']
+                      'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+                      'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
+                      'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl']
     cum_pnl_cols = [c for c in df_log.columns if '_CumPnL' in c]
     other_cols = [c for c in df_log.columns if c not in total_pnl_cols + cum_pnl_cols]
     df_log = df_log[total_pnl_cols + cum_pnl_cols + other_cols]
@@ -471,7 +512,11 @@ def main():
     parser.add_argument('--pnl-ma', type=int, default=0,
                         help='Per-strategy PnL MA filter period (0 = disabled). '
                              'Strategies below their own N-day cumulative-PnL MA are silenced.')
-    
+    parser.add_argument('--incremental', action='store_true',
+                        help='Use incremental discovery in Phase 1 (reuse previous month)')
+    parser.add_argument('--full-scan-interval', type=int, default=3,
+                        help='Full scan every N months in incremental mode (default: 3)')
+
     args = parser.parse_args()
     
     # Load data
@@ -496,7 +541,9 @@ def main():
         print(f"\n{'='*60}")
         print(f"  PHASE 1: Strategy Pre-Discovery")
         print(f"{'='*60}")
-        run_phase1_discovery(prices, month_ends, factory_base)
+        run_phase1_discovery(prices, month_ends, factory_base,
+                             incremental=args.incremental,
+                             full_scan_interval=args.full_scan_interval)
     else:
         print("\n⏭️  Skipping Phase 1 (--skip-discovery)")
     

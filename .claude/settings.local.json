@@ -8,7 +8,23 @@
       "Bash(set PYTHONIOENCODING=utf-8)",
       "Bash(python -W ignore -c \":*)",
       "Bash(find /D/김선도/Python/only_quant -name *.json -type f)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(python -c \"from src.factory.strategy_factory import StrategyFactory; print\\(''StrategyFactory OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''main.py''\\).read\\(\\)\\); print\\(''main.py syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''main.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''main.py syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/run_backtest.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''run_backtest.py syntax OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/migrate_to_sqlite.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''migrate_to_sqlite.py syntax OK''\\)\")",
+      "Bash(python scripts/migrate_to_sqlite.py --dry-run)",
+      "Bash(python scripts/migrate_to_sqlite.py)",
+      "Bash(python main.py --mode summary --storage-dir src/factory/strategies_2026-02-27)",
+      "Bash(python -c \":*)",
+      "Bash(python scripts/migrate_to_sqlite.py --delete-json)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/plot_trading_results.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/run_backtest.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''main.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''main.py OK''\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''scripts/run_backtest.py'', encoding=''utf-8''\\).read\\(\\)\\); print\\(''run_backtest.py OK''\\)\")",
+      "Bash(python -c \"from src.portfolio.selector import StrategySelector; print\\(''selector OK''\\)\")",
+      "Bash(python -c \"from src.data.loader import DataLoader; print\\(''loader OK''\\)\")"
     ]
   }
 }
