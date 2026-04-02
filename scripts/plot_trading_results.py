@@ -36,22 +36,27 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
         'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
         'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
     ])
-    has_type_pnl = all(c in df.columns for c in [
-        'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+    has_alpha = all(c in df.columns for c in [
+        'a1_rates_cumpnl', 'a2_rates_cumpnl', 'a3_rates_cumpnl',
+        'a1_fx_cumpnl', 'a2_fx_cumpnl', 'a3_fx_cumpnl',
     ])
 
     # =====================================================================
-    # Layout: 1 top (full width) + 2x2 grid below
+    # Layout: 1 top (full width) + 2x2 grid (MOM/MR/ADV) + 2x1 (Alpha)
+    # 4 rows if alpha data exists, 3 rows otherwise
     # =====================================================================
-    fig = plt.figure(figsize=(18, 22))
+    n_rows = 4 if has_alpha else 3
+    fig = plt.figure(figsize=(18, 6 * n_rows + 4))
+    gs = fig.add_gridspec(n_rows, 2, height_ratios=[1] * n_rows, hspace=0.3, wspace=0.25)
 
-    # GridSpec: 3 rows, 2 cols. Top row spans both columns.
-    gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1], hspace=0.3, wspace=0.25)
     ax_top = fig.add_subplot(gs[0, :])       # Total Return (full width)
     ax_ir  = fig.add_subplot(gs[1, 0])       # Individual Rates
     ax_ifx = fig.add_subplot(gs[1, 1])       # Individual FX
     ax_sr  = fig.add_subplot(gs[2, 0])       # Strategy-Type Rates
     ax_sfx = fig.add_subplot(gs[2, 1])       # Strategy-Type FX
+    if has_alpha:
+        ax_ar  = fig.add_subplot(gs[3, 0])   # Alpha Rates
+        ax_afx = fig.add_subplot(gs[3, 1])   # Alpha FX
 
     # -----------------------------------------------------------------
     # Top: Total Return (Rates + FX dual Y-axis)
@@ -77,12 +82,34 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
                  color=color_fx, fontweight='bold', va='center', fontsize=9)
 
     ax_top.set_title(f'Global Macro Strategy: Total Return{title_mode}', fontsize=16, pad=15)
+
+    # Regime shading: T=trending (green), R=ranging (orange)
+    has_regime = ('regime_rates' in df.columns and df['regime_rates'].notna().any())
+    if has_regime:
+        import matplotlib.patches as mpatches
+        regime_col = df[['Date', 'regime_rates']].dropna()
+        regime_col = regime_col.copy()
+        regime_col['grp'] = (regime_col['regime_rates'] != regime_col['regime_rates'].shift()).cumsum()
+        for _, grp in regime_col.groupby('grp'):
+            regime = grp['regime_rates'].iloc[0]
+            start  = grp['Date'].iloc[0]
+            end    = grp['Date'].iloc[-1]
+            color  = 'limegreen' if regime == 'T' else 'lightsalmon'
+            ax_top.axvspan(start, end, alpha=0.12, color=color, linewidth=0)
+        trending_patch = mpatches.Patch(color='limegreen',  alpha=0.4, label='추세장 (H>0.5)')
+        ranging_patch  = mpatches.Patch(color='lightsalmon', alpha=0.4, label='횡보장 (H≤0.5)')
+        regime_handles = [trending_patch, ranging_patch]
+    else:
+        regime_handles = []
+
     lines1, labels1 = ax_top.get_legend_handles_labels()
     lines2, labels2 = ax_top2.get_legend_handles_labels()
-    ax_top.legend(lines1 + lines2, labels1 + labels2, loc='upper left')
+    all_handles = lines1 + lines2 + regime_handles
+    all_labels  = labels1 + labels2 + [h.get_label() for h in regime_handles]
+    ax_top.legend(all_handles, all_labels, loc='upper left')
 
     # -----------------------------------------------------------------
-    # Bottom-left (1,0): Individual Rates
+    # Row 1: Individual Rates / Individual FX
     # -----------------------------------------------------------------
     for col in rate_cols:
         label = col.replace('_CumPnL', '')
@@ -94,9 +121,6 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     ax_ir.grid(True, linestyle='--', alpha=0.6)
     ax_ir.legend(loc='upper left', bbox_to_anchor=(1.01, 1), fontsize='x-small')
 
-    # -----------------------------------------------------------------
-    # Bottom-right (1,1): Individual FX
-    # -----------------------------------------------------------------
     for col in fx_cols:
         label = col.replace('_CumPnL', '')
         line = ax_ifx.plot(df['Date'], df[col], label=label, alpha=0.8, linewidth=1.2)[0]
@@ -110,25 +134,21 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     # -----------------------------------------------------------------
     # Helper: plot strategy-type lines on an axis
     # -----------------------------------------------------------------
-    def _plot_strategy_type(ax, mom_col, mr_col, adv_col, unit_fmt, title):
-        if mom_col not in df.columns:
+    def _plot_strategy_type(ax, col_map, unit_fmt, title):
+        """col_map: dict of {label: column_name}"""
+        colors = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple', 'tab:cyan']
+        missing = [c for c in col_map.values() if c not in df.columns]
+        if missing:
             ax.text(0.5, 0.5, 'Data not available.\nRe-run backtest.',
                     ha='center', va='center', transform=ax.transAxes, fontsize=11, color='gray')
             ax.set_title(title, fontsize=13)
             return
 
-        sharpe_m = calc_sharpe(df[mom_col])
-        sharpe_r = calc_sharpe(df[mr_col])
-        sharpe_a = calc_sharpe(df[adv_col])
-
-        ax.plot(df['Date'], df[mom_col], color='tab:blue', linewidth=2,
-                label=f'Momentum (Sharpe: {sharpe_m:.2f})')
-        ax.plot(df['Date'], df[mr_col],  color='tab:orange', linewidth=2,
-                label=f'Mean-Rev (Sharpe: {sharpe_r:.2f})')
-        ax.plot(df['Date'], df[adv_col], color='tab:green', linewidth=2,
-                label=f'Advanced (Sharpe: {sharpe_a:.2f})')
-
-        for col, color in [(mom_col, 'tab:blue'), (mr_col, 'tab:orange'), (adv_col, 'tab:green')]:
+        for i, (label, col) in enumerate(col_map.items()):
+            sharpe = calc_sharpe(df[col])
+            color = colors[i % len(colors)]
+            ax.plot(df['Date'], df[col], color=color, linewidth=2,
+                    label=f'{label} (Sharpe: {sharpe:.2f})')
             last_val = df[col].iloc[-1]
             ax.text(last_date, last_val, f'  {unit_fmt.format(last_val)}',
                     color=color, fontsize=8, va='center')
@@ -139,41 +159,47 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
         ax.legend(loc='upper left', fontsize='small')
 
     # -----------------------------------------------------------------
-    # Bottom-left (2,0): Strategy-Type Rates
+    # Row 2: Strategy-Type Rates / FX (MOM / MR / ADV)
     # -----------------------------------------------------------------
     if has_split:
-        _plot_strategy_type(ax_sr,
-                            'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
-                            '{:.2f}', 'Strategy-Type: Rates (MOM / MR / ADV)')
+        _plot_strategy_type(ax_sr, {
+            'Momentum': 'mom_rates_cumpnl',
+            'Mean-Rev': 'mr_rates_cumpnl',
+            'Advanced': 'adv_rates_cumpnl',
+        }, '{:.2f}', 'Strategy-Type: Rates (MOM / MR / ADV)')
         ax_sr.set_ylabel('Normalised Cum PnL (bps)', fontweight='bold')
-    elif has_type_pnl:
-        # Fallback: show combined if split columns don't exist
-        _plot_strategy_type(ax_sr,
-                            'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
-                            '{:.2f}', 'Strategy-Type: Combined (MOM / MR / ADV)')
-        ax_sr.set_ylabel('Normalised Cum PnL', fontweight='bold')
+
+        _plot_strategy_type(ax_sfx, {
+            'Momentum': 'mom_fx_cumpnl',
+            'Mean-Rev': 'mr_fx_cumpnl',
+            'Advanced': 'adv_fx_cumpnl',
+        }, '{:.2f}', 'Strategy-Type: FX (MOM / MR / ADV)')
+        ax_sfx.set_ylabel('Normalised Cum PnL (%)', fontweight='bold')
     else:
         ax_sr.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest.',
                    ha='center', va='center', transform=ax_sr.transAxes, fontsize=11, color='gray')
         ax_sr.set_title('Strategy-Type: Rates', fontsize=13)
-
-    # -----------------------------------------------------------------
-    # Bottom-right (2,1): Strategy-Type FX
-    # -----------------------------------------------------------------
-    if has_split:
-        _plot_strategy_type(ax_sfx,
-                            'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
-                            '{:.2f}', 'Strategy-Type: FX (MOM / MR / ADV)')
-        ax_sfx.set_ylabel('Normalised Cum PnL (%)', fontweight='bold')
-    elif has_type_pnl:
-        _plot_strategy_type(ax_sfx,
-                            'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
-                            '{:.2f}', 'Strategy-Type: Combined (MOM / MR / ADV)')
-        ax_sfx.set_ylabel('Normalised Cum PnL', fontweight='bold')
-    else:
         ax_sfx.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest.',
                     ha='center', va='center', transform=ax_sfx.transAxes, fontsize=11, color='gray')
         ax_sfx.set_title('Strategy-Type: FX', fontsize=13)
+
+    # -----------------------------------------------------------------
+    # Row 3: Alpha Rates / Alpha FX (A1 / A2 / A3)
+    # -----------------------------------------------------------------
+    if has_alpha:
+        _plot_strategy_type(ax_ar, {
+            'Alpha1 (XSect)': 'a1_rates_cumpnl',
+            'Alpha2 (Predict)': 'a2_rates_cumpnl',
+            'Alpha3 (Regime)': 'a3_rates_cumpnl',
+        }, '{:.2f}', 'Alpha Strategies: Rates (A1 / A2 / A3)')
+        ax_ar.set_ylabel('Normalised Cum PnL (bps)', fontweight='bold')
+
+        _plot_strategy_type(ax_afx, {
+            'Alpha1 (XSect)': 'a1_fx_cumpnl',
+            'Alpha2 (Predict)': 'a2_fx_cumpnl',
+            'Alpha3 (Regime)': 'a3_fx_cumpnl',
+        }, '{:.2f}', 'Alpha Strategies: FX (A1 / A2 / A3)')
+        ax_afx.set_ylabel('Normalised Cum PnL (%)', fontweight='bold')
 
     # -----------------------------------------------------------------
     # Save

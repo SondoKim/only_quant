@@ -304,6 +304,141 @@ class TechnicalIndicators:
         return adx.fillna(0)
     
     @staticmethod
+    def hurst_exponent(series: pd.Series, window: int = 120) -> float:
+        """
+        Hurst Exponent via R/S (Rescaled Range) analysis.
+
+        Measures whether a price series is trending or mean-reverting:
+          H > 0.5 : persistent / trending  → MOM/ADV 유효
+          H = 0.5 : random walk
+          H < 0.5 : anti-persistent / mean-reverting → MR 유효
+
+        Uses the last `window` observations of the series.
+        Minimum reliable window: 64 observations.
+
+        Args:
+            series: Price series (close prices)
+            window: Number of recent observations to use
+
+        Returns:
+            Hurst exponent in [0, 1]. Returns 0.5 if data is insufficient.
+        """
+        prices_w = series.dropna().iloc[-window:]
+        if len(prices_w) < 32:
+            return 0.5
+
+        returns = prices_w.pct_change().dropna().values
+        n = len(returns)
+
+        # Lags for R/S: powers of 2 that fit within the series
+        lags = [l for l in [8, 16, 32, 64] if l <= n // 2]
+        if len(lags) < 2:
+            return 0.5
+
+        rs_means = []
+        for lag in lags:
+            rs_list = []
+            for start in range(0, n - lag + 1, lag):
+                chunk = returns[start:start + lag]
+                m = chunk.mean()
+                dev = np.cumsum(chunk - m)
+                R = dev.max() - dev.min()
+                S = chunk.std(ddof=0)
+                if S > 0:
+                    rs_list.append(R / S)
+            if rs_list:
+                rs_means.append(float(np.mean(rs_list)))
+
+        if len(rs_means) < 2:
+            return 0.5
+
+        valid_lags = lags[:len(rs_means)]
+        try:
+            H = np.polyfit(np.log(valid_lags), np.log(rs_means), 1)[0]
+            return float(np.clip(H, 0.0, 1.0))
+        except Exception:
+            return 0.5
+
+    @staticmethod
+    def hurst_dfa(series: pd.Series, window: int = 120) -> float:
+        """
+        Hurst Exponent via DFA (Detrended Fluctuation Analysis).
+
+        More robust than R/S for non-stationary financial series.
+        Removes local linear trends within each segment before measuring
+        fluctuation scaling, avoiding over-estimation caused by long-term trends.
+
+          H > 0.5 : trending / persistent
+          H = 0.5 : random walk
+          H < 0.5 : mean-reverting / anti-persistent
+
+        Uses n//3 as max scale to ensure ≥3 non-overlapping segments per scale.
+        Minimum reliable window: 32 observations.
+
+        Args:
+            series: Price series
+            window: Number of recent observations to use
+
+        Returns:
+            Hurst exponent in [0, 1]. Returns 0.5 if data is insufficient.
+        """
+        prices_w = series.dropna().iloc[-window:]
+        if len(prices_w) < 32:
+            return 0.5
+
+        returns = prices_w.pct_change().dropna().values
+        n = len(returns)
+
+        # Profile: cumulative sum of demeaned returns
+        y = np.cumsum(returns - returns.mean())
+
+        # Scales: require at least 3 non-overlapping segments (scale <= n//3)
+        scales = [s for s in [8, 16, 32, 64, 128] if s <= n // 3]
+        if len(scales) < 2:
+            return 0.5
+
+        fluctuations = []
+        for scale in scales:
+            n_segs = n // scale
+            sq_residuals = []
+            for k in range(n_segs):
+                seg = y[k * scale:(k + 1) * scale]
+                x = np.arange(scale, dtype=float)
+                # Linear detrend
+                coeffs = np.polyfit(x, seg, 1)
+                trend = coeffs[0] * x + coeffs[1]
+                sq_residuals.extend((seg - trend) ** 2)
+            if sq_residuals:
+                fluctuations.append(float(np.sqrt(np.mean(sq_residuals))))
+
+        if len(fluctuations) < 2:
+            return 0.5
+
+        valid_scales = scales[:len(fluctuations)]
+        try:
+            H = np.polyfit(np.log(valid_scales), np.log(fluctuations), 1)[0]
+            return float(np.clip(H, 0.0, 1.0))
+        except Exception:
+            return 0.5
+
+    @staticmethod
+    def hurst(series: pd.Series, window: int = 120, method: str = 'rs') -> float:
+        """
+        Compute Hurst Exponent using the specified method.
+
+        Args:
+            series: Price series
+            window: Lookback window
+            method: 'rs' for R/S analysis (default), 'dfa' for DFA
+
+        Returns:
+            Hurst exponent in [0, 1]
+        """
+        if method == 'dfa':
+            return TechnicalIndicators.hurst_dfa(series, window)
+        return TechnicalIndicators.hurst_exponent(series, window)
+
+    @staticmethod
     def donchian_channel(
         prices: pd.Series,
         period: int = 20

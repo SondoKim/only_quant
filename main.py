@@ -193,14 +193,18 @@ class GlobalMacroTradingSystem:
                 self.sortino_6m_threshold = bt_config.get('sortino_threshold_6m', 0.5)
                 self.min_trades = bt_config.get('min_trades', 20)
                 self.max_drawdown = bt_config.get('max_drawdown', -0.20)
+                self.trail_stop_pct = bt_config.get('trail_stop_pct', 0)
+                self.max_hold_days = bt_config.get('max_hold_days', 0)
                 
                 # Update selector threshold
                 self.strategy_selector.sharpe_threshold = self.sharpe_6m_threshold
         else:
-            self.sharpe_3y_threshold = 1.0
-            self.sortino_3y_threshold = 1.0
+            self.sharpe_3y_threshold = 0.8
+            self.sortino_3y_threshold = 0.8
             self.sharpe_6m_threshold = 0.5
             self.sortino_6m_threshold = 0.5
+            self.trail_stop_pct = 0
+            self.max_hold_days = 0
             self.min_trades = 20
             self.max_drawdown = -0.20
     
@@ -266,7 +270,11 @@ class GlobalMacroTradingSystem:
             logger.info(f"🔄 Sampling mode: {sample_ratio*100:.1f}% search")
         
         # 4. Initialize backtester
-        backtester = VectorBTEngine(prices)
+        backtester = VectorBTEngine(
+            prices,
+            trail_stop_pct=self.trail_stop_pct,
+            max_hold_days=self.max_hold_days,
+        )
         
         # 5. Generate and backtest strategies in batches
         tested_count = 0
@@ -376,7 +384,11 @@ class GlobalMacroTradingSystem:
 
         assets = list(prices.columns)
         related_assets = self._build_related_assets_map()
-        backtester = VectorBTEngine(prices)
+        backtester = VectorBTEngine(
+            prices,
+            trail_stop_pct=self.trail_stop_pct,
+            max_hold_days=self.max_hold_days,
+        )
 
         # 2. Load previous month's strategies
         prev_factory = StrategyFactory(storage_dir=prev_dir)
@@ -540,7 +552,11 @@ class GlobalMacroTradingSystem:
         prices = preprocessor.clean().get_data()
         
         # 2. Update strategy performance
-        backtester = VectorBTEngine(prices)
+        backtester = VectorBTEngine(
+            prices,
+            trail_stop_pct=self.trail_stop_pct,
+            max_hold_days=self.max_hold_days,
+        )
         updated = 0
         
         for strategy in self.strategy_factory.filter_by_sharpe_3y(0):  # Get all
@@ -559,21 +575,39 @@ class GlobalMacroTradingSystem:
         logger.info("✅ Daily update complete!")
         return report
     
-    def get_trading_signals(self, max_correlation: float = 0.3) -> Dict[str, Any]:
+    def get_trading_signals(self, max_correlation: float = 0.3,
+                            hurst_window: int = 120, hurst_threshold: float = 0.5,
+                            hurst_method: str = 'rs') -> Dict[str, Any]:
         """
-        Get current trading signals.
+        Get current trading signals with Hurst Exponent regime classification.
 
         Args:
             max_correlation: Maximum allowed correlation between strategies
+            hurst_window: Lookback window for Hurst Exponent (default: 120)
+            hurst_threshold: H threshold above which regime is 'trending' (default: 0.5)
 
         Returns:
-            Trading signal report
+            Trading signal report including 'regime_info' per asset
         """
         prices = self.data_loader.load_data()
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
-        
-        return self.strategy_selector.get_trading_report(prices, max_correlation=max_correlation)
+
+        result = self.strategy_selector.get_trading_report(prices, max_correlation=max_correlation)
+
+        # Compute Hurst Exponent regime for each asset
+        from src.indicators.technical import TechnicalIndicators
+        regime_info: Dict[str, Any] = {}
+        for asset in prices.columns:
+            h = TechnicalIndicators.hurst(prices[asset], window=hurst_window, method=hurst_method)
+            regime_info[asset] = {
+                'hurst': round(h, 3),
+                'regime': 'trending' if h > hurst_threshold else 'ranging',
+                'method': hurst_method.upper(),
+            }
+        result['regime_info'] = regime_info
+
+        return result
     
     def get_factory_summary(self) -> Dict[str, Any]:
         """Get strategy factory summary."""
@@ -712,7 +746,31 @@ def main():
         positions = result['asset_positions']
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
-        
+
+        # ── Hurst Exponent 시장 국면 출력 ────────────────────────────────
+        regime_info = result.get('regime_info', {})
+        if regime_info:
+            sample_method = next(iter(regime_info.values()), {}).get('method', 'RS')
+            print(f"\n   🌡️  시장 국면 (Hurst [{sample_method}], window={120}):")
+            rate_assets_ri = sorted(
+                [(a, ri) for a, ri in regime_info.items() if 'Comdty' in a and 'NQ' not in a],
+                key=lambda x: x[0]
+            )
+            fx_assets_ri = sorted(
+                [(a, ri) for a, ri in regime_info.items() if 'Curncy' in a],
+                key=lambda x: x[0]
+            )
+            if rate_assets_ri:
+                print("      [금리]")
+                for asset, ri in rate_assets_ri:
+                    icon = '📈 추세장' if ri['regime'] == 'trending' else '↔️  횡보장'
+                    print(f"         {icon}  {asset}: H={ri['hurst']:.3f}")
+            if fx_assets_ri:
+                print("      [FX]")
+                for asset, ri in fx_assets_ri:
+                    icon = '📈 추세장' if ri['regime'] == 'trending' else '↔️  횡보장'
+                    print(f"         {icon}  {asset}: H={ri['hurst']:.3f}")
+
         # Per-active-asset budget allocation (전체 선물 기준, 방향 역전 불필요)
         rate_keywords = ['Comdty']
         fx_keywords = ['Curncy']
@@ -739,9 +797,11 @@ def main():
             if 'NQ' in pos['asset']:
                 continue
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
+            ri = regime_info.get(pos['asset'])
+            regime_str = f" | {'📈' if ri['regime'] == 'trending' else '↔️'} H={ri['hurst']:.3f}" if ri else ""
             print(f"      {pos['asset']}: {pos['position']} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
-                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
+                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str}{regime_str})")
 
         if rate_positions:
             fut_long_cnt  = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)
@@ -750,14 +810,15 @@ def main():
             net_sign = "롱" if net_delta > 0 else "숏" if net_delta < 0 else "중립"
             print(f"\n      💰 선물 넷 델타: {net_delta:+d}만원 {net_sign} (선물롱 {fut_long_cnt} / 선물숏 {fut_short_cnt}, 그로스: {gross}만원, 예산: {round(1000/len(rate_positions))}만/자산)")
 
-        
         print("\n   💱 FX 포지션:")
         for pos in positions:
             if not any(k in pos['asset'] for k in fx_keywords):
                 continue
+            ri = regime_info.get(pos['asset'])
+            regime_str = f" | {'📈' if ri['regime'] == 'trending' else '↔️'} H={ri['hurst']:.3f}" if ri else ""
             print(f"      {pos['asset']}: {pos['position']} "
                   f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
-                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}])")
+                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{regime_str})")
         
         # Verbose: per-strategy detail grouped by asset
         if args.verbose and result.get('raw_signals'):

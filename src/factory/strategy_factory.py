@@ -166,7 +166,12 @@ class StrategyFactory:
 
         asset_short = strategy_config.get('asset', 'UNK')[:6]
         strategy_short = strategy_config.get('strategy_name', 'UNK')[:4].upper()
-        type_short = 'MOM' if strategy_config.get('strategy_type') == 'momentum' else 'MR'
+        stype = strategy_config.get('strategy_type', '')
+        type_map = {
+            'momentum': 'MOM', 'mean_reversion': 'MR', 'advanced': 'ADV',
+            'alpha1': 'A1', 'alpha2': 'A2', 'alpha3': 'A3',
+        }
+        type_short = type_map.get(stype, stype[:3].upper())
 
         return f"{asset_short}_{type_short}_{strategy_short}_{hash_id}"
 
@@ -433,7 +438,8 @@ class StrategyFactory:
         conn = self._get_conn()
         total = conn.execute("SELECT COUNT(*) c FROM strategies").fetchone()['c']
         active = conn.execute("SELECT COUNT(*) c FROM strategies WHERE is_active=1").fetchone()['c']
-        by_type = {'momentum': 0, 'mean_reversion': 0, 'advanced': 0}
+        by_type = {'momentum': 0, 'mean_reversion': 0, 'advanced': 0,
+                   'alpha1': 0, 'alpha2': 0, 'alpha3': 0}
         for row in conn.execute("SELECT strategy_type, COUNT(*) c FROM strategies GROUP BY strategy_type"):
             if row['strategy_type'] in by_type:
                 by_type[row['strategy_type']] = row['c']

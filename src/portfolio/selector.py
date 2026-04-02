@@ -15,6 +15,7 @@ from ..factory.strategy_factory import StrategyFactory
 from ..strategies.momentum import MomentumStrategy
 from ..strategies.mean_reversion import MeanReversionStrategy
 from ..strategies.advanced import AdvancedStrategies
+from ..strategies.alpha import AlphaStrategies
 from ..backtester.vectorbt_engine import VectorBTEngine
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ class StrategySelector:
         self.config = self._load_config()
         self.active_strategies: List[Dict[str, Any]] = []
         self._carry_positions: Dict[str, float] = {}  # asset → last non-zero position
+        self._regime_inverted_ids: set = set()  # strategy_ids whose signals are inverted by regime filter
 
     def _get_default_config_path(self) -> str:
         """Get default path to indicators.yaml."""
@@ -127,6 +129,39 @@ class StrategySelector:
 
         return result
 
+    def _build_asset_groups(self) -> Dict[str, List[str]]:
+        """Build country/asset group mapping from assets.yaml config.
+        Returns dict: {group_name: [ticker1, ticker2, ...]}"""
+        import yaml
+        from pathlib import Path
+        assets_path = Path(self.config_path).parent / 'assets.yaml'
+        try:
+            with open(assets_path, 'r', encoding='utf-8') as f:
+                cfg = yaml.safe_load(f) or {}
+        except Exception:
+            return {}
+
+        groups = {}
+        # Rates: grouped by country
+        for country, data in cfg.get('rates', {}).items():
+            tickers = data.get('tickers', [])
+            if tickers:
+                groups[f'rates_{country}'] = tickers
+
+        # FX: each currency is its own group
+        for currency, data in cfg.get('fx', {}).items():
+            ticker = data.get('ticker')
+            if ticker:
+                groups[f'fx_{currency}'] = [ticker]
+
+        # Indices
+        for name, data in cfg.get('indices', {}).items():
+            ticker = data.get('ticker')
+            if ticker:
+                groups[f'index_{name}'] = [ticker]
+
+        return groups
+
     def _filter_by_correlation(
         self,
         strategies: List[Dict[str, Any]],
@@ -134,43 +169,107 @@ class StrategySelector:
         threshold: float
     ) -> List[Dict[str, Any]]:
         """
-        Greedily filter strategies by correlation.
+        Filter strategies by correlation within country/asset groups.
+        Correlation filter applies within each group independently,
+        so strategies from different countries don't compete with each other.
         """
         if not strategies:
             return []
-            
-        # Sort by 6m Sharpe Ratio (Descending to prioritize top winners for fading)
-        sorted_strategies = sorted(
-            strategies,
-            key=lambda x: x['performance']['sharpe_6m'],
-            reverse=True
-        )
-        
+
+        # Build asset → group mapping
+        asset_groups = self._build_asset_groups()
+        asset_to_group = {}
+        for group_name, tickers in asset_groups.items():
+            for ticker in tickers:
+                asset_to_group[ticker] = group_name
+
+        # Group strategies by their asset's country group
+        from collections import defaultdict
+        grouped: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for s in strategies:
+            group = asset_to_group.get(s['asset'], f'ungrouped_{s["asset"]}')
+            grouped[group].append(s)
+
         backtester = VectorBTEngine(prices)
-        selected_strategies = []
-        selected_returns = []
-        
-        for strategy in sorted_strategies:
-            # Run a quick backtest to get returns
-            result = backtester.run_backtest(strategy)
-            rets = result.returns
-            
-            if rets is None or rets.empty or rets.std() == 0:
-                continue
-                
-            # Check correlation with already selected strategies
-            is_redundant = False
-            for other_rets in selected_returns:
-                corr = rets.corr(other_rets)
-                if abs(corr) >= threshold:
-                    is_redundant = True
-                    break
-            
-            if not is_redundant:
-                selected_strategies.append(strategy)
-                selected_returns.append(rets)
-                
-        return selected_strategies
+
+        # ── Pre-compute ALL returns in one parallel batch ──────────────────
+        # run_batch_backtest uses mp.Pool internally (already parallelised).
+        # This replaces the old per-strategy sequential run_backtest() calls.
+        logger.info(f"   Batch backtesting {len(strategies)} strategies (parallel)...")
+        batch_results = backtester.run_batch_backtest(strategies, progress=False)
+
+        # Build cache: strategy_id → returns Series (None if invalid)
+        returns_cache: Dict[str, Optional[pd.Series]] = {}
+        for strat, result in zip(strategies, batch_results):
+            sid = strat['strategy_id']
+            r = result.returns if result is not None else None
+            returns_cache[sid] = r if (r is not None and not r.empty and r.std() != 0) else None
+
+        all_selected = []
+
+        for group_name, group_strategies in grouped.items():
+            # Sort by 6m Sharpe within group (descending)
+            sorted_strats = sorted(
+                group_strategies,
+                key=lambda x: x['performance']['sharpe_6m'],
+                reverse=True
+            )
+
+            selected_returns = []
+            for strategy in sorted_strats:
+                rets = returns_cache.get(strategy['strategy_id'])
+                if rets is None:
+                    continue
+
+                # Check correlation with already selected strategies IN THIS GROUP
+                is_redundant = False
+                for other_rets in selected_returns:
+                    corr = rets.corr(other_rets)
+                    if abs(corr) >= threshold:
+                        is_redundant = True
+                        break
+
+                if not is_redundant:
+                    all_selected.append(strategy)
+                    selected_returns.append(rets)
+
+        before_diversify = len(all_selected)
+
+        # ── Pass 2: Negative Correlation Seeking (diversifiers) ──
+        selected_ids = {s['strategy_id'] for s in all_selected}
+        if all_selected:
+            # Build portfolio return series — reuse cache (no extra backtest)
+            all_sel_returns = [returns_cache[s['strategy_id']]
+                               for s in all_selected
+                               if returns_cache.get(s['strategy_id']) is not None]
+
+            if all_sel_returns:
+                portfolio_rets = pd.concat(all_sel_returns, axis=1).mean(axis=1)
+
+                # Check top-200 rejected strategies (by Sharpe) — all already cached
+                rejected = [s for s in strategies if s['strategy_id'] not in selected_ids]
+                rejected = sorted(rejected,
+                                  key=lambda x: x['performance']['sharpe_6m'],
+                                  reverse=True)[:200]
+
+                diversifiers_added = 0
+                for strategy in rejected:
+                    if diversifiers_added >= 5:
+                        break
+                    rets = returns_cache.get(strategy['strategy_id'])
+                    if rets is None:
+                        continue
+                    corr = rets.corr(portfolio_rets)
+                    if corr < -0.1 and strategy['performance']['sharpe_6m'] > 0:
+                        all_selected.append(strategy)
+                        diversifiers_added += 1
+                        logger.info(f"   + Diversifier: {strategy['strategy_id']} "
+                                     f"(corr={corr:.2f}, Sharpe6M={strategy['performance']['sharpe_6m']:.2f})")
+
+        logger.info(f"   Correlation filter: {len(strategies)} -> {before_diversify} "
+                     f"+ {len(all_selected) - before_diversify} diversifiers "
+                     f"= {len(all_selected)} (within {len(grouped)} groups)")
+        return all_selected
     
     def generate_signals(
         self,
@@ -215,35 +314,26 @@ class StrategySelector:
         
         return pd.DataFrame(signals)
     
-    def _generate_strategy_signal(
+    def _compute_position_series(
         self,
         prices: pd.DataFrame,
         strategy: Dict[str, Any],
-        target_date: str = None
-    ) -> Dict[str, Any]:
-        """
-        Generate signal for a single strategy.
-        
-        Args:
-            prices: Price DataFrame
-            strategy: Strategy configuration
-            target_date: Target date
-            
-        Returns:
-            Signal dict
+    ) -> pd.Series:
+        """Compute the full direction-corrected position series for a strategy.
+
+        Separated from _generate_strategy_signal so that callers can pre-compute
+        the full series once and look up individual dates cheaply.
         """
         asset = strategy['asset']
         strategy_type = strategy['strategy_type']
         strategy_name = strategy['strategy_name']
         params = strategy['params']
         related_asset = strategy.get('related_asset')
-        
-        # Generate entry/exit signals
+
         if strategy_type == 'momentum':
             entries, exits = MomentumStrategy.generate_signals(
                 prices, asset, strategy_name, params, related_asset
             )
-            # Momentum is typically long-only
             position = self._calculate_position_momentum(entries, exits)
         elif strategy_type == 'mean_reversion':
             long_entries, long_exits, short_entries, short_exits = \
@@ -258,32 +348,85 @@ class StrategySelector:
                 prices, asset, strategy_name, params, related_asset
             )
             position = self._calculate_position_momentum(entries, exits)
+        elif strategy_type in ('alpha1', 'alpha2', 'alpha3'):
+            long_entries, long_exits, short_entries, short_exits = \
+                AlphaStrategies.generate_signals(
+                    prices, asset, strategy_name, params, related_asset
+                )
+            position = self._calculate_position_mean_reversion(
+                long_entries, long_exits, short_entries, short_exits
+            )
         else:
             raise ValueError(f"Unknown strategy category: {strategy_type}")
 
-        # Get signal for target date
+        # 방향 보정 규칙:
+        # 1) ADV rates: 역방향 (금리 선물에서 ADV 시그널은 contrarian 성격)
+        # 2) alpha2 FX: 역방향 (curve_to_fx / rate_diff_to_fx는 채권 가격 기준으로
+        #    계산되어 yield 기준 경제적 방향과 반대가 됨)
+        # 3) regime_inverted: 추세장의 MR 전략 → 신호 반전으로 추세 추종화
+        is_rates = 'Comdty' in asset and 'NQ' not in asset
+        is_fx = 'Curncy' in asset
+
+        if strategy_type == 'advanced' and is_rates:
+            position = -position
+        elif strategy_type == 'alpha2' and is_fx:
+            position = -position
+
+        sid = strategy.get('strategy_id', '')
+        if sid and sid in self._regime_inverted_ids:
+            position = -position
+
+        return position
+
+    def precompute_position_cache(
+        self,
+        prices: pd.DataFrame,
+    ) -> Dict[str, Any]:
+        """Pre-compute position series for all active strategies.
+
+        Call once after monthly rebalance. The returned cache maps
+        strategy_id → {'positions': pd.Series, <signal metadata>}
+        so that daily lookups are O(1) dict access instead of
+        recomputing the full indicator series each day.
+        """
+        cache: Dict[str, Any] = {}
+        for strategy in self.active_strategies:
+            try:
+                pos_series = self._compute_position_series(prices, strategy)
+                cache[strategy['strategy_id']] = {
+                    'positions': pos_series,
+                    'asset': strategy['asset'],
+                    'related_asset': strategy.get('related_asset'),
+                    'strategy_type': strategy['strategy_type'],
+                    'strategy_name': strategy['strategy_name'],
+                    'sharpe_6m': strategy['performance']['sharpe_6m'],
+                }
+            except Exception as e:
+                logger.error(f"Position cache failed for {strategy['strategy_id']}: {e}")
+        return cache
+
+    def _generate_strategy_signal(
+        self,
+        prices: pd.DataFrame,
+        strategy: Dict[str, Any],
+        target_date: str = None
+    ) -> Dict[str, Any]:
+        """Generate signal for a single strategy at a specific date."""
+        position = self._compute_position_series(prices, strategy)
+
         if target_date:
             target_idx = pd.to_datetime(target_date)
-            if target_idx in position.index:
-                current_position = position.loc[target_idx]
-            else:
-                current_position = position.iloc[-1]
+            current_position = position.loc[target_idx] if target_idx in position.index else position.iloc[-1]
         else:
             current_position = position.iloc[-1]
 
-        # ADV 전략은 역방향으로 매매 (백테스팅 결과 반대 신호가 더 우수)
-        if strategy_type == 'advanced':
-            final_position = -current_position
-        else:
-            final_position = current_position
-            
         return {
             'strategy_id': strategy['strategy_id'],
-            'asset': asset,
-            'related_asset': related_asset,
-            'strategy_type': strategy_type,
-            'strategy_name': strategy_name,
-            'position': final_position,
+            'asset': strategy['asset'],
+            'related_asset': strategy.get('related_asset'),
+            'strategy_type': strategy['strategy_type'],
+            'strategy_name': strategy['strategy_name'],
+            'position': float(current_position),
             'sharpe_6m': strategy['performance']['sharpe_6m'],
             'date': target_date or str(position.index[-1].date()),
         }
@@ -546,16 +689,102 @@ class StrategySelector:
     
     def _refresh_sync(self, prices: pd.DataFrame, max_correlation: float = 0.3):
         """Internal synchronous refresh."""
+        self._regime_inverted_ids = set()  # reset; apply_regime_filter() will repopulate if called
         # All strategies are already activated — just get them
         potential_strategies = self.factory.get_active_strategies()
-        
+
         if not potential_strategies:
             self.active_strategies = []
             return
-            
+
         if max_correlation >= 1.0:
             self.active_strategies = potential_strategies
             return
 
         self.active_strategies = self._filter_by_correlation(potential_strategies, prices, max_correlation)
         self.active_strategies = self._ensure_min_assets(self.active_strategies, potential_strategies, min_assets=3)
+
+    def apply_regime_filter(
+        self,
+        prices: pd.DataFrame,
+        hurst_window: int = 120,
+        hurst_threshold: float = 0.5,
+        hurst_method: str = 'rs',
+        regime_cache: Optional[Dict[str, pd.Series]] = None,
+        as_of_date=None,
+    ) -> None:
+        """Alpha3 meta-layer: classify market regime per asset via Hurst Exponent.
+
+        H > hurst_threshold → trending (persistent):
+            MOM/ADV 유지, MR 신호 반전 → 추세 추종으로 활용
+        H ≤ hurst_threshold → ranging (anti-persistent):
+            MR 정방향 유지, MOM/ADV 제거
+        alpha1 / alpha2 는 regime-agnostic → 항상 유지.
+
+        regime_cache: {asset: pd.Series(index=dates, values=H)} 사전 계산값.
+                      as_of_date 기준으로 조회하여 매월 재계산 비용 제거.
+        """
+        from ..indicators.technical import TechnicalIndicators
+
+        self._regime_inverted_ids = set()
+
+        before = len(self.active_strategies)
+        filtered = []
+        regime_log: Dict[str, str] = {}
+
+        for strategy in self.active_strategies:
+            asset = strategy['asset']
+            stype = strategy['strategy_type']
+            sid   = strategy['strategy_id']
+
+            if stype in ('alpha1', 'alpha2'):
+                filtered.append(strategy)
+                continue
+
+            if regime_cache is None and asset not in prices.columns:
+                filtered.append(strategy)
+                continue
+
+            if asset not in regime_log:
+                if regime_cache is not None and asset in regime_cache:
+                    # 캐시 조회: as_of_date 이전의 마지막 Hurst 값
+                    h_series = regime_cache[asset]
+                    if as_of_date is not None:
+                        h_series = h_series[h_series.index <= as_of_date]
+                    h = float(h_series.iloc[-1]) if not h_series.empty else 0.5
+                else:
+                    # 캐시 없을 때 직접 계산
+                    h = TechnicalIndicators.hurst(
+                        prices[asset], window=hurst_window, method=hurst_method
+                    )
+                regime_log[asset] = 'trending' if h > hurst_threshold else 'ranging'
+
+            regime = regime_log[asset]
+
+            if regime == 'trending':
+                if stype in ('momentum', 'advanced'):
+                    filtered.append(strategy)
+                elif stype == 'mean_reversion':
+                    filtered.append(strategy)
+                    self._regime_inverted_ids.add(sid)  # 추세장 MR → 반전
+            else:  # ranging
+                if stype == 'mean_reversion':
+                    filtered.append(strategy)
+                # MOM/ADV 횡보장 제거
+
+        all_candidates = self.active_strategies
+        self.active_strategies = filtered
+        self.active_strategies = self._ensure_min_assets(
+            self.active_strategies, all_candidates, min_assets=3
+        )
+
+        after = len(self.active_strategies)
+        n_inverted = len(self._regime_inverted_ids)
+        trending_assets = [a for a, r in regime_log.items() if r == 'trending']
+        ranging_assets  = [a for a, r in regime_log.items() if r == 'ranging']
+        logger.info(
+            f"   Regime filter ({hurst_method.upper()}, H>{hurst_threshold}, window={hurst_window}): "
+            f"{before} → {after} strategies "
+            f"(MR inverted in trending: {n_inverted}) | "
+            f"trending={len(trending_assets)} assets, ranging={len(ranging_assets)} assets"
+        )

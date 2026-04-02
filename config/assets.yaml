@@ -74,6 +74,39 @@ cross_asset_pairs:
     - [IK1 Comdty, RX1 Comdty]              # Italy-Germany spread
     - [OAT1 Comdty, RX1 Comdty]             # France-Germany spread
 
+# Cross-asset predictive pairs (Alpha2)
+predictive_pairs:
+  curve_to_fx:
+    # US 2s10s curve → risk FX
+    - short_rate: TU1 Comdty
+      long_rate: TY1 Comdty
+      targets:
+        - AD1 Curncy    # AUD (commodity currency, risk-sensitive)
+        - KRW Curncy    # KRW (EM, risk-sensitive)
+        - EC1 Curncy    # EUR
+    # DE 2s10s curve → EUR
+    - short_rate: DU1 Comdty
+      long_rate: RX1 Comdty
+      targets:
+        - EC1 Curncy
+  rate_diff_to_fx:
+    # US vs foreign rate differential → FX
+    - us_rate: TY1 Comdty
+      foreign_rate: RX1 Comdty
+      target: EC1 Curncy
+    - us_rate: TY1 Comdty
+      foreign_rate: JB1 Comdty
+      target: JY1 Curncy
+    - us_rate: TY1 Comdty
+      foreign_rate: G 1 Comdty
+      target: BP1 Curncy
+    - us_rate: TU1 Comdty
+      foreign_rate: KE1 Comdty
+      target: KRW Curncy
+    - us_rate: TU1 Comdty
+      foreign_rate: YM1 Comdty
+      target: AD1 Curncy
+
 # Carry trade pairs: [FX asset, US rate, Foreign rate]
 carry_pairs:
   - fx: EC1 Curncy

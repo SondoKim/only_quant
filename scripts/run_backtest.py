@@ -203,7 +203,11 @@ def run_phase2_simulation(prices: pd.DataFrame,
                            start_date_str: str,
                            max_correlation: float = 0.3,
                            dd_threshold: float = 10.0,
-                           pnl_ma: int = 0):
+                           pnl_ma: int = 0,
+                           regime_filter: bool = False,
+                           regime_hurst_window: int = 120,
+                           regime_hurst_threshold: float = 0.5,
+                           regime_hurst_method: str = 'rs'):
     """
     Simulate monthly trading using pre-cached strategies.
     Each month uses the previous month-end's strategies.
@@ -213,6 +217,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
     pnl_ma: MA period for per-strategy PnL filter (0 = disabled).
             Strategies whose cumulative PnL is below its own N-day MA are
             silenced (position set to 0) before position aggregation.
+    regime_filter: When True, apply Hurst Exponent regime meta-filter after
+                   correlation filtering at each rebalance.
+    regime_hurst_window: Price history window (days) for Hurst computation.
+    regime_hurst_threshold: H above which asset is considered trending (default 0.5).
     """
     cfg = load_config()
     
@@ -240,9 +248,14 @@ def run_phase2_simulation(prices: pd.DataFrame,
     cum_pnl_mom = 0.0   # Momentum strategies
     cum_pnl_mr  = 0.0   # Mean-Reversion strategies
     cum_pnl_adv = 0.0   # Advanced strategies
+    cum_pnl_a1  = 0.0   # Alpha1: Cross-Sectional
+    cum_pnl_a2  = 0.0   # Alpha2: Cross-Asset Predictive
+    cum_pnl_a3  = 0.0   # Alpha3: Regime-Adaptive
     # Per-type per-class cumulative PnL
     cum_pnl_mom_rates = 0.0; cum_pnl_mr_rates = 0.0; cum_pnl_adv_rates = 0.0
     cum_pnl_mom_fx = 0.0;    cum_pnl_mr_fx = 0.0;    cum_pnl_adv_fx = 0.0
+    cum_pnl_a1_rates = 0.0;  cum_pnl_a2_rates = 0.0;  cum_pnl_a3_rates = 0.0
+    cum_pnl_a1_fx = 0.0;     cum_pnl_a2_fx = 0.0;     cum_pnl_a3_fx = 0.0
     log_data = []
 
     # Drawdown scaling state
@@ -250,6 +263,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
     portfolio_hwm = 0.0
     current_selector = None
     current_strategy_date = None
+    position_cache: Dict[str, Any] = {}   # strategy_id → precomputed positions
+    current_regime_map: Dict[str, str] = {}  # asset → 'T' (trending) or 'R' (ranging)
 
     # Per-strategy PnL MA filter state
     # strat_cum_pnl[sid]     : running cumulative PnL of that strategy
@@ -257,8 +272,27 @@ def run_phase2_simulation(prices: pd.DataFrame,
     strat_cum_pnl: Dict[str, float] = defaultdict(float)
     strat_cum_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=pnl_ma if pnl_ma > 0 else 1))
     
+    # ── Pre-compute Hurst Exponent at each month-end (regime filter) ─────────
+    # Hurst is computed once per (asset, rebalance_date) and stored as a Series.
+    # apply_regime_filter() does a fast dict lookup instead of recomputing.
+    regime_cache: Dict[str, pd.Series] = {}
+    if regime_filter:
+        from src.indicators.technical import TechnicalIndicators
+        print(f"⚡ Pre-computing Hurst Exponent [{regime_hurst_method.upper()}] "
+              f"(window={regime_hurst_window}) "
+              f"for {len(prices.columns)} assets × {len(month_ends)} month-ends...")
+        for asset in prices.columns:
+            h_values = {}
+            for me in month_ends:
+                prices_until = prices.loc[prices.index <= me, asset]
+                h_values[me] = TechnicalIndicators.hurst(
+                    prices_until, window=regime_hurst_window, method=regime_hurst_method
+                )
+            regime_cache[asset] = pd.Series(h_values)
+        print(f"   Hurst cache ready ({len(regime_cache)} assets)")
+
     print(f"🚀 Running Phase 2 Simulation (Start: {start_date_str}, MaxCorr: {max_correlation})...")
-    
+
     for date in target_dates:
         prev_idx = all_dates.get_loc(date) - 1
         if prev_idx < 0:
@@ -281,40 +315,84 @@ def run_phase2_simulation(prices: pd.DataFrame,
         if applicable_month_end != current_strategy_date:
             date_str = applicable_month_end.strftime('%Y-%m-%d')
             storage_dir = factory_base / f"strategies_{date_str}"
-            
+
             if not storage_dir.exists() or not (
                 (storage_dir / 'strategies.db').exists() or (storage_dir / 'index.json').exists()
             ):
                 logger.warning(f"⚠️ No strategies found for {date_str}. Run Phase 1 first!")
                 continue
-            
+
             factory = StrategyFactory(storage_dir=str(storage_dir))
             factory.set_all_active(True)
-            
+
             active_count = sum(1 for v in factory.index['strategies'].values() if v.get('is_active'))
             logger.info(f"📊 Rebalance at {date_str}: {active_count} active strategies")
-            
+
             prev_carry = current_selector._carry_positions.copy() if current_selector else {}
             current_selector = StrategySelector(factory=factory)
-            current_selector._carry_positions = prev_carry  # carry-forward across month boundaries
+            current_selector._carry_positions = prev_carry
 
-            # Refresh with correlation filter
             prices_until = prices[prices.index <= applicable_month_end]
             current_selector._refresh_sync(prices_until, max_correlation=max_correlation)
-            
+
+            if regime_filter:
+                current_selector.apply_regime_filter(
+                    prices_until,
+                    hurst_window=regime_hurst_window,
+                    hurst_threshold=regime_hurst_threshold,
+                    hurst_method=regime_hurst_method,
+                    regime_cache=regime_cache,
+                    as_of_date=applicable_month_end,
+                )
+
+            # Build per-asset regime map for CSV logging
+            if regime_filter and regime_cache:
+                current_regime_map = {}
+                for asset in prices.columns:
+                    if asset in regime_cache:
+                        h_s = regime_cache[asset]
+                        h_s_t = h_s[h_s.index <= applicable_month_end]
+                        h = float(h_s_t.iloc[-1]) if not h_s_t.empty else 0.5
+                    else:
+                        h = 0.5
+                    current_regime_map[asset] = 'T' if h > regime_hurst_threshold else 'R'
+
+            # Pre-compute position series for all active strategies (full price history).
+            # Indicators are causal so prices[t] only depends on prices[:t] — no look-ahead.
+            # Daily loop will do O(1) dict lookup instead of recomputing each day.
+            logger.info(f"   Pre-computing position cache for {len(current_selector.active_strategies)} strategies...")
+            position_cache = current_selector.precompute_position_cache(prices)
+
             current_strategy_date = applicable_month_end
         
         if current_selector is None:
             continue
         
-        # Generate signals
-        context_prices = prices.loc[:prev_date]
-        report = current_selector.get_trading_report(
-            context_prices,
-            target_date=str(date.date()),
-            max_correlation=max_correlation
-        )
-        raw = report.get('raw_signals', [])
+        # Generate signals — O(1) cache lookup per strategy instead of full recompute
+        date_ts = pd.Timestamp(date)
+        raw = []
+        for strategy in current_selector.active_strategies:
+            sid = strategy['strategy_id']
+            cached = position_cache.get(sid)
+            if cached is None:
+                continue
+            pos_series = cached['positions']
+            # Look up position at 'date'; fall back to last available value
+            if date_ts in pos_series.index:
+                pos = float(pos_series.loc[date_ts])
+            else:
+                prior = pos_series[pos_series.index <= date_ts]
+                pos = float(prior.iloc[-1]) if not prior.empty else 0.0
+            raw.append({
+                'strategy_id': sid,
+                'asset': cached['asset'],
+                'related_asset': cached['related_asset'],
+                'strategy_type': cached['strategy_type'],
+                'strategy_name': cached['strategy_name'],
+                'position': pos,
+                'sharpe_6m': cached['sharpe_6m'],
+                'date': str(date.date()),
+            })
 
         # ── Per-strategy PnL MA filter ────────────────────────────────────
         pnl_ma_off_count = 0
@@ -336,7 +414,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
             filtered_map = _aggregate_raw_signals(passing, prices, prev_date, date)
             sig_map = {asset: info for asset, info in filtered_map.items()}
         else:
-            sig_map = {item['asset']: item for item in report['aggregated_positions']}
+            sig_map = _aggregate_raw_signals(raw, prices, prev_date, date)
         
         # Drawdown scaling: compute scale from prior day's portfolio PnL
         if dd_threshold > 0:
@@ -396,11 +474,16 @@ def run_phase2_simulation(prices: pd.DataFrame,
         # Per-strategy-type daily PnL  (MOM / MR / ADV) split by Rates / FX
         # ------------------------------------------------------------------
         daily_mom = daily_mr = daily_adv = 0.0
-        n_mom = n_mr = n_adv = 0
+        daily_a1 = daily_a2 = daily_a3 = 0.0
+        n_mom = n_mr = n_adv = n_a1 = n_a2 = n_a3 = 0
         daily_mom_rates = daily_mr_rates = daily_adv_rates = 0.0
         daily_mom_fx = daily_mr_fx = daily_adv_fx = 0.0
+        daily_a1_rates = daily_a2_rates = daily_a3_rates = 0.0
+        daily_a1_fx = daily_a2_fx = daily_a3_fx = 0.0
         n_mom_rates = n_mr_rates = n_adv_rates = 0
         n_mom_fx = n_mr_fx = n_adv_fx = 0
+        n_a1_rates = n_a2_rates = n_a3_rates = 0
+        n_a1_fx = n_a2_fx = n_a3_fx = 0
 
         for sig in raw:
             asset = sig['asset']
@@ -421,6 +504,12 @@ def run_phase2_simulation(prices: pd.DataFrame,
                 daily_mr  += dpnl; n_mr  += 1
             elif stype == 'advanced':
                 daily_adv += dpnl; n_adv += 1
+            elif stype == 'alpha1':
+                daily_a1 += dpnl; n_a1 += 1
+            elif stype == 'alpha2':
+                daily_a2 += dpnl; n_a2 += 1
+            elif stype == 'alpha3':
+                daily_a3 += dpnl; n_a3 += 1
 
             # Split by asset class
             if is_fx:
@@ -430,6 +519,12 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     daily_mr_fx += dpnl; n_mr_fx += 1
                 elif stype == 'advanced':
                     daily_adv_fx += dpnl; n_adv_fx += 1
+                elif stype == 'alpha1':
+                    daily_a1_fx += dpnl; n_a1_fx += 1
+                elif stype == 'alpha2':
+                    daily_a2_fx += dpnl; n_a2_fx += 1
+                elif stype == 'alpha3':
+                    daily_a3_fx += dpnl; n_a3_fx += 1
             elif is_rates_asset:
                 if stype == 'momentum':
                     daily_mom_rates += dpnl; n_mom_rates += 1
@@ -437,27 +532,58 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     daily_mr_rates += dpnl; n_mr_rates += 1
                 elif stype == 'advanced':
                     daily_adv_rates += dpnl; n_adv_rates += 1
+                elif stype == 'alpha1':
+                    daily_a1_rates += dpnl; n_a1_rates += 1
+                elif stype == 'alpha2':
+                    daily_a2_rates += dpnl; n_a2_rates += 1
+                elif stype == 'alpha3':
+                    daily_a3_rates += dpnl; n_a3_rates += 1
 
         # Normalise by number of strategies (so scale is comparable to per-asset PnL)
         cum_pnl_mom += (daily_mom / n_mom if n_mom else 0.0)
         cum_pnl_mr  += (daily_mr  / n_mr  if n_mr  else 0.0)
         cum_pnl_adv += (daily_adv / n_adv if n_adv else 0.0)
+        cum_pnl_a1  += (daily_a1  / n_a1  if n_a1  else 0.0)
+        cum_pnl_a2  += (daily_a2  / n_a2  if n_a2  else 0.0)
+        cum_pnl_a3  += (daily_a3  / n_a3  if n_a3  else 0.0)
         cum_pnl_mom_rates += (daily_mom_rates / n_mom_rates if n_mom_rates else 0.0)
         cum_pnl_mr_rates  += (daily_mr_rates  / n_mr_rates  if n_mr_rates  else 0.0)
         cum_pnl_adv_rates += (daily_adv_rates / n_adv_rates if n_adv_rates else 0.0)
+        cum_pnl_a1_rates  += (daily_a1_rates  / n_a1_rates  if n_a1_rates  else 0.0)
+        cum_pnl_a2_rates  += (daily_a2_rates  / n_a2_rates  if n_a2_rates  else 0.0)
+        cum_pnl_a3_rates  += (daily_a3_rates  / n_a3_rates  if n_a3_rates  else 0.0)
         cum_pnl_mom_fx += (daily_mom_fx / n_mom_fx if n_mom_fx else 0.0)
         cum_pnl_mr_fx  += (daily_mr_fx  / n_mr_fx  if n_mr_fx  else 0.0)
         cum_pnl_adv_fx += (daily_adv_fx / n_adv_fx if n_adv_fx else 0.0)
+        cum_pnl_a1_fx  += (daily_a1_fx  / n_a1_fx  if n_a1_fx  else 0.0)
+        cum_pnl_a2_fx  += (daily_a2_fx  / n_a2_fx  if n_a2_fx  else 0.0)
+        cum_pnl_a3_fx  += (daily_a3_fx  / n_a3_fx  if n_a3_fx  else 0.0)
 
         row['total_mom_cumpnl'] = round(cum_pnl_mom, 4)
         row['total_mr_cumpnl']  = round(cum_pnl_mr,  4)
         row['total_adv_cumpnl'] = round(cum_pnl_adv, 4)
+        row['total_a1_cumpnl']  = round(cum_pnl_a1,  4)
+        row['total_a2_cumpnl']  = round(cum_pnl_a2,  4)
+        row['total_a3_cumpnl']  = round(cum_pnl_a3,  4)
         row['mom_rates_cumpnl'] = round(cum_pnl_mom_rates, 4)
         row['mr_rates_cumpnl']  = round(cum_pnl_mr_rates,  4)
         row['adv_rates_cumpnl'] = round(cum_pnl_adv_rates, 4)
+        row['a1_rates_cumpnl']  = round(cum_pnl_a1_rates,  4)
+        row['a2_rates_cumpnl']  = round(cum_pnl_a2_rates,  4)
+        row['a3_rates_cumpnl']  = round(cum_pnl_a3_rates,  4)
         row['mom_fx_cumpnl']    = round(cum_pnl_mom_fx, 4)
         row['mr_fx_cumpnl']     = round(cum_pnl_mr_fx,  4)
         row['adv_fx_cumpnl']    = round(cum_pnl_adv_fx, 4)
+        row['a1_fx_cumpnl']     = round(cum_pnl_a1_fx,  4)
+        row['a2_fx_cumpnl']     = round(cum_pnl_a2_fx,  4)
+        row['a3_fx_cumpnl']     = round(cum_pnl_a3_fx,  4)
+
+        # Dominant regime per asset class (majority vote across assets)
+        if current_regime_map:
+            r_vals = [current_regime_map[a] for a in rates_assets if a in current_regime_map]
+            f_vals = [current_regime_map[a] for a in fx_assets    if a in current_regime_map]
+            row['regime_rates'] = 'T' if r_vals.count('T') >= r_vals.count('R') else 'R'
+            row['regime_fx']    = 'T' if f_vals.count('T') >= f_vals.count('R') else 'R'
 
         log_data.append(row)
     
@@ -471,9 +597,13 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Reorder columns
     total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl', 'total_index_cumpnl',
+                      'regime_rates', 'regime_fx',
                       'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+                      'total_a1_cumpnl', 'total_a2_cumpnl', 'total_a3_cumpnl',
                       'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
-                      'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl']
+                      'a1_rates_cumpnl', 'a2_rates_cumpnl', 'a3_rates_cumpnl',
+                      'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
+                      'a1_fx_cumpnl', 'a2_fx_cumpnl', 'a3_fx_cumpnl']
     cum_pnl_cols = [c for c in df_log.columns if '_CumPnL' in c]
     other_cols = [c for c in df_log.columns if c not in total_pnl_cols + cum_pnl_cols]
     df_log = df_log[total_pnl_cols + cum_pnl_cols + other_cols]
@@ -485,8 +615,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
     # Generate PnL plot
     dd_tag = f"_dd{int(dd_threshold)}" if dd_threshold > 0 else ""
     ma_tag = f"_ma{pnl_ma}" if pnl_ma > 0 else ""
+    regime_tag = f"_hurst{regime_hurst_method}{regime_hurst_threshold}" if regime_filter else ""
     try:
-        plot_pnl(max_correlation=max_correlation, mode=f'backtest{dd_tag}{ma_tag}',
+        plot_pnl(max_correlation=max_correlation,
+                 mode=f'backtest{dd_tag}{ma_tag}{regime_tag}',
                  start_date=start_date_str,
                  end_date=prices.index[-1].strftime('%Y-%m-%d'))
     except Exception as e:
@@ -516,6 +648,16 @@ def main():
                         help='Use incremental discovery in Phase 1 (reuse previous month)')
     parser.add_argument('--full-scan-interval', type=int, default=3,
                         help='Full scan every N months in incremental mode (default: 3)')
+    parser.add_argument('--regime-filter', action='store_true',
+                        help='Enable Hurst Exponent regime meta-filter: '
+                             'trending (H>0.5) → MOM/ADV + inverted MR, '
+                             'ranging (H≤0.5) → MR only.')
+    parser.add_argument('--regime-hurst-window', type=int, default=120,
+                        help='Price history window (days) for Hurst computation (default: 120)')
+    parser.add_argument('--regime-hurst-threshold', type=float, default=0.5,
+                        help='Hurst threshold above which asset is trending (default: 0.5)')
+    parser.add_argument('--regime-hurst-method', choices=['rs', 'dfa'], default='rs',
+                        help='Hurst computation method: rs=R/S analysis (default), dfa=Detrended Fluctuation Analysis')
 
     args = parser.parse_args()
     
@@ -555,12 +697,19 @@ def main():
         print(f"📉 Drawdown scaling enabled: threshold = {args.dd_threshold}")
     if args.pnl_ma > 0:
         print(f"🔍 PnL MA filter enabled: period = {args.pnl_ma} days")
+    if args.regime_filter:
+        print(f"🔀 Regime filter enabled: method={args.regime_hurst_method.upper()}, "
+              f"window={args.regime_hurst_window}, threshold={args.regime_hurst_threshold}")
     run_phase2_simulation(
         prices, month_ends, factory_base,
         start_date_str=args.start_date,
         max_correlation=args.max_corr,
         dd_threshold=args.dd_threshold,
         pnl_ma=args.pnl_ma,
+        regime_filter=args.regime_filter,
+        regime_hurst_window=args.regime_hurst_window,
+        regime_hurst_threshold=args.regime_hurst_threshold,
+        regime_hurst_method=args.regime_hurst_method,
     )
 
 

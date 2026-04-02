@@ -25,6 +25,7 @@ except ImportError:
 from ..strategies.momentum import MomentumStrategy
 from ..strategies.mean_reversion import MeanReversionStrategy
 from ..strategies.advanced import AdvancedStrategies
+from ..strategies.alpha import AlphaStrategies
 from .indicator_cache import IndicatorCache
 
 logger = logging.getLogger(__name__)
@@ -73,20 +74,26 @@ class VectorBTEngine:
         self,
         prices: pd.DataFrame,
         transaction_cost_bps: float = 2.0,
-        slippage_bps: float = 1.0
+        slippage_bps: float = 1.0,
+        trail_stop_pct: float = 0,
+        max_hold_days: int = 0,
     ):
         """
         Initialize backtesting engine.
-        
+
         Args:
             prices: DataFrame with price data indexed by date
             transaction_cost_bps: Transaction cost in basis points
             slippage_bps: Slippage in basis points
+            trail_stop_pct: Trailing stop as fraction (0.02 = 2%). 0 = disabled.
+            max_hold_days: Maximum holding period in days. 0 = disabled.
         """
         self.prices = prices
         self.transaction_cost = transaction_cost_bps / 10000
         self.slippage = slippage_bps / 10000
-        
+        self._trail_stop_pct = trail_stop_pct
+        self._max_hold_days = max_hold_days
+
         if not VBT_AVAILABLE:
             logger.warning("vectorbt not available. Using simplified backtester.")
     
@@ -139,11 +146,14 @@ class VectorBTEngine:
             entries, exits = AdvancedStrategies.generate_signals(
                 prices, asset, strategy_name, params, related_asset
             )
-            # For advanced, treat as long-short or long-only depending on implementation
-            # Here we treat entries/exits from AdvancedStrategies as long signals
             long_entries, long_exits = entries, exits
             short_entries = pd.Series(False, index=prices.index)
             short_exits = pd.Series(False, index=prices.index)
+        elif strategy_type in ('alpha1', 'alpha2', 'alpha3'):
+            long_entries, long_exits, short_entries, short_exits = \
+                AlphaStrategies.generate_signals(
+                    prices, asset, strategy_name, params, related_asset
+                )
         else:
             raise ValueError(f"Unknown strategy category: {strategy_type}")
         
@@ -235,9 +245,7 @@ class VectorBTEngine:
         """Calculate position series using vectorized NumPy operations."""
         n = len(long_entries)
         position = np.zeros(n, dtype=np.int8)
-        
-        # Build event arrays: +1 for long entry, -1 for short entry, 0 for exit
-        # Process sequentially but using numpy boolean indexing for speed
+
         pos = 0
         for i in range(n):
             if pos == 0:
@@ -252,8 +260,57 @@ class VectorBTEngine:
                 if short_exits[i]:
                     pos = 0
             position[i] = pos
-        
+
         return position
+
+    @staticmethod
+    def _apply_exit_rules(position: np.ndarray, prices_arr: np.ndarray,
+                           trail_stop_pct: float = 0, max_hold_days: int = 0) -> np.ndarray:
+        """Apply trailing stop and max holding period to position series.
+
+        Args:
+            position: Position array from _vectorized_position
+            prices_arr: Price array for the asset
+            trail_stop_pct: Trail stop as fraction (0.02 = 2%). 0 = disabled.
+            max_hold_days: Max bars to hold. 0 = disabled.
+
+        Returns:
+            Modified position array with additional exits applied.
+        """
+        if trail_stop_pct <= 0 and max_hold_days <= 0:
+            return position
+
+        n = len(position)
+        result = position.copy()
+        peak_price = 0.0
+        hold_days = 0
+
+        for i in range(n):
+            if result[i] != 0 and (i == 0 or result[i - 1] == 0):
+                # New entry
+                peak_price = prices_arr[i]
+                hold_days = 0
+            elif result[i] != 0:
+                hold_days += 1
+
+                # Trailing stop
+                if trail_stop_pct > 0:
+                    if result[i] > 0:  # Long
+                        peak_price = max(peak_price, prices_arr[i])
+                        if prices_arr[i] < peak_price * (1 - trail_stop_pct):
+                            result[i] = 0
+                            continue
+                    elif result[i] < 0:  # Short
+                        peak_price = min(peak_price, prices_arr[i])
+                        if prices_arr[i] > peak_price * (1 + trail_stop_pct):
+                            result[i] = 0
+                            continue
+
+                # Max holding period
+                if max_hold_days > 0 and hold_days >= max_hold_days:
+                    result[i] = 0
+
+        return result
     
     def _run_simple_backtest(
         self,
@@ -276,7 +333,14 @@ class VectorBTEngine:
                 long_entries.values, long_exits.values,
                 short_entries.values, short_exits.values
             )
-            
+
+            # Apply trailing stop and max hold days
+            position = self._apply_exit_rules(
+                position, prices_arr,
+                trail_stop_pct=getattr(self, '_trail_stop_pct', 0),
+                max_hold_days=getattr(self, '_max_hold_days', 0),
+            )
+
             # Strategy returns: position[t-1] * return[t]
             shifted_pos = np.empty_like(position, dtype=np.float64)
             shifted_pos[0] = 0.0

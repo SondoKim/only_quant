@@ -1,6 +1,7 @@
 advanced_strategies:
   adx_momentum:
     adx_period:
+    - 7
     - 10
     - 14
     - 20
@@ -9,10 +10,12 @@ advanced_strategies:
     - 25
     - 30
     roc_period:
+    - 3
     - 5
     - 10
   carry_trade:
     period:
+    - 5
     - 10
     - 20
     - 30
@@ -22,6 +25,7 @@ advanced_strategies:
     - 1.5
   filtered_momentum:
     ma_period:
+    - 10
     - 20
     - 50
     rsi_entry:
@@ -30,10 +34,12 @@ advanced_strategies:
     - 55
     rsi_period:
     - 5
+    - 7
     - 10
     - 14
   lead_lag_momentum:
     period:
+    - 3
     - 5
     - 10
     - 20
@@ -49,8 +55,12 @@ advanced_strategies:
     - - 5
       - 10
       - 20
+    - - 3
+      - 7
+      - 14
   relative_strength_rank:
     period:
+    - 5
     - 10
     - 20
     top_n:
@@ -64,31 +74,92 @@ advanced_strategies:
     - 1.5
     - 2.0
     period:
+    - 5
     - 10
     - 20
     - 30
+alpha_strategies:
+  # Alpha1: Cross-Sectional Factor
+  xsect_momentum:
+    period:
+    - 3       # 단기 포지셔닝 변화
+    - 5
+    - 10
+    - 20
+    - 60      # 3개월 모멘텀 (학술적 표준)
+    top_n:
+    - 1       # 최고 집중 베팅
+    - 2
+    - 3
+    universe:
+    - rates
+    - fx
+  xsect_carry:
+    period:
+    - 5       # 빠른 캐리 시그널
+    - 10
+    - 20
+    - 30      # 느린 구조적 캐리
+    top_n:
+    - 1
+    - 2
+  # Alpha2: Cross-Asset Predictive
+  curve_to_fx:
+    period:
+    - 5       # 전술적 커브 변화
+    - 10
+    - 20
+    - 60      # 구조적 커브 변화
+    threshold:
+    - 0.3     # 민감한 진입
+    - 0.5
+    - 1.0
+    - 1.5
+    - 2.0     # 고확신 진입
+  rate_diff_to_fx:
+    period:
+    - 3       # 단기 금리차 모멘텀
+    - 5
+    - 10
+    - 20
+    threshold:
+    - 0.3     # 민감한 진입
+    - 0.5
+    - 1.0
+    - 1.5
+  # Alpha3 (Regime-Adaptive) is implemented as a meta-filter in selector.py
+  # Configure via backtest section: regime_filter, regime_adx_period, regime_adx_threshold
 backtest:
   max_drawdown: -0.25
   min_trades: 20
-  sharpe_threshold_3y: 1.0
-  sortino_threshold_3y: 1.0
+  sharpe_threshold_3y: 0.8
+  sortino_threshold_3y: 0.8
+  trail_stop_pct: 0.02
+  max_hold_days: 60
   transaction_cost_bps: 0
+  # Alpha3: Regime filter (applied in selector, not as a strategy type)
+  # Set via --regime-filter CLI flag. Parameters below are defaults.
+  regime_adx_period: 14
+  regime_adx_threshold: 25
 cross_asset_indicators:
   correlation_rolling:
     params:
       period:
+      - 3
       - 5
       - 10
       - 20
   relative_strength:
     params:
       period:
+      - 3
       - 5
       - 10
       - 20
   spread_percentile:
     params:
       period:
+      - 10
       - 20
       - 60
     thresholds:
@@ -103,6 +174,7 @@ cross_asset_indicators:
   spread_zscore:
     params:
       period:
+      - 5
       - 10
       - 20
       - 30
@@ -135,6 +207,7 @@ technical_indicators:
   bollinger_bands:
     params:
       period:
+      - 5
       - 10
       - 20
       std_dev:
@@ -143,21 +216,23 @@ technical_indicators:
   breakout:
     params:
       period:
+      - 5
       - 10
-      - 20
-      - 30
   ema_crossover:
     params:
       fast_period:
+      - 3
       - 5
+      - 7
       - 10
       - 12
       slow_period:
+      - 13
       - 20
-      - 26
   macd:
     params:
       fast_period:
+      - 3
       - 5
       - 8
       - 12
@@ -166,22 +241,22 @@ technical_indicators:
       - 5
       - 9
       slow_period:
+      - 10
       - 13
       - 21
-      - 26
   rate_of_change:
     params:
       period:
       - 3
       - 5
       - 7
-      - 10
   rsi:
     params:
       period:
       - 4
+      - 5
+      - 7
       - 9
-      - 14
     thresholds:
       overbought:
       - 65
@@ -194,13 +269,16 @@ technical_indicators:
       fast_period:
       - 3
       - 5
+      - 7
       - 10
       slow_period:
       - 10
+      - 15
       - 20
   zscore:
     params:
       period:
+      - 5
       - 10
       - 20
       - 30

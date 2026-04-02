@@ -437,6 +437,111 @@ class StrategyGenerator:
                             'related_asset': pair['foreign_rate']
                         }
     
+    def generate_alpha_strategies(
+        self,
+        assets: List[str],
+        related_assets: Dict[str, List[str]] = None
+    ) -> Generator[Dict[str, Any], None, None]:
+        """Generate all alpha strategy combinations (alpha1/alpha2/alpha3)."""
+        alpha_config = self.config.get('alpha_strategies', {})
+
+        # ── Alpha1: Cross-Sectional Momentum ──
+        if 'xsect_momentum' in alpha_config:
+            p = alpha_config['xsect_momentum']
+            for universe in p.get('universe', ['rates', 'fx']):
+                if universe == 'rates':
+                    target_assets = [a for a in assets if 'Comdty' in a and 'NQ' not in a]
+                elif universe == 'fx':
+                    target_assets = [a for a in assets if 'Curncy' in a]
+                else:
+                    target_assets = list(assets)
+                for asset in target_assets:
+                    for period in p.get('period', [20]):
+                        for top_n in p.get('top_n', [3]):
+                            yield {
+                                'asset': asset,
+                                'strategy_type': 'alpha1',
+                                'strategy_name': 'xsect_momentum',
+                                'params': {
+                                    'period': period,
+                                    'top_n': top_n,
+                                    'universe': universe,
+                                },
+                                'related_asset': None,
+                            }
+
+        # ── Alpha1: Cross-Sectional Carry ──
+        if 'xsect_carry' in alpha_config:
+            p = alpha_config['xsect_carry']
+            carry_pairs = self.assets_config.get('carry_pairs', [])
+            for pair in carry_pairs:
+                fx = pair['fx']
+                if fx not in assets:
+                    continue
+                for period in p.get('period', [20]):
+                    for top_n in p.get('top_n', [2]):
+                        yield {
+                            'asset': fx,
+                            'strategy_type': 'alpha1',
+                            'strategy_name': 'xsect_carry',
+                            'params': {
+                                'rate_asset': pair['us_rate'],
+                                'foreign_rate_asset': pair['foreign_rate'],
+                                'period': period,
+                                'top_n': top_n,
+                            },
+                            'related_asset': pair['foreign_rate'],
+                        }
+
+        # ── Alpha2: Curve → FX ──
+        if 'curve_to_fx' in alpha_config:
+            p = alpha_config['curve_to_fx']
+            pred_pairs = self.assets_config.get('predictive_pairs', {}).get('curve_to_fx', [])
+            for pair in pred_pairs:
+                short_rate = pair['short_rate']
+                long_rate = pair['long_rate']
+                for target in pair.get('targets', []):
+                    if target not in assets:
+                        continue
+                    for period in p.get('period', [20]):
+                        for threshold in p.get('threshold', [1.0]):
+                            yield {
+                                'asset': target,
+                                'strategy_type': 'alpha2',
+                                'strategy_name': 'curve_to_fx',
+                                'params': {
+                                    'short_rate': short_rate,
+                                    'long_rate': long_rate,
+                                    'period': period,
+                                    'threshold': threshold,
+                                },
+                                'related_asset': long_rate,
+                            }
+
+        # ── Alpha2: Rate-Diff → FX ──
+        if 'rate_diff_to_fx' in alpha_config:
+            p = alpha_config['rate_diff_to_fx']
+            pred_pairs = self.assets_config.get('predictive_pairs', {}).get('rate_diff_to_fx', [])
+            for pair in pred_pairs:
+                target = pair['target']
+                if target not in assets:
+                    continue
+                for period in p.get('period', [20]):
+                    for threshold in p.get('threshold', [0.5]):
+                        yield {
+                            'asset': target,
+                            'strategy_type': 'alpha2',
+                            'strategy_name': 'rate_diff_to_fx',
+                            'params': {
+                                'us_rate': pair['us_rate'],
+                                'foreign_rate': pair['foreign_rate'],
+                                'period': period,
+                                'threshold': threshold,
+                            },
+                            'related_asset': pair['foreign_rate'],
+                        }
+
+
     def generate_all_strategies(
         self,
         assets: List[str],
@@ -444,19 +549,19 @@ class StrategyGenerator:
         sample_ratio: float = 1.0
     ) -> Generator[Dict[str, Any], None, None]:
         """
-        Generate all strategy combinations (momentum + mean reversion).
-        
+        Generate all strategy combinations.
+
         Args:
             assets: List of asset tickers
             related_assets: Dict mapping asset to related assets
             sample_ratio: Ratio of strategies to sample (0.0 to 1.0)
-            
+
         Yields:
             Strategy configuration dict
         """
         import random
         strategy_id = 0
-        
+
         # Momentum strategies
         for strategy in self.generate_momentum_strategies(assets, related_assets):
             if sample_ratio < 1.0 and random.random() > sample_ratio:
@@ -464,7 +569,7 @@ class StrategyGenerator:
             strategy['id'] = f"MOM_{strategy_id:06d}"
             strategy_id += 1
             yield strategy
-        
+
         # Mean reversion strategies
         for strategy in self.generate_mean_reversion_strategies(assets, related_assets):
             if sample_ratio < 1.0 and random.random() > sample_ratio:
@@ -478,6 +583,15 @@ class StrategyGenerator:
             if sample_ratio < 1.0 and random.random() > sample_ratio:
                 continue
             strategy['id'] = f"ADV_{strategy_id:06d}"
+            strategy_id += 1
+            yield strategy
+
+        # Alpha strategies (alpha1, alpha2, alpha3)
+        for strategy in self.generate_alpha_strategies(assets, related_assets):
+            if sample_ratio < 1.0 and random.random() > sample_ratio:
+                continue
+            prefix = strategy['strategy_type'].upper()  # ALPHA1, ALPHA2, ALPHA3
+            strategy['id'] = f"{prefix}_{strategy_id:06d}"
             strategy_id += 1
             yield strategy
     
@@ -499,10 +613,19 @@ class StrategyGenerator:
         momentum_count = sum(1 for _ in self.generate_momentum_strategies(assets, related_assets))
         mean_rev_count = sum(1 for _ in self.generate_mean_reversion_strategies(assets, related_assets))
         advanced_count = sum(1 for _ in self.generate_advanced_strategies(assets, related_assets))
-        
+
+        alpha_counts = {'alpha1': 0, 'alpha2': 0}
+        for s in self.generate_alpha_strategies(assets, related_assets):
+            stype = s.get('strategy_type', '')
+            if stype in alpha_counts:
+                alpha_counts[stype] += 1
+        alpha_total = sum(alpha_counts.values())
+
         return {
             'momentum': momentum_count,
             'mean_reversion': mean_rev_count,
             'advanced': advanced_count,
-            'total': momentum_count + mean_rev_count + advanced_count
+            'alpha1': alpha_counts['alpha1'],
+            'alpha2': alpha_counts['alpha2'],
+            'total': momentum_count + mean_rev_count + advanced_count + alpha_total,
         }
