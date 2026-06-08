@@ -264,7 +264,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
     current_selector = None
     current_strategy_date = None
     position_cache: Dict[str, Any] = {}   # strategy_id → precomputed positions
-    current_regime_map: Dict[str, str] = {}  # asset → 'T' (trending) or 'R' (ranging)
+    current_regime_map: Dict[str, str] = {}    # asset → 'T' (trending) or 'R' (ranging)
+    current_hurst_map:  Dict[str, float] = {}  # asset → Hurst float value
 
     # Per-strategy PnL MA filter state
     # strat_cum_pnl[sid]     : running cumulative PnL of that strategy
@@ -348,6 +349,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
             # Build per-asset regime map for CSV logging
             if regime_filter and regime_cache:
                 current_regime_map = {}
+                current_hurst_map  = {}
                 for asset in prices.columns:
                     if asset in regime_cache:
                         h_s = regime_cache[asset]
@@ -356,6 +358,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     else:
                         h = 0.5
                     current_regime_map[asset] = 'T' if h > regime_hurst_threshold else 'R'
+                    current_hurst_map[asset]  = round(h, 4)
 
             # Pre-compute position series for all active strategies (full price history).
             # Indicators are causal so prices[t] only depends on prices[:t] — no look-ahead.
@@ -584,6 +587,11 @@ def run_phase2_simulation(prices: pd.DataFrame,
             f_vals = [current_regime_map[a] for a in fx_assets    if a in current_regime_map]
             row['regime_rates'] = 'T' if r_vals.count('T') >= r_vals.count('R') else 'R'
             row['regime_fx']    = 'T' if f_vals.count('T') >= f_vals.count('R') else 'R'
+
+        # Per-asset Hurst float values for plotting
+        if current_hurst_map:
+            for asset, h_val in current_hurst_map.items():
+                row[f'hurst_{asset}'] = h_val
 
         log_data.append(row)
     

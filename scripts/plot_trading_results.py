@@ -1,6 +1,21 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 from pathlib import Path
+
+# ── 한글 폰트 설정 ────────────────────────────────────────────────────────────
+def _setup_korean_font():
+    """Windows/Linux/Mac 환경에서 한글 폰트를 자동 설정합니다."""
+    candidates = ['Malgun Gothic', 'NanumGothic', 'AppleGothic', 'Noto Sans KR',
+                  'Noto Sans CJK KR', 'DejaVu Sans']
+    available = {f.name for f in fm.fontManager.ttflist}
+    for font in candidates:
+        if font in available:
+            plt.rcParams['font.family'] = font
+            break
+    plt.rcParams['axes.unicode_minus'] = False  # 마이너스 기호 깨짐 방지
+
+_setup_korean_font()
 
 def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     csv_path = Path("trading_log.csv")
@@ -42,21 +57,47 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     ])
 
     # =====================================================================
-    # Layout: 1 top (full width) + 2x2 grid (MOM/MR/ADV) + 2x1 (Alpha)
-    # 4 rows if alpha data exists, 3 rows otherwise
+    # Hurst exponent columns (per-asset, forward-filled monthly values)
     # =====================================================================
-    n_rows = 4 if has_alpha else 3
-    fig = plt.figure(figsize=(18, 6 * n_rows + 4))
-    gs = fig.add_gridspec(n_rows, 2, height_ratios=[1] * n_rows, hspace=0.3, wspace=0.25)
+    hurst_cols = [c for c in df.columns if c.startswith('hurst_')]
+    has_hurst  = len(hurst_cols) > 0
 
-    ax_top = fig.add_subplot(gs[0, :])       # Total Return (full width)
-    ax_ir  = fig.add_subplot(gs[1, 0])       # Individual Rates
-    ax_ifx = fig.add_subplot(gs[1, 1])       # Individual FX
-    ax_sr  = fig.add_subplot(gs[2, 0])       # Strategy-Type Rates
-    ax_sfx = fig.add_subplot(gs[2, 1])       # Strategy-Type FX
+    # Pick 2-3 representative rate assets by largest absolute final CumPnL
+    if has_hurst:
+        # Prefer rate assets; fall back to all hurst cols
+        rate_hurst_cols = [
+            f'hurst_{c.replace("_CumPnL", "")}' for c in rate_cols
+            if f'hurst_{c.replace("_CumPnL", "")}' in hurst_cols
+        ]
+        candidates = rate_hurst_cols if rate_hurst_cols else hurst_cols
+        key_fn = lambda col: abs(df[col.replace('hurst_', ''  # noqa
+            ) + '_CumPnL'].iloc[-1]) if col.replace('hurst_', '') + '_CumPnL' in df.columns else 0
+        # Sort by last absolute CumPnL contribution; take top 3
+        rep_hurst_cols = sorted(candidates, key=key_fn, reverse=True)[:3]
+
+    # =====================================================================
+    # Layout: 1 top (full width) + optional Hurst row + 2x2 grid + 2x1 (Alpha)
+    # =====================================================================
+    extra = 1 if has_hurst else 0
+    n_rows = (4 if has_alpha else 3) + extra
+    # Hurst row is shorter (0.45 relative height); other rows = 1.0
+    if has_hurst:
+        height_ratios = [1.0, 0.45] + [1.0] * (n_rows - 2)
+    else:
+        height_ratios = [1.0] * n_rows
+    fig = plt.figure(figsize=(18, sum(height_ratios) * 5 + 2))
+    gs = fig.add_gridspec(n_rows, 2, height_ratios=height_ratios, hspace=0.35, wspace=0.25)
+
+    ax_top = fig.add_subplot(gs[0, :])                 # Total Return (full width)
+    if has_hurst:
+        ax_hurst = fig.add_subplot(gs[1, :])           # Hurst Exponent (full width)
+    ax_ir  = fig.add_subplot(gs[1 + extra, 0])        # Individual Rates
+    ax_ifx = fig.add_subplot(gs[1 + extra, 1])        # Individual FX
+    ax_sr  = fig.add_subplot(gs[2 + extra, 0])        # Strategy-Type Rates
+    ax_sfx = fig.add_subplot(gs[2 + extra, 1])        # Strategy-Type FX
     if has_alpha:
-        ax_ar  = fig.add_subplot(gs[3, 0])   # Alpha Rates
-        ax_afx = fig.add_subplot(gs[3, 1])   # Alpha FX
+        ax_ar  = fig.add_subplot(gs[3 + extra, 0])    # Alpha Rates
+        ax_afx = fig.add_subplot(gs[3 + extra, 1])    # Alpha FX
 
     # -----------------------------------------------------------------
     # Top: Total Return (Rates + FX dual Y-axis)
@@ -107,6 +148,34 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     all_handles = lines1 + lines2 + regime_handles
     all_labels  = labels1 + labels2 + [h.get_label() for h in regime_handles]
     ax_top.legend(all_handles, all_labels, loc='upper left')
+
+    # -----------------------------------------------------------------
+    # Hurst Exponent time series (between top and 2x2 grid)
+    # -----------------------------------------------------------------
+    if has_hurst:
+        hurst_colors = ['tab:blue', 'tab:orange', 'tab:green']
+        for i, col in enumerate(rep_hurst_cols):
+            label = col.replace('hurst_', '')
+            # Forward-fill monthly Hurst values to daily frequency (step function)
+            series = df[col].ffill().dropna()
+            if series.empty:
+                continue
+            ax_hurst.plot(df.loc[series.index, 'Date'], series,
+                          color=hurst_colors[i % len(hurst_colors)],
+                          linewidth=1.5, label=label, alpha=0.9, drawstyle='steps-post')
+            ax_hurst.text(last_date, series.iloc[-1], f' {series.iloc[-1]:.2f}',
+                          color=hurst_colors[i % len(hurst_colors)], fontsize=8, va='center')
+
+        ax_hurst.axhline(y=0.5, color='black', linestyle='--', linewidth=1.2, alpha=0.6,
+                         label='H=0.5 (랜덤워크)')
+        ax_hurst.fill_between(df['Date'], 0.5, 1.0, alpha=0.06, color='limegreen')
+        ax_hurst.fill_between(df['Date'], 0.0, 0.5, alpha=0.06, color='lightsalmon')
+        ax_hurst.set_ylabel('Hurst 지수', fontweight='bold', fontsize=10)
+        ax_hurst.set_title('Hurst Exponent (대표 자산 | 추세장 H>0.5, 횡보장 H≤0.5)',
+                            fontsize=11)
+        ax_hurst.set_ylim(0.0, 1.0)
+        ax_hurst.grid(True, linestyle='--', alpha=0.5)
+        ax_hurst.legend(loc='upper left', fontsize='small')
 
     # -----------------------------------------------------------------
     # Row 1: Individual Rates / Individual FX
