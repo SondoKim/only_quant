@@ -21,6 +21,80 @@ from ..backtester.vectorbt_engine import VectorBTEngine
 logger = logging.getLogger(__name__)
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Shared helpers (used by both StrategySelector and scripts/run_backtest.py so
+# live signals and the walk-forward backtest stay in sync).
+# ─────────────────────────────────────────────────────────────────────────────
+def classify_asset_class(ticker: str) -> str:
+    """Return coarse asset class: 'rates' | 'fx' | 'index' | 'other'."""
+    if 'Curncy' in ticker:
+        return 'fx'
+    if 'NQ' in ticker or 'Index' in ticker:
+        return 'index'
+    if 'Comdty' in ticker:
+        return 'rates'
+    return 'other'
+
+
+def compute_inverse_vol_scale(
+    prices: pd.DataFrame,
+    asset: str,
+    as_of_date=None,
+    vol_target: float = 0.10,
+    lookback: int = 60,
+    scale_min: float = 0.25,
+    scale_max: float = 3.0,
+) -> float:
+    """Inverse-volatility position multiplier for `asset` as of a date.
+
+    Returns vol_target / realized_vol, clipped to [scale_min, scale_max].
+    Low-vol assets (e.g. bond futures) get a multiplier > 1 so they are not
+    drowned out by high-vol FX/equity in the aggregated portfolio.
+    Falls back to 1.0 on insufficient/degenerate data.
+    """
+    if asset not in prices.columns:
+        return 1.0
+    s = prices[asset]
+    if as_of_date is not None:
+        s = s[s.index <= pd.to_datetime(as_of_date)]
+    s = s.tail(lookback + 1)
+    rets = s.pct_change().dropna()
+    if len(rets) < 5:
+        return 1.0
+    vol = float(rets.std() * np.sqrt(252))
+    if vol <= 0 or np.isnan(vol):
+        return 1.0
+    return float(np.clip(vol_target / vol, scale_min, scale_max))
+
+
+def sharpe_weighted_position(
+    signals: List[Dict[str, Any]],
+    is_rates: bool = False,
+    alpha_weight_boost: float = 1.0,
+) -> float:
+    """Sharpe-weighted average position for one asset's strategy signals.
+
+    `signals` is a list of dicts each with 'position', 'sharpe_6m', and
+    'strategy_type'. On rates, carry/curve (alpha1/alpha2) strategies get
+    their weight multiplied by `alpha_weight_boost`. Returns the raw
+    (un-clipped) weighted average — caller clips/scales.
+    """
+    if not signals:
+        return 0.0
+    positions = np.array([s['position'] for s in signals], dtype=float)
+    weights = np.array([s.get('sharpe_6m', 0.0) for s in signals], dtype=float)
+    if is_rates and alpha_weight_boost != 1.0:
+        boost = np.array(
+            [alpha_weight_boost if s.get('strategy_type') in ('alpha1', 'alpha2') else 1.0
+             for s in signals],
+            dtype=float,
+        )
+        weights = weights * boost
+    if weights.sum() > 0:
+        return float(np.average(positions, weights=weights))
+    return float(positions.mean())
+
+
 class StrategySelector:
     """Select and manage active trading strategies."""
     
@@ -44,6 +118,24 @@ class StrategySelector:
         self.active_strategies: List[Dict[str, Any]] = []
         self._carry_positions: Dict[str, float] = {}  # asset → last non-zero position
         self._regime_inverted_ids: set = set()  # strategy_ids whose signals are inverted by regime filter
+
+        # ── Rates-specific improvement toggles (config-driven) ──
+        ri = (self.config.get('backtest', {}) or {}).get('rates_improvements', {}) or {}
+        self.rates_adv_invert: bool = ri.get('rates_adv_invert', False)               # #1
+        self.inverse_vol_sizing: bool = ri.get('inverse_vol_sizing', True)            # #3
+        self.vol_target_annual: float = ri.get('vol_target_annual', 0.10)
+        self.vol_lookback: int = ri.get('vol_lookback', 60)
+        self.vol_scale_min: float = ri.get('vol_scale_min', 0.25)
+        self.vol_scale_max: float = ri.get('vol_scale_max', 3.0)
+        self.rates_global_corr_group: bool = ri.get('rates_global_corr_group', True)  # #4
+        self.rates_alpha_weight_boost: float = ri.get('rates_alpha_weight_boost', 1.0)  # #5b
+
+        # Discovery scope (None/empty = use all). Filters which active
+        # strategies are used now — works on existing DBs without re-discovery.
+        _scope = self.config.get('discovery', {}) or {}
+        self.enabled_categories = _scope.get('enabled_categories')
+        self.excluded_assets = set(_scope.get('exclude_assets', []) or [])
+        self.disabled_strategies = set(_scope.get('disabled_strategies', []) or [])
 
     def _get_default_config_path(self) -> str:
         """Get default path to indicators.yaml."""
@@ -76,7 +168,8 @@ class StrategySelector:
         """
         # 1. Get all potential active strategies (already activated in factory)
         potential_strategies = self.factory.get_active_strategies()
-        
+        potential_strategies = self._filter_discovery_scope(potential_strategies)
+
         if not potential_strategies:
             self.active_strategies = []
             return 0
@@ -93,6 +186,34 @@ class StrategySelector:
 
         logger.info(f"🎯 {len(self.active_strategies)} active strategies loaded after correlation filtering")
         return len(self.active_strategies)
+
+    @staticmethod
+    def _strategy_category(stype: str) -> str:
+        """Map strategy_type → coarse category (alpha1/2/3 → 'alpha')."""
+        return 'alpha' if stype in ('alpha1', 'alpha2', 'alpha3') else stype
+
+    def _filter_discovery_scope(
+        self, strategies: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Drop strategies outside the discovery scope: category not in
+        enabled_categories, asset in exclude_assets, or strategy_name in
+        disabled_strategies. No-op for each criterion when unset. Works on
+        existing DBs — excluded strategies are ignored without re-discovery."""
+        allowed = set(self.enabled_categories) if self.enabled_categories else None
+        kept = [
+            s for s in strategies
+            if (allowed is None
+                or self._strategy_category(s.get('strategy_type', '')) in allowed)
+            and s.get('asset') not in self.excluded_assets
+            and s.get('strategy_name') not in self.disabled_strategies
+        ]
+        dropped = len(strategies) - len(kept)
+        if dropped:
+            logger.info(f"   🧹 Discovery-scope filter: dropped {dropped} strategies "
+                        f"(categories={sorted(allowed) if allowed else 'all'}, "
+                        f"excluded_assets={sorted(self.excluded_assets)}, "
+                        f"disabled={sorted(self.disabled_strategies)})")
+        return kept
 
     def _ensure_min_assets(
         self,
@@ -142,11 +263,21 @@ class StrategySelector:
             return {}
 
         groups = {}
-        # Rates: grouped by country
-        for country, data in cfg.get('rates', {}).items():
-            tickers = data.get('tickers', [])
-            if tickers:
-                groups[f'rates_{country}'] = tickers
+        # Rates grouping:
+        #   #4 rates_global_corr_group=True  → ALL rates tickers in ONE group so
+        #      the correlation filter can't stack the same global-duration bet.
+        #   False (legacy) → one group per country.
+        if self.rates_global_corr_group:
+            global_rates: List[str] = []
+            for country, data in cfg.get('rates', {}).items():
+                global_rates.extend(data.get('tickers', []))
+            if global_rates:
+                groups['rates_GLOBAL'] = global_rates
+        else:
+            for country, data in cfg.get('rates', {}).items():
+                tickers = data.get('tickers', [])
+                if tickers:
+                    groups[f'rates_{country}'] = tickers
 
         # FX: each currency is its own group
         for currency, data in cfg.get('fx', {}).items():
@@ -367,7 +498,10 @@ class StrategySelector:
         is_rates = 'Comdty' in asset and 'NQ' not in asset
         is_fx = 'Curncy' in asset
 
-        if strategy_type == 'advanced' and is_rates:
+        # #1: ADV-on-rates flip is a legacy yield-era convention. Now that rates
+        # are bond FUTURES it inverts good signals — disabled by default, kept
+        # behind a toggle for A/B comparison.
+        if strategy_type == 'advanced' and is_rates and self.rates_adv_invert:
             position = -position
         elif strategy_type == 'alpha2' and is_fx:
             position = -position
@@ -492,29 +626,35 @@ class StrategySelector:
         """
         if signals.empty:
             return pd.DataFrame()
-        
+
+        # As-of date for inverse-vol estimate (latest signal date)
+        as_of_date = None
+        if 'date' in signals.columns and not signals['date'].isna().all():
+            try:
+                as_of_date = pd.to_datetime(signals['date']).max()
+            except Exception:
+                as_of_date = None
+
         # Group by asset
         asset_positions = []
-        
+
         for asset in signals['asset'].unique():
             asset_signals = signals[signals['asset'] == asset]
+            is_rates = classify_asset_class(asset) == 'rates'
             avg_position = 0.0
-            
+
             if method == 'equal':
                 # Simple average
                 avg_position = asset_signals['position'].mean()
-            
+
             elif method == 'sharpe_weighted':
-                # Sharpe-weighted average
-                weights = asset_signals['sharpe_6m']
-                if weights.sum() > 0:
-                    avg_position = np.average(
-                        asset_signals['position'],
-                        weights=weights
-                    )
-                else:
-                    avg_position = asset_signals['position'].mean()
-            
+                # Sharpe-weighted average (#5b: carry/curve boosted on rates)
+                avg_position = sharpe_weighted_position(
+                    asset_signals.to_dict('records'),
+                    is_rates=is_rates,
+                    alpha_weight_boost=self.rates_alpha_weight_boost,
+                )
+
             elif method == 'vote':
                 # Majority vote
                 positions = asset_signals['positions'].values # Fix: positions should be from individual strategy status
@@ -530,13 +670,27 @@ class StrategySelector:
             else:
                 avg_position = asset_signals['position'].mean()
             
-            # Cap to [-1, 1] — confidence never exceeds 1.0
-            avg_position = float(np.clip(avg_position, -1.0, 1.0))
+            # raw_position = directional confidence, capped to [-1, 1]
+            raw_position = float(np.clip(avg_position, -1.0, 1.0))
+
+            # #3: inverse-vol sizing — scale by vol_target / realized_vol so
+            # low-vol rates carry comparable risk to high-vol FX/equity.
+            if self.inverse_vol_sizing:
+                vol_scale = compute_inverse_vol_scale(
+                    prices, asset, as_of_date,
+                    vol_target=self.vol_target_annual,
+                    lookback=self.vol_lookback,
+                    scale_min=self.vol_scale_min,
+                    scale_max=self.vol_scale_max,
+                )
+            else:
+                vol_scale = 1.0
+            avg_position = raw_position * vol_scale
 
             asset_positions.append({
                 'asset': asset,
                 'position': avg_position,
-                'raw_position': avg_position,
+                'raw_position': raw_position,
                 'num_strategies': len(asset_signals),
                 'momentum_count': (asset_signals['strategy_type'] == 'momentum').sum(),
                 'mr_count': (asset_signals['strategy_type'] == 'mean_reversion').sum(),
@@ -692,6 +846,7 @@ class StrategySelector:
         self._regime_inverted_ids = set()  # reset; apply_regime_filter() will repopulate if called
         # All strategies are already activated — just get them
         potential_strategies = self.factory.get_active_strategies()
+        potential_strategies = self._filter_discovery_scope(potential_strategies)
 
         if not potential_strategies:
             self.active_strategies = []

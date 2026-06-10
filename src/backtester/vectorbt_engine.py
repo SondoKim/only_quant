@@ -22,6 +22,74 @@ try:
 except ImportError:
     VBT_AVAILABLE = False
 
+# Some numba / Python (3.12+) combinations fail to JIT-compile vectorbt's
+# simulation kernel ("incorrect value for flags variable (overflow)"). The
+# failure is at compile time, so EVERY from_signals call dies and discovery
+# silently stores 0 strategies. Probe the kernel ONCE per process and, if it
+# is unusable, route all backtests to the pure-numpy _run_simple_backtest,
+# which yields identical metrics without numba.
+_VBT_USABLE = None  # tri-state: None=unprobed, True/False=probed result
+
+# Persistent worker pool, reused across batches AND months within one process.
+# On Windows spawn, creating a Pool costs ~20s (11 workers re-import pandas
+# etc.) while a batch's actual compute is ~2-3s — per-batch pools made pool
+# startup ~90% of discovery wall time.
+_WORKER_POOL = None
+_WORKER_POOL_SIZE = 0
+
+
+def _get_worker_pool(n_jobs: int) -> "mp.pool.Pool":
+    """Return a cached mp.Pool, (re)creating it only when the size changes."""
+    global _WORKER_POOL, _WORKER_POOL_SIZE
+    if _WORKER_POOL is not None and _WORKER_POOL_SIZE == n_jobs:
+        return _WORKER_POOL
+    _shutdown_worker_pool()
+    _WORKER_POOL = mp.Pool(n_jobs)
+    _WORKER_POOL_SIZE = n_jobs
+    import atexit
+    atexit.register(_shutdown_worker_pool)
+    return _WORKER_POOL
+
+
+def _shutdown_worker_pool() -> None:
+    """Terminate and forget the cached pool (also used on worker errors)."""
+    global _WORKER_POOL, _WORKER_POOL_SIZE
+    if _WORKER_POOL is not None:
+        try:
+            _WORKER_POOL.terminate()
+            _WORKER_POOL.join()
+        except Exception:
+            pass
+        _WORKER_POOL = None
+        _WORKER_POOL_SIZE = 0
+
+
+def _vbt_usable() -> bool:
+    """Return True only if vectorbt's from_signals kernel actually compiles."""
+    global _VBT_USABLE
+    if _VBT_USABLE is not None:
+        return _VBT_USABLE
+    if not VBT_AVAILABLE:
+        _VBT_USABLE = False
+        return False
+    try:
+        idx = pd.date_range('2020-01-01', periods=5)
+        px = pd.Series([1.0, 1.01, 1.02, 1.01, 1.03], index=idx)
+        ent = pd.Series([True, False, False, False, False], index=idx)
+        ex = pd.Series([False, False, True, False, False], index=idx)
+        f = pd.Series(False, index=idx)
+        vbt.Portfolio.from_signals(px, entries=ent, exits=ex,
+                                   short_entries=f, short_exits=f, freq='D')
+        _VBT_USABLE = True
+    except Exception as e:
+        logger.warning(
+            f"vectorbt JIT kernel unusable ({e}); falling back to pure-numpy "
+            f"backtester for all strategies."
+        )
+        _VBT_USABLE = False
+    return _VBT_USABLE
+
+
 from ..strategies.momentum import MomentumStrategy
 from ..strategies.mean_reversion import MeanReversionStrategy
 from ..strategies.advanced import AdvancedStrategies
@@ -157,10 +225,12 @@ class VectorBTEngine:
         else:
             raise ValueError(f"Unknown strategy category: {strategy_type}")
         
-        # Run backtest
-        if VBT_AVAILABLE:
+        # Run backtest. Prefer vectorbt, but transparently fall back to the
+        # pure-numpy engine if vectorbt's numba kernel won't compile in this
+        # environment (see _vbt_usable).
+        if _vbt_usable():
             return self._run_vbt_backtest(
-                prices[asset], 
+                prices[asset],
                 long_entries, long_exits,
                 short_entries, short_exits,
                 strategy_id
@@ -184,16 +254,16 @@ class VectorBTEngine:
     ) -> BacktestResult:
         """Run backtest using vectorbt."""
         try:
-            # Handle non-positive prices (common in yields/macro data)
-            # vectorbt requires prices > 0 for return calculations.
+            # Handle non-positive prices. Rates are now bond FUTURES (positive),
+            # so this should rarely trigger; it remains a guard for any residual
+            # spread/yield series. Use an ADDITIVE shift to a positive floor,
+            # which preserves absolute price changes (and thus P&L direction and
+            # relative magnitude). The old np.exp(price/10) transform distorted
+            # return magnitudes non-linearly and made Sharpe meaningless.
             vbt_prices = prices.copy()
             if (vbt_prices <= 0).any():
-                # For macro data with <= 0 values, we use a synthetic index
-                # This preserves return direction and relative magnitude
-                diff = vbt_prices.diff().fillna(0)
-                # We treat the change as a log-return or similar
-                # Small constant added to avoid extreme moves if yield is near 0
-                vbt_prices = np.exp(vbt_prices / 10.0) # Scale down to avoid overflow
+                shift = abs(float(vbt_prices.min())) + 1.0
+                vbt_prices = vbt_prices + shift
             
             # Combine long and short into direction-aware signals
             # For now, run long-only backtest (vectorbt handles this well)
@@ -527,27 +597,29 @@ class VectorBTEngine:
                                     slippage=self.slippage)
                 
                 completed = 0
-                with mp.Pool(n_jobs) as pool:
-                    try:
-                        from tqdm import tqdm
-                        iterator = tqdm(
-                            pool.imap_unordered(worker_fn, chunks),
-                            total=len(chunks),
-                            desc=f"⚡ Parallel ({n_jobs} workers)",
-                            unit="chunk"
-                        )
-                    except ImportError:
-                        iterator = pool.imap_unordered(worker_fn, chunks)
-                    
-                    for worker_batch in iterator:
-                        for orig_idx, result_dict in worker_batch:
-                            results[orig_idx] = BacktestResult(**result_dict)
-                            completed += 1
-                        
+                pool = _get_worker_pool(n_jobs)
+                try:
+                    from tqdm import tqdm
+                    iterator = tqdm(
+                        pool.imap_unordered(worker_fn, chunks),
+                        total=len(chunks),
+                        desc=f"⚡ Parallel ({n_jobs} workers)",
+                        unit="chunk"
+                    )
+                except ImportError:
+                    iterator = pool.imap_unordered(worker_fn, chunks)
+
+                for worker_batch in iterator:
+                    for orig_idx, result_dict in worker_batch:
+                        results[orig_idx] = BacktestResult(**result_dict)
+                        completed += 1
+
                 logger.info(f"⚡ Parallel backtest: {len(strategies)} strategies on {n_jobs} workers")
                 return results
-                
+
             except Exception as e:
+                # A failed/poisoned pool must not be reused — drop it.
+                _shutdown_worker_pool()
                 logger.warning(f"Parallel execution failed ({e}), falling back to sequential")
         
         # Sequential fallback (small batches or parallel failure)

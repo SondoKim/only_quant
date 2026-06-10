@@ -231,6 +231,63 @@ class DataLoader:
         
         return df
     
+    def _extract_yield_tickers(self) -> List[str]:
+        """Extract signal-only yield tickers from assets.yaml → signal_yields."""
+        sy = self.config.get('signal_yields', {}) or {}
+        tickers = []
+        for t in (sy.get('tradeable_yield_map', {}) or {}).values():
+            tickers.append(t)
+        for t in (sy.get('fx_short_yield', {}) or {}).values():
+            tickers.append(t)
+        return sorted(set(tickers))
+
+    def load_signal_yields(
+        self,
+        start_date: str = "2020-01-01",
+        end_date: str = None,
+        use_cache: bool = True,
+    ) -> pd.DataFrame:
+        """Load signal-only yield series (separate from the tradeable panel).
+
+        Returns an empty DataFrame if neither Bloomberg nor a cache is available
+        — the SleeveEngine then falls back to price-based Carry/Value proxies.
+        """
+        yield_tickers = self._extract_yield_tickers()
+        if not yield_tickers:
+            return pd.DataFrame()
+
+        if end_date is None:
+            end_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        cache_file = self.cache_dir / f"yields_{start_date}_{end_date}.parquet"
+
+        if use_cache and cache_file.exists():
+            logger.info(f"📂 Loading cached yields from {cache_file}")
+            return pd.read_parquet(cache_file)
+
+        if XBBG_AVAILABLE:
+            try:
+                df = blp.bdh(tickers=yield_tickers, flds=['px_last'],
+                             start_date=start_date, end_date=end_date, Per='D', Fill='NA')
+                if df is not None and not df.empty:
+                    if isinstance(df.columns, pd.MultiIndex):
+                        df.columns = [c[0] for c in df.columns]
+                    df.index = pd.to_datetime(df.index)
+                    df = df.ffill()
+                    df.to_parquet(cache_file)
+                    logger.info(f"✅ Yield data loaded: {df.shape}")
+                    return df
+            except Exception as e:
+                logger.error(f"❌ Yield load failed: {e}")
+
+        # Fallback: most recent yields cache, else empty
+        ycaches = list(self.cache_dir.glob("yields_*.parquet"))
+        if ycaches:
+            latest = max(ycaches, key=lambda x: x.stat().st_mtime)
+            logger.info(f"📂 Fallback yields: {latest}")
+            return pd.read_parquet(latest)
+        logger.warning("⚠️ No yield data available — sleeve Carry/Value will use price proxies.")
+        return pd.DataFrame()
+
     def get_cross_asset_pairs(self) -> Dict[str, List[tuple]]:
         """Get cross-asset pairs from configuration."""
         return self.config.get('cross_asset_pairs', {})

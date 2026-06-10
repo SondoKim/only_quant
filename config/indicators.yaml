@@ -1,3 +1,62 @@
+# ───────────────────────────────────────────────────────────────────────────
+# Sleeve engine (src/sleeves) — continuous, risk-targeted macro book.
+# Independent of the strategy-factory; tuned here, backtested via
+# scripts/run_sleeve_backtest.py.
+# ───────────────────────────────────────────────────────────────────────────
+sleeves:
+  # Sleeve blend weights (per asset class; carry applies to FX only)
+  sleeve_weights:
+    trend: 1.0
+    value: 0.5
+    carry: 1.0
+  # Per-sleeve cross-sectional neutralization (1=market-neutral RV, 0=directional).
+  # Trend keeps its directional CTA premium; Value/Carry are relative-value.
+  xs_neutralize:
+    trend: 0.0
+    value: 1.0
+    carry: 1.0
+  signal_smooth_span: 5     # EWMA span on conviction to damp turnover (1=off)
+
+  # (가) Regime gate: turn the TREND sleeve down in ranging/choppy regimes
+  # (Hurst ≤ threshold) to avoid whipsaw (the 2023-25 rates problem).
+  regime_gate:
+    enabled: true
+    method: rs              # 'rs' (R/S) or 'dfa'
+    window: 120
+    threshold: 0.5
+    ranging_trend_weight: 0.0   # trend multiplier when ranging (0=off, 1=no gate)
+    recompute_every: 5          # recompute Hurst every N days (ffill between)
+
+  # Carry source. Rates carry is always yield-based (cross-country yield level,
+  # active only when signal_yields are loaded). FX carry:
+  #   'yield' = true 2Y differential (foreign-US); best in 2022+ normal-rates regime
+  #   'price' = rate-differential momentum; best in 2020-21 reflation era
+  # Within statistical noise full-sample — see sleeve_engine findings.
+  fx_carry_source: yield
+
+  # Signal construction. Fast (63d) trend whipsaws on rates; 6-12m horizons
+  # are the robust TSMOM standard.
+  trend_horizons: [126, 252]
+  trend_z_window: 252
+  value_window: 504         # ~2y mean-reversion lookback
+  carry_window: 252
+  signal_clip: 2.0          # clip each sleeve signal to ±this (in z units)
+
+  # Risk model
+  vol_halflife: 33          # EWMA halflife (days) for realized vol
+  target_asset_vol: 0.10    # per-asset risk target (inverse-vol sizing)
+  target_port_vol: 0.10     # portfolio annualized vol target
+  port_vol_window: 63       # trailing window for ex-ante portfolio vol
+  max_asset_pos: 3.0        # cap on any single asset position
+  max_gross_leverage: 10.0  # cap on summed gross exposure
+
+  # Transaction costs (bps of turnover); per-ticker overrides allowed
+  costs_bps:
+    rates: 0.5
+    fx: 1.0
+    index: 1.0
+    KRW Curncy: 3.0
+
 advanced_strategies:
   adx_momentum:
     adx_period:
@@ -23,19 +82,18 @@ advanced_strategies:
     - 0.5
     - 1.0
     - 1.5
+  # 2026-06-10: grid thinned 36→6 combos/asset (rsi_period 4→2, rsi_entry 3→1).
+  # Neighboring params produce near-duplicate signals that the correlation
+  # filter dropped anyway; cuts total search candidates ~28%.
   filtered_momentum:
     ma_period:
     - 10
     - 20
     - 50
     rsi_entry:
-    - 45
     - 50
-    - 55
     rsi_period:
-    - 5
     - 7
-    - 10
     - 14
   lead_lag_momentum:
     period:
@@ -129,6 +187,31 @@ alpha_strategies:
     - 1.5
   # Alpha3 (Regime-Adaptive) is implemented as a meta-filter in selector.py
   # Configure via backtest section: regime_filter, regime_adx_period, regime_adx_threshold
+# ───────────────────────────────────────────────────────────────────────────
+# Discovery scope — which strategy CATEGORIES the factory generates/uses.
+# Categories: momentum, mean_reversion, advanced, alpha
+#
+# Naive single-asset technicals (momentum: MA/EMA/RSI/MACD/breakout;
+# mean_reversion: Z-score/Bollinger) are data-mining-prone and in 2022-26
+# backtests contributed ~0 (momentum) and net-negative (mean_reversion, fx
+# -20). The structured cross-asset signals (advanced filtered/multi-TF
+# momentum, alpha cross-sectional/curve) carry the real PnL → keep only those.
+#
+# Drives BOTH the generator (future discovery) AND the selector (which active
+# strategies are used now — takes effect immediately, even on existing DBs).
+# Set to [momentum, mean_reversion, advanced, alpha] to restore the old behavior.
+# ───────────────────────────────────────────────────────────────────────────
+discovery:
+  enabled_categories: [advanced, alpha]
+  # Assets removed from strategy search AND backtesting entirely
+  # (2026-06-10: Nasdaq dropped from the strategy universe by decision;
+  # its prices remain available as an input/related signal).
+  exclude_assets: ["NQ1 Index"]
+  # Strategy archetypes no longer searched — persistent post-discovery
+  # underperformance across 53 monthly DBs (avg 6M Sharpe of stored
+  # strategies: adx_momentum 0.14, carry_trade 0.36 vs ~1.0 for others).
+  disabled_strategies: [adx_momentum, carry_trade]
+
 backtest:
   max_drawdown: -0.25
   min_trades: 20
@@ -141,6 +224,49 @@ backtest:
   # Set via --regime-filter CLI flag. Parameters below are defaults.
   regime_adx_period: 14
   regime_adx_threshold: 25
+
+  # ──────────────────────────────────────────────────────────────────────
+  # Rates-specific improvements (all toggleable for A/B backtesting).
+  # Defaults below = IMPROVED behavior. To restore legacy behavior, see the
+  # "legacy:" note on each line.
+  # ──────────────────────────────────────────────────────────────────────
+  rates_improvements:
+    # #1: Legacy yield-era sign flip applied to ADVANCED strategies on rates.
+    #     Now that rates are bond FUTURES (price, not yield), this flip is
+    #     almost certainly stale and inverts good signals.  legacy: true
+    rates_adv_invert: false
+
+    # #3: Inverse-volatility position sizing (risk parity across assets).
+    #     Scales each asset's position by (vol_target / realized_vol) so that
+    #     low-vol rates are not drowned out by high-vol FX/equity.  legacy: false
+    inverse_vol_sizing: true
+    vol_target_annual: 0.10   # target annualized vol per asset
+    vol_lookback: 60          # trading days for realized-vol estimate
+    vol_scale_min: 0.25       # floor on the inverse-vol multiplier
+    vol_scale_max: 3.0        # cap on the inverse-vol multiplier
+
+    # #4: Treat ALL rates tickers as ONE correlation group instead of
+    #     per-country, so the selector cannot stack the same global-duration
+    #     bet (US long + DE long + UK long ...) as if it were diversified.
+    #     legacy: false
+    rates_global_corr_group: true
+
+    # #5b: Extra weight multiplier for carry/curve (alpha1/alpha2) strategies
+    #      on rates during sharpe-weighted aggregation. Rates alpha is mostly
+    #      carry + curve, so up-weight it vs weak price technicals.
+    #      1.0 = no boost (legacy).  >1.0 = favor alpha sleeves on rates.
+    rates_alpha_weight_boost: 2.0
+
+  # #5a: Asset-class differentiated discovery thresholds. If an asset class
+  #      appears here, its values override the global thresholds above during
+  #      _process_batch storage filtering. Omit a class to use globals.
+  #      Default mirrors globals (neutral) — tune per class after backtesting.
+  asset_class_thresholds:
+    rates:
+      sharpe_threshold_3y: 0.8
+      sortino_threshold_3y: 0.8
+      min_trades: 20
+      max_drawdown: -0.25
 cross_asset_indicators:
   correlation_rolling:
     params:

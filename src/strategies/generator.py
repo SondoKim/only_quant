@@ -562,38 +562,71 @@ class StrategyGenerator:
         import random
         strategy_id = 0
 
+        scope = self.config.get('discovery', {}) or {}
+        # Which categories to generate (config-driven; default = all four)
+        enabled = set(
+            scope.get(
+                'enabled_categories',
+                ['momentum', 'mean_reversion', 'advanced', 'alpha'],
+            )
+        )
+        # Assets removed from the strategy search universe entirely; their
+        # prices may still feed other strategies as related/basket inputs.
+        excluded_assets = set(scope.get('exclude_assets', []) or [])
+        # Strategy archetypes disabled for persistent live underperformance.
+        disabled_names = set(scope.get('disabled_strategies', []) or [])
+
+        if excluded_assets:
+            assets = [a for a in assets if a not in excluded_assets]
+
+        def _skip(strategy: Dict[str, Any]) -> bool:
+            return (strategy.get('asset') in excluded_assets
+                    or strategy.get('strategy_name') in disabled_names)
+
         # Momentum strategies
-        for strategy in self.generate_momentum_strategies(assets, related_assets):
-            if sample_ratio < 1.0 and random.random() > sample_ratio:
-                continue
-            strategy['id'] = f"MOM_{strategy_id:06d}"
-            strategy_id += 1
-            yield strategy
+        if 'momentum' in enabled:
+            for strategy in self.generate_momentum_strategies(assets, related_assets):
+                if _skip(strategy):
+                    continue
+                if sample_ratio < 1.0 and random.random() > sample_ratio:
+                    continue
+                strategy['id'] = f"MOM_{strategy_id:06d}"
+                strategy_id += 1
+                yield strategy
 
         # Mean reversion strategies
-        for strategy in self.generate_mean_reversion_strategies(assets, related_assets):
-            if sample_ratio < 1.0 and random.random() > sample_ratio:
-                continue
-            strategy['id'] = f"MR_{strategy_id:06d}"
-            strategy_id += 1
-            yield strategy
+        if 'mean_reversion' in enabled:
+            for strategy in self.generate_mean_reversion_strategies(assets, related_assets):
+                if _skip(strategy):
+                    continue
+                if sample_ratio < 1.0 and random.random() > sample_ratio:
+                    continue
+                strategy['id'] = f"MR_{strategy_id:06d}"
+                strategy_id += 1
+                yield strategy
 
         # Advanced strategies
-        for strategy in self.generate_advanced_strategies(assets, related_assets):
-            if sample_ratio < 1.0 and random.random() > sample_ratio:
-                continue
-            strategy['id'] = f"ADV_{strategy_id:06d}"
-            strategy_id += 1
-            yield strategy
+        if 'advanced' in enabled:
+            for strategy in self.generate_advanced_strategies(assets, related_assets):
+                if _skip(strategy):
+                    continue
+                if sample_ratio < 1.0 and random.random() > sample_ratio:
+                    continue
+                strategy['id'] = f"ADV_{strategy_id:06d}"
+                strategy_id += 1
+                yield strategy
 
         # Alpha strategies (alpha1, alpha2, alpha3)
-        for strategy in self.generate_alpha_strategies(assets, related_assets):
-            if sample_ratio < 1.0 and random.random() > sample_ratio:
-                continue
-            prefix = strategy['strategy_type'].upper()  # ALPHA1, ALPHA2, ALPHA3
-            strategy['id'] = f"{prefix}_{strategy_id:06d}"
-            strategy_id += 1
-            yield strategy
+        if 'alpha' in enabled:
+            for strategy in self.generate_alpha_strategies(assets, related_assets):
+                if _skip(strategy):
+                    continue
+                if sample_ratio < 1.0 and random.random() > sample_ratio:
+                    continue
+                prefix = strategy['strategy_type'].upper()  # ALPHA1, ALPHA2, ALPHA3
+                strategy['id'] = f"{prefix}_{strategy_id:06d}"
+                strategy_id += 1
+                yield strategy
     
     def count_strategies(
         self,
@@ -610,12 +643,24 @@ class StrategyGenerator:
         Returns:
             Dict with counts by strategy type
         """
-        momentum_count = sum(1 for _ in self.generate_momentum_strategies(assets, related_assets))
-        mean_rev_count = sum(1 for _ in self.generate_mean_reversion_strategies(assets, related_assets))
-        advanced_count = sum(1 for _ in self.generate_advanced_strategies(assets, related_assets))
+        scope = self.config.get('discovery', {}) or {}
+        excluded_assets = set(scope.get('exclude_assets', []) or [])
+        disabled_names = set(scope.get('disabled_strategies', []) or [])
+        if excluded_assets:
+            assets = [a for a in assets if a not in excluded_assets]
+
+        def _ok(s: Dict[str, Any]) -> bool:
+            return (s.get('asset') not in excluded_assets
+                    and s.get('strategy_name') not in disabled_names)
+
+        momentum_count = sum(1 for s in self.generate_momentum_strategies(assets, related_assets) if _ok(s))
+        mean_rev_count = sum(1 for s in self.generate_mean_reversion_strategies(assets, related_assets) if _ok(s))
+        advanced_count = sum(1 for s in self.generate_advanced_strategies(assets, related_assets) if _ok(s))
 
         alpha_counts = {'alpha1': 0, 'alpha2': 0}
         for s in self.generate_alpha_strategies(assets, related_assets):
+            if not _ok(s):
+                continue
             stype = s.get('strategy_type', '')
             if stype in alpha_counts:
                 alpha_counts[stype] += 1

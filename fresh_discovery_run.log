@@ -1,0 +1,1038 @@
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2026-06-08.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (1672, 18)
+INFO:__main__:[1/55] 🔍 Discovering strategies for 2021-12-31...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2021-12-31...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2021-12-31.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (519, 18)
+INFO:main:   Data shape: (519, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2021-12-31 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+📊 Loading price data...
+
+📅 Month-end dates for discovery:
+   2021-12-31 (Friday)
+   2022-01-31 (Monday)
+   2022-02-28 (Monday)
+   2022-03-31 (Thursday)
+   2022-04-29 (Friday)
+   2022-05-31 (Tuesday)
+   2022-06-30 (Thursday)
+   2022-07-29 (Friday)
+   2022-08-31 (Wednesday)
+   2022-09-30 (Friday)
+   2022-10-31 (Monday)
+   2022-11-30 (Wednesday)
+   2022-12-30 (Friday)
+   2023-01-31 (Tuesday)
+   2023-02-28 (Tuesday)
+   2023-03-31 (Friday)
+   2023-04-28 (Friday)
+   2023-05-31 (Wednesday)
+   2023-06-30 (Friday)
+   2023-07-31 (Monday)
+   2023-08-31 (Thursday)
+   2023-09-29 (Friday)
+   2023-10-31 (Tuesday)
+   2023-11-30 (Thursday)
+   2023-12-29 (Friday)
+   2024-01-31 (Wednesday)
+   2024-02-29 (Thursday)
+   2024-03-29 (Friday)
+   2024-04-30 (Tuesday)
+   2024-05-31 (Friday)
+   2024-06-28 (Friday)
+   2024-07-31 (Wednesday)
+   2024-08-30 (Friday)
+   2024-09-30 (Monday)
+   2024-10-31 (Thursday)
+   2024-11-29 (Friday)
+   2024-12-31 (Tuesday)
+   2025-01-31 (Friday)
+   2025-02-28 (Friday)
+   2025-03-31 (Monday)
+   2025-04-30 (Wednesday)
+   2025-05-30 (Friday)
+   2025-06-30 (Monday)
+   2025-07-31 (Thursday)
+   2025-08-29 (Friday)
+   2025-09-30 (Tuesday)
+   2025-10-31 (Friday)
+   2025-11-28 (Friday)
+   2025-12-31 (Wednesday)
+   2026-01-30 (Friday)
+   2026-02-27 (Friday)
+   2026-03-31 (Tuesday)
+   2026-04-30 (Thursday)
+   2026-05-29 (Friday)
+   2026-06-08 (Monday)
+
+============================================================
+  PHASE 1: Strategy Pre-Discovery
+============================================================
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:30<05:00, 30.06s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:30<01:53, 12.58s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:30<00:55,  6.94s/chunk]⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:30<00:30,  4.29s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:30<00:16,  2.78s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:31<00:09,  1.98s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:31<00:05,  1.44s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:31<00:00,  1.59chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:31<00:00,  2.90s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000155
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000402
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000403
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000405
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000412
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000468
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000472
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000473
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000475
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000476
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000479
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000482
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000493
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000500
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000503
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000687
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000928
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000929
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:33, 21.33s/chunk]⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:20,  8.93s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.08s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:21,  3.14s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:12,  2.08s/chunk]⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:22<00:07,  1.43s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:22<00:00,  1.98chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.07s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001338
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001339
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001352
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001353
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001428
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001429
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001430
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001437
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001443
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001866
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001875
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:35, 21.54s/chunk]⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:21,  9.01s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.12s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:13,  2.32s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:22<00:05,  1.32s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:22<00:00,  1.44chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.08s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002040
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002043
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002326
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002328
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002329
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002332
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002442
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002443
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002514
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 61 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[1/55] ✅ 2021-12-31: Stored 61, Active 61
+INFO:__main__:[2/55] 🔍 Discovering strategies for 2022-01-31...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-01-31...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-01-31.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (540, 18)
+INFO:main:   Data shape: (540, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-01-31 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:20<03:27, 20.70s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:19,  8.87s/chunk]⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:21<00:39,  4.88s/chunk]⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:21<00:21,  3.02s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:21<00:11,  1.98s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:22<00:07,  1.46s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:22<00:00,  1.94chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.03s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000155
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000402
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000406
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000415
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000468
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000472
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000473
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000475
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000476
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000479
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000482
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000493
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000500
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000503
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000928
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000929
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:23<03:50, 23.04s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:28,  9.85s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:24<00:44,  5.53s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:14,  2.46s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:24<00:08,  1.80s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:24<00:05,  1.32s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:24<00:00,  1.62chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.25s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001338
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001339
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001349
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001352
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001353
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001429
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001437
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001875
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:34, 21.41s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:22<01:23,  9.23s/chunk]⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.09s/chunk]⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:22,  3.17s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:12,  2.08s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:23<00:07,  1.52s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:23<00:00,  1.87chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.11s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002040
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002043
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002044
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002326
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002329
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002442
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002443
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002514
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 56 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[2/55] ✅ 2022-01-31: Stored 56, Active 56
+INFO:__main__:[3/55] 🔍 Discovering strategies for 2022-02-28...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-02-28...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-02-28.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (560, 18)
+INFO:main:   Data shape: (560, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-02-28 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:23<03:52, 23.25s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:24<00:51,  6.38s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:24<00:29,  4.26s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:17,  2.91s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:24<00:10,  2.04s/chunk]⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:24<00:01,  1.13chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:25<00:00,  2.27s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000402
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000405
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000468
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000476
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000479
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000493
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000503
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000929
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:49, 22.98s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:27,  9.68s/chunk]⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:23<00:42,  5.35s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:23<00:23,  3.34s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:13,  2.32s/chunk]⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:24<00:07,  1.59s/chunk]⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:24<00:01,  1.48chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.22chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.25s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001338
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001353
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:48, 22.83s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:27,  9.71s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:23<00:16,  2.81s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:23<00:06,  1.70s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:23<00:00,  1.07chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.17s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002040
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002043
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002044
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002329
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002436
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002442
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002443
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002446
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002447
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002514
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 44 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[3/55] ✅ 2022-02-28: Stored 44, Active 44
+INFO:__main__:[4/55] 🔍 Discovering strategies for 2022-03-31...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-03-31...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-03-31.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (583, 18)
+INFO:main:   Data shape: (583, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-03-31 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:20<03:27, 20.77s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:21,  9.03s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:21<00:23,  3.42s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:15,  2.51s/chunk]⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:22<00:01,  1.08chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.03s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000402
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000405
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000412
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000415
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000418
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000468
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000471
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000473
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000475
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000476
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000479
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000482
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000503
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000928
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000929
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:33, 21.37s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:22<01:22,  9.21s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.07s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:22,  3.17s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:12,  2.11s/chunk]⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:22<00:01,  1.41chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.08s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001349
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001353
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:38, 21.90s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:22<01:23,  9.28s/chunk]⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.10s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:13,  2.29s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:22<00:05,  1.31s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:23<00:01,  1.21chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.10s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002043
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002044
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002329
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002514
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 45 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[4/55] ✅ 2022-03-31: Stored 45, Active 45
+INFO:__main__:[5/55] 🔍 Discovering strategies for 2022-04-29...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-04-29...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-04-29.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (604, 18)
+INFO:main:   Data shape: (604, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-04-29 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:41, 22.16s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:22<01:24,  9.40s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:41,  5.16s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:13,  2.30s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:23<00:05,  1.30s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.11s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000412
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000415
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000418
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000468
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000471
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000473
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000475
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000476
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000479
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000482
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000929
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:23<03:58, 23.87s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:24<01:29,  9.98s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:24<00:26,  3.78s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:16,  2.68s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:24<00:03,  1.18s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.25s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:26<04:23, 26.39s/chunk]⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:27<01:42, 11.43s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:27<00:50,  6.32s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:28<00:28,  4.02s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:28<00:16,  2.69s/chunk]⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:28<00:09,  1.84s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:29<00:06,  1.62s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:29<00:01,  1.14chunk/s]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:30<00:00,  1.45chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:30<00:00,  2.74s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002043
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002044
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002248
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002307
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002332
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002341
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002361
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002362
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002446
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002447
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002448
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002529
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 47 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[5/55] ✅ 2022-04-29: Stored 47, Active 47
+INFO:__main__:[6/55] 🔍 Discovering strategies for 2022-05-31...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-05-31...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-05-31.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (626, 18)
+INFO:main:   Data shape: (626, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-05-31 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:25<04:10, 25.05s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:25<01:35, 10.60s/chunk]⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:25<00:46,  5.84s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:26<00:26,  3.72s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:26<00:14,  2.46s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:26<00:05,  1.31s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:26<00:01,  1.27chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:26<00:00,  2.45s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000412
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000415
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000418
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000473
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000474
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000476
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000479
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000482
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:24<04:00, 24.00s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:24<01:29,  9.98s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:24<00:43,  5.50s/chunk]⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:24<00:24,  3.47s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:13,  2.29s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:25<00:07,  1.59s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:25<00:04,  1.19s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:25<00:02,  1.13chunk/s]⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:25<00:01,  1.53chunk/s]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:25<00:00,  2.06chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:25<00:00,  2.36s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:26<04:29, 26.99s/chunk]⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:27<01:40, 11.17s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:27<00:30,  4.34s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:27<00:04,  1.58s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:27<00:00,  1.05chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:27<00:00,  2.54s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002043
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002044
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002248
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002249
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002361
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002362
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002442
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002446
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002447
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002448
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002531
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002532
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002550
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 45 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[6/55] ✅ 2022-05-31: Stored 45, Active 45
+INFO:__main__:[7/55] 🔍 Discovering strategies for 2022-06-30...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-06-30...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-06-30.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (648, 18)
+INFO:main:   Data shape: (648, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-06-30 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:48, 22.87s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:28,  9.86s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:24<00:44,  5.62s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:14,  2.48s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:24<00:09,  1.85s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:24<00:00,  1.39chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.25s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000418
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000474
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000478
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000490
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000491
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000841
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:48, 22.84s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:26,  9.61s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:23<00:43,  5.38s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:23<00:14,  2.40s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:23<00:08,  1.77s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:24<00:00,  1.46chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.19s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001312
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001313
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:38, 21.83s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:46,  5.85s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:17,  2.90s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:22<00:10,  2.18s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:22<00:03,  1.26s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.09s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_002044
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002248
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002249
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002307
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002322
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002361
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002362
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002446
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002447
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002448
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002529
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002530
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 41 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[7/55] ✅ 2022-06-30: Stored 41, Active 41
+INFO:__main__:[8/55] 🔍 Discovering strategies for 2022-07-29...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-07-29...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-07-29.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (669, 18)
+INFO:main:   Data shape: (669, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-07-29 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:39, 22.00s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:46,  5.80s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:27,  3.92s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:16,  2.72s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:23<00:09,  1.91s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:23<00:03,  1.03s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.12s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000300
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000415
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000418
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000474
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000478
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000490
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000756
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000841
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000843
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000900
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:42, 22.23s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:27,  9.74s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:23<00:25,  3.66s/chunk]⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:23<00:09,  1.96s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  1.34chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.15s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001153
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001313
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001353
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:20<03:26, 20.64s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:23,  9.23s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:24,  3.52s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:22<00:06,  1.52s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:22<00:00,  1.17chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.04s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002332
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002361
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002362
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002446
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002447
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002529
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002530
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 42 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[8/55] ✅ 2022-07-29: Stored 42, Active 42
+INFO:__main__:[9/55] 🔍 Discovering strategies for 2022-08-31...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-08-31...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-08-31.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (692, 18)
+INFO:main:   Data shape: (692, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-08-31 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:20<03:29, 20.98s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:22,  9.17s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.07s/chunk]⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:21,  3.14s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:22<00:07,  1.52s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:22<00:04,  1.15s/chunk]⚡ Parallel (11 workers):  91%|█████████ | 10/11 [00:22<00:00,  1.81chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.07s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000327
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000474
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000478
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000488
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000490
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000841
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000843
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:23<03:54, 23.47s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:23<01:28,  9.81s/chunk]⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:23<00:26,  3.73s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:24<00:15,  2.66s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:24<00:09,  1.89s/chunk]⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:24<00:03,  1.04s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:24<00:00,  2.24s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001153
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001312
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001313
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001355
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:21<03:35, 21.55s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:21,  9.08s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:40,  5.01s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  36%|███▋      | 4/11 [00:22<00:21,  3.11s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:22<00:12,  2.03s/chunk]⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:22<00:06,  1.38s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  82%|████████▏ | 9/11 [00:22<00:01,  1.71chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.06s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 555 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002188
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002310
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002311
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002313
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002314
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002322
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002355
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002356
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002357
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002358
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002359
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002360
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002361
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA1_002362
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002445
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002446
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002447
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002527
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002528
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002529
+INFO:src.factory.strategy_factory:Strategy saved: ALPHA2_002530
+INFO:main:✅ Discovery complete!
+INFO:main:   Tested: 2555/5671
+INFO:main:   Stored: 38 (Sharpe 3Y >= 0.8, Sortino 3Y >= 0.8)
+INFO:__main__:[9/55] ✅ 2022-08-31: Stored 38, Active 38
+INFO:__main__:[10/55] 🔍 Discovering strategies for 2022-09-30...
+INFO:main:🚀 Starting strategy discovery pipeline...
+INFO:main:📊 Loading price data from 2020-01-01 to 2022-09-30...
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2022-09-30.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (714, 18)
+INFO:main:   Data shape: (714, 18)
+INFO:main:   Date range: 2020-01-06 00:00:00 to 2022-09-30 00:00:00
+INFO:main:📈 Total possible strategies: 5671
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:20<03:25, 20.54s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:21<01:19,  8.79s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:21<00:38,  4.86s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:21<00:13,  2.22s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:21<00:08,  1.65s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:22<00:04,  1.20s/chunk]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:22<00:00,  2.01s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000324
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000327
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000354
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000478
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000480
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000481
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000484
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000485
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000487
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000490
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000840
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000841
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000843
+INFO:src.factory.strategy_factory:Strategy saved: ADV_000915
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):   9%|▉         | 1/11 [00:22<03:46, 22.67s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  18%|█▊        | 2/11 [00:22<01:24,  9.41s/chunk]⚡ Parallel (11 workers):  27%|██▋       | 3/11 [00:22<00:41,  5.19s/chunk]⚡ Parallel (11 workers):  45%|████▌     | 5/11 [00:23<00:13,  2.30s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  55%|█████▍    | 6/11 [00:23<00:08,  1.71s/chunk]WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+WARNING:src.backtester.vectorbt_engine:vectorbt JIT kernel unusable (incorrect value for flags variable (overflow)); falling back to pure-numpy backtester for all strategies.
+⚡ Parallel (11 workers):  64%|██████▎   | 7/11 [00:23<00:05,  1.27s/chunk]⚡ Parallel (11 workers):  73%|███████▎  | 8/11 [00:23<00:02,  1.08chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.32chunk/s]⚡ Parallel (11 workers): 100%|██████████| 11/11 [00:23<00:00,  2.16s/chunk]
+INFO:src.backtester.vectorbt_engine:⚡ Parallel backtest: 1000 strategies on 11 workers
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001087
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001088
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001089
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001091
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001311
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001312
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001313
+INFO:src.factory.strategy_factory:Strategy saved: ADV_001719
+⚡ Parallel (11 workers):   0%|          | 0/11 [00:00<?, ?chunk/s]Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Python\Lib\multiprocessing\spawn.py", line 113, in spawn_main
+    new_handle = reduction.duplicate(pipe_handle,
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Lib\multiprocessing\reduction.py", line 79, in duplicate
+    return _winapi.DuplicateHandle(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] 액세스가 거부되었습니다
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Python\Lib\multiprocessing\spawn.py", line 113, in spawn_main
+    new_handle = reduction.duplicate(pipe_handle,
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Lib\multiprocessing\reduction.py", line 79, in duplicate
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Python\Lib\multiprocessing\spawn.py", line 113, in spawn_main
+    return _winapi.DuplicateHandle(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+    new_handle = reduction.duplicate(pipe_handle,
+PermissionError: [WinError 5] 액세스가 거부되었습니다
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Lib\multiprocessing\reduction.py", line 79, in duplicate
+    return _winapi.DuplicateHandle(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] 액세스가 거부되었습니다
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Python\Lib\multiprocessing\spawn.py", line 113, in spawn_main
+    new_handle = reduction.duplicate(pipe_handle,
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Lib\multiprocessing\reduction.py", line 79, in duplicate
+    return _winapi.DuplicateHandle(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] 액세스가 거부되었습니다
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "C:\Python\Lib\multiprocessing\spawn.py", line 113, in spawn_main
+    new_handle = reduction.duplicate(pipe_handle,
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python\Lib\multiprocessing\reduction.py", line 79, in duplicate
+    return _winapi.DuplicateHandle(
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 5] 액세스가 거부되었습니다

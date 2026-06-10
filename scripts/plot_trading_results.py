@@ -46,10 +46,11 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     last_date = df['Date'].iloc[-1]
     title_mode = f" (Mode: {mode.upper()})" if mode else ""
 
-    # Check if split strategy-type columns exist
+    # Check if split strategy-type columns exist.
+    # Naive momentum/mean_reversion were pruned (discovery.enabled_categories
+    # = [advanced, alpha]); only the Advanced category remains in this row.
     has_split = all(c in df.columns for c in [
-        'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
-        'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
+        'adv_rates_cumpnl', 'adv_fx_cumpnl',
     ])
     has_alpha = all(c in df.columns for c in [
         'a1_rates_cumpnl', 'a2_rates_cumpnl', 'a3_rates_cumpnl',
@@ -228,27 +229,23 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
         ax.legend(loc='upper left', fontsize='small')
 
     # -----------------------------------------------------------------
-    # Row 2: Strategy-Type Rates / FX (MOM / MR / ADV)
+    # Row 2: Strategy-Type Rates / FX (ADV only — naive MOM/MR pruned)
     # -----------------------------------------------------------------
     if has_split:
         _plot_strategy_type(ax_sr, {
-            'Momentum': 'mom_rates_cumpnl',
-            'Mean-Rev': 'mr_rates_cumpnl',
             'Advanced': 'adv_rates_cumpnl',
-        }, '{:.2f}', 'Strategy-Type: Rates (MOM / MR / ADV)')
+        }, '{:.2f}', 'Strategy-Type: Rates (Advanced)')
         ax_sr.set_ylabel('Normalised Cum PnL (bps)', fontweight='bold')
 
         _plot_strategy_type(ax_sfx, {
-            'Momentum': 'mom_fx_cumpnl',
-            'Mean-Rev': 'mr_fx_cumpnl',
             'Advanced': 'adv_fx_cumpnl',
-        }, '{:.2f}', 'Strategy-Type: FX (MOM / MR / ADV)')
+        }, '{:.2f}', 'Strategy-Type: FX (Advanced)')
         ax_sfx.set_ylabel('Normalised Cum PnL (%)', fontweight='bold')
     else:
-        ax_sr.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest.',
+        ax_sr.text(0.5, 0.5, 'ADV columns not found.\nRe-run backtest.',
                    ha='center', va='center', transform=ax_sr.transAxes, fontsize=11, color='gray')
         ax_sr.set_title('Strategy-Type: Rates', fontsize=13)
-        ax_sfx.text(0.5, 0.5, 'MOM/MR/ADV columns not found.\nRe-run backtest.',
+        ax_sfx.text(0.5, 0.5, 'ADV columns not found.\nRe-run backtest.',
                     ha='center', va='center', transform=ax_sfx.transAxes, fontsize=11, color='gray')
         ax_sfx.set_title('Strategy-Type: FX', fontsize=13)
 

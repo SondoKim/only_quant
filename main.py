@@ -195,7 +195,9 @@ class GlobalMacroTradingSystem:
                 self.max_drawdown = bt_config.get('max_drawdown', -0.20)
                 self.trail_stop_pct = bt_config.get('trail_stop_pct', 0)
                 self.max_hold_days = bt_config.get('max_hold_days', 0)
-                
+                # #5a: per-asset-class threshold overrides (rates/fx/index)
+                self.asset_class_thresholds = bt_config.get('asset_class_thresholds', {}) or {}
+
                 # Update selector threshold
                 self.strategy_selector.sharpe_threshold = self.sharpe_6m_threshold
         else:
@@ -207,6 +209,21 @@ class GlobalMacroTradingSystem:
             self.max_hold_days = 0
             self.min_trades = 20
             self.max_drawdown = -0.20
+            self.asset_class_thresholds = {}
+
+    def _thresholds_for_asset(self, asset: str) -> Dict[str, float]:
+        """#5a: Resolve storage thresholds for an asset, applying per-class
+        overrides from config.asset_class_thresholds when present, else globals.
+        """
+        from src.portfolio.selector import classify_asset_class
+        defaults = {
+            'sharpe_threshold_3y': self.sharpe_3y_threshold,
+            'sortino_threshold_3y': self.sortino_3y_threshold,
+            'min_trades': self.min_trades,
+            'max_drawdown': self.max_drawdown,
+        }
+        overrides = self.asset_class_thresholds.get(classify_asset_class(asset), {})
+        return {**defaults, **overrides}
     
     def run_discovery(
         self,
@@ -496,11 +513,13 @@ class GlobalMacroTradingSystem:
         active = 0
         
         for strategy, result in zip(strategies, results):
-            # Check if qualifies for storage: Sharpe 3Y AND Sortino 3Y
-            if (result.sharpe_3y >= self.sharpe_3y_threshold and
-                result.sortino_ratio >= self.sortino_3y_threshold and
-                result.num_trades >= self.min_trades and
-                result.max_drawdown >= self.max_drawdown):
+            # Check if qualifies for storage: Sharpe 3Y AND Sortino 3Y.
+            # #5a: thresholds can differ per asset class (e.g. rates).
+            th = self._thresholds_for_asset(strategy.get('asset', ''))
+            if (result.sharpe_3y >= th['sharpe_threshold_3y'] and
+                result.sortino_ratio >= th['sortino_threshold_3y'] and
+                result.num_trades >= th['min_trades'] and
+                result.max_drawdown >= th['max_drawdown']):
                 
                 self.strategy_factory.save_strategy(strategy, result.to_dict())
                 stored += 1

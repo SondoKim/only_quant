@@ -102,12 +102,28 @@ def load_config() -> dict:
         'sharpe_threshold_6m': 0.5,
         'sortino_threshold_6m': 0.5,
     }
+    # #3/#5b rates-improvement defaults (kept in sync with selector defaults)
+    ri_defaults = {
+        'inverse_vol_sizing': True,
+        'vol_target_annual': 0.10,
+        'vol_lookback': 60,
+        'vol_scale_min': 0.25,
+        'vol_scale_max': 3.0,
+        'rates_alpha_weight_boost': 1.0,
+    }
+    discovery_cfg = {}
     if config_path.exists():
         with open(config_path, 'r', encoding='utf-8') as f:
             config = yaml.safe_load(f)
             bt_cfg = config.get('backtest', {})
             for key in defaults:
                 defaults[key] = bt_cfg.get(key, defaults[key])
+            ri_cfg = bt_cfg.get('rates_improvements', {}) or {}
+            for key in ri_defaults:
+                ri_defaults[key] = ri_cfg.get(key, ri_defaults[key])
+            discovery_cfg = config.get('discovery', {}) or {}
+    defaults['rates_improvements'] = ri_defaults
+    defaults['discovery'] = discovery_cfg
     return defaults
 
 
@@ -116,30 +132,50 @@ def load_config() -> dict:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
-                            prev_date, curr_date) -> dict:
+                            prev_date, curr_date, ri_cfg: dict = None) -> dict:
     """
     Re-aggregate a (possibly filtered) list of raw strategy signals into
     per-asset {position, raw_position} using sharpe-weighted voting,
     same logic as selector.aggregate_positions.
 
-    Returns dict: {asset: {'position': int, 'raw_position': float}}
+    ri_cfg: rates-improvement settings (#3 inverse-vol, #5b alpha boost).
+            When None, falls back to plain sharpe-weighted (legacy) behavior.
+
+    Returns dict: {asset: {'position': float, 'raw_position': float}}
+    raw_position = directional confidence in [-1, 1];
+    position     = confidence × inverse-vol scale (may exceed 1 for low-vol assets).
     """
     from collections import defaultdict
+    from src.portfolio.selector import (
+        classify_asset_class, compute_inverse_vol_scale, sharpe_weighted_position,
+    )
+
+    ri_cfg = ri_cfg or {}
+    inverse_vol = ri_cfg.get('inverse_vol_sizing', False)
+    alpha_boost = ri_cfg.get('rates_alpha_weight_boost', 1.0)
+
     by_asset = defaultdict(list)
     for sig in raw_signals:
         by_asset[sig['asset']].append(sig)
 
     result = {}
     for asset, sigs in by_asset.items():
-        weights = [s['sharpe_6m'] for s in sigs]
-        positions = [s['position'] for s in sigs]
-        total_w = sum(weights)
-        if total_w > 0:
-            avg = sum(p * w for p, w in zip(positions, weights)) / total_w
+        is_rates = classify_asset_class(asset) == 'rates'
+        avg = sharpe_weighted_position(sigs, is_rates=is_rates, alpha_weight_boost=alpha_boost)
+        raw_position = float(np.clip(avg, -1.0, 1.0))
+
+        if inverse_vol:
+            vol_scale = compute_inverse_vol_scale(
+                prices, asset, curr_date,
+                vol_target=ri_cfg.get('vol_target_annual', 0.10),
+                lookback=ri_cfg.get('vol_lookback', 60),
+                scale_min=ri_cfg.get('vol_scale_min', 0.25),
+                scale_max=ri_cfg.get('vol_scale_max', 3.0),
+            )
         else:
-            avg = sum(positions) / len(positions) if positions else 0.0
-        avg = float(np.clip(avg, -1.0, 1.0))
-        result[asset] = {'position': avg, 'raw_position': avg}
+            vol_scale = 1.0
+
+        result[asset] = {'position': raw_position * vol_scale, 'raw_position': raw_position}
     return result
 
 
@@ -147,7 +183,8 @@ def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
 # Phase 1: Pre-Discovery
 # ─────────────────────────────────────────────────────────────────────────────
 def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: Path,
-                          incremental: bool = False, full_scan_interval: int = 3):
+                          incremental: bool = False, full_scan_interval: int = 3,
+                          window_months: int = 42):
     """
     Pre-discover strategies at each month-end business day.
     Uses main.py's GlobalMacroTradingSystem for reliable discovery.
@@ -155,6 +192,10 @@ def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: P
     Args:
         incremental: If True, use incremental discovery (reuse previous month).
         full_scan_interval: Full scan every N months in incremental mode.
+        window_months: Rolling data window per discovery (default 42 = 3y for
+            the sharpe_3y/sortino_3y storage gate + ~6mo indicator warmup,
+            covering the longest lookback of 120 trading days). Replaces the
+            old ever-expanding from-2020 window. 0 = expanding (legacy).
     """
     from main import GlobalMacroTradingSystem
 
@@ -177,15 +218,21 @@ def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: P
 
         system = GlobalMacroTradingSystem(storage_dir=str(storage_dir))
 
+        if window_months > 0:
+            window_start = (month_end - pd.DateOffset(months=window_months)).strftime('%Y-%m-%d')
+            discovery_start = max("2020-01-01", window_start)
+        else:
+            discovery_start = "2020-01-01"
+
         if incremental:
             result = system.run_incremental_discovery(
-                start_date="2020-01-01",
+                start_date=discovery_start,
                 end_date=date_str,
                 full_scan_interval=full_scan_interval,
             )
         else:
             result = system.run_discovery(
-                start_date="2020-01-01",
+                start_date=discovery_start,
                 end_date=date_str,
             )
 
@@ -223,7 +270,14 @@ def run_phase2_simulation(prices: pd.DataFrame,
     regime_hurst_threshold: H above which asset is considered trending (default 0.5).
     """
     cfg = load_config()
-    
+    ri_cfg = cfg.get('rates_improvements', {})
+    if ri_cfg.get('inverse_vol_sizing'):
+        print(f"⚖️  Inverse-vol sizing ON (target={ri_cfg.get('vol_target_annual')}, "
+              f"lookback={ri_cfg.get('vol_lookback')}d, "
+              f"cap=[{ri_cfg.get('vol_scale_min')},{ri_cfg.get('vol_scale_max')}])")
+    if ri_cfg.get('rates_alpha_weight_boost', 1.0) != 1.0:
+        print(f"⚖️  Rates alpha-weight boost = {ri_cfg.get('rates_alpha_weight_boost')}×")
+
     all_dates = prices.index
     target_dates = all_dates[all_dates >= pd.to_datetime(start_date_str)]
     
@@ -231,8 +285,14 @@ def run_phase2_simulation(prices: pd.DataFrame,
         print(f"❌ No data available from {start_date_str}")
         return
     
-    # Sort assets
-    all_assets = sorted(list(prices.columns), key=asset_sort_key)
+    # Sort assets; drop those excluded from the trading universe
+    # (discovery.exclude_assets — e.g. NQ1 Index since 2026-06). Their prices
+    # stay in `prices` as inputs for related/cross-asset signals.
+    excluded_assets = set((cfg.get('discovery', {}) or {}).get('exclude_assets', []) or [])
+    all_assets = sorted([a for a in prices.columns if a not in excluded_assets],
+                        key=asset_sort_key)
+    if excluded_assets:
+        print(f"🚫 Excluded from backtest universe: {sorted(excluded_assets)}")
     rates_assets = [a for a in all_assets if asset_sort_key(a)[0] <= 7]
     fx_assets = [a for a in all_assets if asset_sort_key(a)[0] == 8]
     index_assets = [a for a in all_assets if asset_sort_key(a)[0] == 9]
@@ -245,15 +305,15 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Track state
     cum_pnl = {asset: 0.0 for asset in all_assets}
-    cum_pnl_mom = 0.0   # Momentum strategies
-    cum_pnl_mr  = 0.0   # Mean-Reversion strategies
+    # Naive momentum/mean_reversion categories were pruned (discovery.enabled_categories
+    # = [advanced, alpha]); only Advanced + Alpha attribution is tracked now.
     cum_pnl_adv = 0.0   # Advanced strategies
     cum_pnl_a1  = 0.0   # Alpha1: Cross-Sectional
     cum_pnl_a2  = 0.0   # Alpha2: Cross-Asset Predictive
     cum_pnl_a3  = 0.0   # Alpha3: Regime-Adaptive
     # Per-type per-class cumulative PnL
-    cum_pnl_mom_rates = 0.0; cum_pnl_mr_rates = 0.0; cum_pnl_adv_rates = 0.0
-    cum_pnl_mom_fx = 0.0;    cum_pnl_mr_fx = 0.0;    cum_pnl_adv_fx = 0.0
+    cum_pnl_adv_rates = 0.0
+    cum_pnl_adv_fx = 0.0
     cum_pnl_a1_rates = 0.0;  cum_pnl_a2_rates = 0.0;  cum_pnl_a3_rates = 0.0
     cum_pnl_a1_fx = 0.0;     cum_pnl_a2_fx = 0.0;     cum_pnl_a3_fx = 0.0
     log_data = []
@@ -414,10 +474,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     else:
                         pnl_ma_off_count += 1  # OFF: below MA
             # Re-aggregate from passing signals only
-            filtered_map = _aggregate_raw_signals(passing, prices, prev_date, date)
+            filtered_map = _aggregate_raw_signals(passing, prices, prev_date, date, ri_cfg)
             sig_map = {asset: info for asset, info in filtered_map.items()}
         else:
-            sig_map = _aggregate_raw_signals(raw, prices, prev_date, date)
+            sig_map = _aggregate_raw_signals(raw, prices, prev_date, date, ri_cfg)
         
         # Drawdown scaling: compute scale from prior day's portfolio PnL
         if dd_threshold > 0:
@@ -474,17 +534,17 @@ def run_phase2_simulation(prices: pd.DataFrame,
         row['pnl_ma_off_count'] = pnl_ma_off_count
 
         # ------------------------------------------------------------------
-        # Per-strategy-type daily PnL  (MOM / MR / ADV) split by Rates / FX
+        # Per-strategy-type daily PnL  (ADV / Alpha) split by Rates / FX
         # ------------------------------------------------------------------
-        daily_mom = daily_mr = daily_adv = 0.0
+        daily_adv = 0.0
         daily_a1 = daily_a2 = daily_a3 = 0.0
-        n_mom = n_mr = n_adv = n_a1 = n_a2 = n_a3 = 0
-        daily_mom_rates = daily_mr_rates = daily_adv_rates = 0.0
-        daily_mom_fx = daily_mr_fx = daily_adv_fx = 0.0
+        n_adv = n_a1 = n_a2 = n_a3 = 0
+        daily_adv_rates = 0.0
+        daily_adv_fx = 0.0
         daily_a1_rates = daily_a2_rates = daily_a3_rates = 0.0
         daily_a1_fx = daily_a2_fx = daily_a3_fx = 0.0
-        n_mom_rates = n_mr_rates = n_adv_rates = 0
-        n_mom_fx = n_mr_fx = n_adv_fx = 0
+        n_adv_rates = 0
+        n_adv_fx = 0
         n_a1_rates = n_a2_rates = n_a3_rates = 0
         n_a1_fx = n_a2_fx = n_a3_fx = 0
 
@@ -501,11 +561,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
 
             stype = sig.get('strategy_type', '')
             # Total (combined)
-            if stype == 'momentum':
-                daily_mom += dpnl; n_mom += 1
-            elif stype == 'mean_reversion':
-                daily_mr  += dpnl; n_mr  += 1
-            elif stype == 'advanced':
+            if stype == 'advanced':
                 daily_adv += dpnl; n_adv += 1
             elif stype == 'alpha1':
                 daily_a1 += dpnl; n_a1 += 1
@@ -516,11 +572,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
 
             # Split by asset class
             if is_fx:
-                if stype == 'momentum':
-                    daily_mom_fx += dpnl; n_mom_fx += 1
-                elif stype == 'mean_reversion':
-                    daily_mr_fx += dpnl; n_mr_fx += 1
-                elif stype == 'advanced':
+                if stype == 'advanced':
                     daily_adv_fx += dpnl; n_adv_fx += 1
                 elif stype == 'alpha1':
                     daily_a1_fx += dpnl; n_a1_fx += 1
@@ -529,11 +581,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
                 elif stype == 'alpha3':
                     daily_a3_fx += dpnl; n_a3_fx += 1
             elif is_rates_asset:
-                if stype == 'momentum':
-                    daily_mom_rates += dpnl; n_mom_rates += 1
-                elif stype == 'mean_reversion':
-                    daily_mr_rates += dpnl; n_mr_rates += 1
-                elif stype == 'advanced':
+                if stype == 'advanced':
                     daily_adv_rates += dpnl; n_adv_rates += 1
                 elif stype == 'alpha1':
                     daily_a1_rates += dpnl; n_a1_rates += 1
@@ -543,39 +591,27 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     daily_a3_rates += dpnl; n_a3_rates += 1
 
         # Normalise by number of strategies (so scale is comparable to per-asset PnL)
-        cum_pnl_mom += (daily_mom / n_mom if n_mom else 0.0)
-        cum_pnl_mr  += (daily_mr  / n_mr  if n_mr  else 0.0)
         cum_pnl_adv += (daily_adv / n_adv if n_adv else 0.0)
         cum_pnl_a1  += (daily_a1  / n_a1  if n_a1  else 0.0)
         cum_pnl_a2  += (daily_a2  / n_a2  if n_a2  else 0.0)
         cum_pnl_a3  += (daily_a3  / n_a3  if n_a3  else 0.0)
-        cum_pnl_mom_rates += (daily_mom_rates / n_mom_rates if n_mom_rates else 0.0)
-        cum_pnl_mr_rates  += (daily_mr_rates  / n_mr_rates  if n_mr_rates  else 0.0)
         cum_pnl_adv_rates += (daily_adv_rates / n_adv_rates if n_adv_rates else 0.0)
         cum_pnl_a1_rates  += (daily_a1_rates  / n_a1_rates  if n_a1_rates  else 0.0)
         cum_pnl_a2_rates  += (daily_a2_rates  / n_a2_rates  if n_a2_rates  else 0.0)
         cum_pnl_a3_rates  += (daily_a3_rates  / n_a3_rates  if n_a3_rates  else 0.0)
-        cum_pnl_mom_fx += (daily_mom_fx / n_mom_fx if n_mom_fx else 0.0)
-        cum_pnl_mr_fx  += (daily_mr_fx  / n_mr_fx  if n_mr_fx  else 0.0)
         cum_pnl_adv_fx += (daily_adv_fx / n_adv_fx if n_adv_fx else 0.0)
         cum_pnl_a1_fx  += (daily_a1_fx  / n_a1_fx  if n_a1_fx  else 0.0)
         cum_pnl_a2_fx  += (daily_a2_fx  / n_a2_fx  if n_a2_fx  else 0.0)
         cum_pnl_a3_fx  += (daily_a3_fx  / n_a3_fx  if n_a3_fx  else 0.0)
 
-        row['total_mom_cumpnl'] = round(cum_pnl_mom, 4)
-        row['total_mr_cumpnl']  = round(cum_pnl_mr,  4)
         row['total_adv_cumpnl'] = round(cum_pnl_adv, 4)
         row['total_a1_cumpnl']  = round(cum_pnl_a1,  4)
         row['total_a2_cumpnl']  = round(cum_pnl_a2,  4)
         row['total_a3_cumpnl']  = round(cum_pnl_a3,  4)
-        row['mom_rates_cumpnl'] = round(cum_pnl_mom_rates, 4)
-        row['mr_rates_cumpnl']  = round(cum_pnl_mr_rates,  4)
         row['adv_rates_cumpnl'] = round(cum_pnl_adv_rates, 4)
         row['a1_rates_cumpnl']  = round(cum_pnl_a1_rates,  4)
         row['a2_rates_cumpnl']  = round(cum_pnl_a2_rates,  4)
         row['a3_rates_cumpnl']  = round(cum_pnl_a3_rates,  4)
-        row['mom_fx_cumpnl']    = round(cum_pnl_mom_fx, 4)
-        row['mr_fx_cumpnl']     = round(cum_pnl_mr_fx,  4)
         row['adv_fx_cumpnl']    = round(cum_pnl_adv_fx, 4)
         row['a1_fx_cumpnl']     = round(cum_pnl_a1_fx,  4)
         row['a2_fx_cumpnl']     = round(cum_pnl_a2_fx,  4)
@@ -606,12 +642,15 @@ def run_phase2_simulation(prices: pd.DataFrame,
     # Reorder columns
     total_pnl_cols = ['total_rates_cumpnl', 'total_fx_cumpnl', 'total_index_cumpnl',
                       'regime_rates', 'regime_fx',
-                      'total_mom_cumpnl', 'total_mr_cumpnl', 'total_adv_cumpnl',
+                      'total_adv_cumpnl',
                       'total_a1_cumpnl', 'total_a2_cumpnl', 'total_a3_cumpnl',
-                      'mom_rates_cumpnl', 'mr_rates_cumpnl', 'adv_rates_cumpnl',
+                      'adv_rates_cumpnl',
                       'a1_rates_cumpnl', 'a2_rates_cumpnl', 'a3_rates_cumpnl',
-                      'mom_fx_cumpnl', 'mr_fx_cumpnl', 'adv_fx_cumpnl',
+                      'adv_fx_cumpnl',
                       'a1_fx_cumpnl', 'a2_fx_cumpnl', 'a3_fx_cumpnl']
+    # regime_rates/regime_fx only exist when --regime-filter is on; keep only
+    # columns actually present so the no-regime run doesn't KeyError on save.
+    total_pnl_cols = [c for c in total_pnl_cols if c in df_log.columns]
     cum_pnl_cols = [c for c in df_log.columns if '_CumPnL' in c]
     other_cols = [c for c in df_log.columns if c not in total_pnl_cols + cum_pnl_cols]
     df_log = df_log[total_pnl_cols + cum_pnl_cols + other_cols]
@@ -656,6 +695,10 @@ def main():
                         help='Use incremental discovery in Phase 1 (reuse previous month)')
     parser.add_argument('--full-scan-interval', type=int, default=3,
                         help='Full scan every N months in incremental mode (default: 3)')
+    parser.add_argument('--discovery-window-months', type=int, default=42,
+                        help='Rolling data window (months) per discovery; 3y metrics '
+                             '+ 6mo indicator warmup. 0 = expanding from 2020 (legacy). '
+                             '(default: 42)')
     parser.add_argument('--regime-filter', action='store_true',
                         help='Enable Hurst Exponent regime meta-filter: '
                              'trending (H>0.5) → MOM/ADV + inverted MR, '
@@ -693,7 +736,8 @@ def main():
         print(f"{'='*60}")
         run_phase1_discovery(prices, month_ends, factory_base,
                              incremental=args.incremental,
-                             full_scan_interval=args.full_scan_interval)
+                             full_scan_interval=args.full_scan_interval,
+                             window_months=args.discovery_window_months)
     else:
         print("\n⏭️  Skipping Phase 1 (--skip-discovery)")
     

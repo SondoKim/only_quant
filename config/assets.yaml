@@ -74,6 +74,16 @@ cross_asset_pairs:
     - [IK1 Comdty, RX1 Comdty]              # Italy-Germany spread
     - [OAT1 Comdty, RX1 Comdty]             # France-Germany spread
 
+  # NQ as a risk-sentiment LEAD for rates/FX lead_lag candidates.
+  # NQ itself is never traded (discovery.exclude_assets blocks the
+  # reverse direction); wrong-sign combos die at the Sharpe-3Y filter.
+  equity_risk:
+    - [NQ1 Index, AD1 Curncy]               # risk-on → AUD (commodity FX)
+    - [NQ1 Index, KRW Curncy]               # risk-on → KRW (EM, equity-flow linked)
+    - [NQ1 Index, JY1 Curncy]               # risk-off → JPY (safe haven)
+    - [NQ1 Index, TY1 Comdty]               # flight-to-quality → US 10Y
+    - [NQ1 Index, TU1 Comdty]               # flight-to-quality → US 2Y
+
 # Cross-asset predictive pairs (Alpha2)
 predictive_pairs:
   curve_to_fx:
@@ -106,6 +116,40 @@ predictive_pairs:
     - us_rate: TU1 Comdty
       foreign_rate: YM1 Comdty
       target: AD1 Curncy
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Signal-only yield data (NOT traded). Feeds the Carry/Value sleeves in
+# SleeveEngine. Execution/PnL stays on the futures above; these yields only
+# drive signals. The engine falls back to price proxies if any are missing,
+# so it is safe to add/verify incrementally.
+#   ⚠️ Verify exact Bloomberg tickers against your terminal before pulling.
+# ─────────────────────────────────────────────────────────────────────────────
+signal_yields:
+  # Each TRADED rates future → the govt yield (%) of its tenor.
+  # Rates carry = cross-country yield level; Rates value = own-history reversal.
+  tradeable_yield_map:
+    TU1 Comdty:  USGG2YR Index     # US 2Y
+    TY1 Comdty:  USGG10YR Index    # US 10Y
+    DU1 Comdty:  GDBR2 Index       # Germany 2Y
+    RX1 Comdty:  GDBR10 Index      # Germany 10Y
+    G 1 Comdty:  GUKG10 Index      # UK 10Y
+    OAT1 Comdty: GFRN10 Index      # France 10Y
+    IK1 Comdty:  GBTPGR10 Index    # Italy 10Y
+    JB1 Comdty:  GJGB10 Index      # Japan 10Y
+    YM1 Comdty:  GTAUD3YR Corp     # Australia 3Y
+    XM1 Comdty:  GTAUD10YR Corp    # Australia 10Y
+    KE1 Comdty:  GVSK3YR Index     # Korea 3Y
+    KAA1 Comdty: GVSK10YR Index    # Korea 10Y
+
+  # Each TRADED FX future → its 2Y (short) govt yield. 'US' is the carry anchor.
+  # FX carry = foreign 2Y − US 2Y (long high-yield currency).
+  fx_short_yield:
+    US:          USGG2YR Index     # anchor
+    EC1 Curncy:  GDBR2 Index       # EUR ← Germany 2Y
+    BP1 Curncy:  GUKG2 Index       # GBP ← UK 2Y
+    AD1 Curncy:  GTAUD2YR Corp     # AUD ← Australia 2Y
+    JY1 Curncy:  GJGB2 Index       # JPY ← Japan 2Y
+    KRW Curncy:  GVSK3YR Index     # KRW ← Korea 3Y (shortest liquid)
 
 # Carry trade pairs: [FX asset, US rate, Foreign rate]
 carry_pairs:
