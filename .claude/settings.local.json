@@ -66,7 +66,10 @@
       "Bash(rm -f src/factory/strategies_*/strategies.db src/factory/strategies_*/strategies.db-wal src/factory/strategies_*/strategies.db-shm)",
       "Bash(sed -n '694,700p' scripts/run_backtest.py)",
       "Bash(sed -n '731,737p' scripts/run_backtest.py)",
-      "Bash(PYTHONPATH=. PYTHONIOENCODING=utf-8 python scripts/strategy_dashboard.py --html)"
+      "Bash(PYTHONPATH=. PYTHONIOENCODING=utf-8 python scripts/strategy_dashboard.py --html)",
+      "Bash(sed -n '470,560p' src/portfolio/selector.py)",
+      "Bash(sed -n '190,240p' src/backtester/vectorbt_engine.py)",
+      "Bash(awk '/elif args.mode == .signals.:/,/elif args.mode == .summary.:/' main.py)"
     ]
   }
 }

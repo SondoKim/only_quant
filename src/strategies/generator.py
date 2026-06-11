@@ -50,6 +50,42 @@ class StrategyGenerator:
         except FileNotFoundError:
             return {}
     
+    def _signal_only_tickers(self) -> set:
+        """Yield tickers from signal_yields — inputs only, never traded."""
+        sy = (self.assets_config.get('signal_yields', {}) or {})
+        t = set((sy.get('tradeable_yield_map', {}) or {}).values())
+        t |= set((sy.get('fx_short_yield', {}) or {}).values())
+        t |= set((sy.get('policy_rate_map', {}) or {}).values())
+        for pair in (sy.get('curve_slope_map', {}) or {}).values():
+            t |= set(pair)
+        return t
+
+    @staticmethod
+    def _enabled_cells(scope: Dict[str, Any]):
+        """Parse discovery.enabled_cells → {asset_class: set(strategy_types)}.
+        None = cell filtering disabled (allow everything)."""
+        cells = scope.get('enabled_cells') or {}
+        return {k: set(v) for k, v in cells.items()} if cells else None
+
+    @staticmethod
+    def _cell_ok(strategy: Dict[str, Any], enabled_cells) -> bool:
+        """True if the strategy's asset-class × strategy_type cell is allowed.
+        Keeps generation in sync with the selector's cell filter (2026-06-11
+        honest-execution audit) so the dashboard universe and discovery search
+        only contain investable cells."""
+        if enabled_cells is None:
+            return True
+        a = strategy.get('asset', '')
+        if 'Curncy' in a:
+            klass = 'fx'
+        elif 'NQ' in a or 'Index' in a:
+            klass = 'index'
+        elif 'Comdty' in a:
+            klass = 'rates'
+        else:
+            klass = 'other'
+        return strategy.get('strategy_type', '') in enabled_cells.get(klass, set())
+
     def _generate_param_combinations(
         self,
         param_config: Dict[str, List]
@@ -541,6 +577,95 @@ class StrategyGenerator:
                             'related_asset': pair['foreign_rate'],
                         }
 
+        # ── Alpha4: Yield-based Carry / Value (uses merged signal_yields cols) ──
+        sy = (self.assets_config.get('signal_yields', {}) or {})
+
+        if 'rates_carry' in alpha_config:
+            p = alpha_config['rates_carry']
+            for asset, pair in (sy.get('curve_slope_map', {}) or {}).items():
+                if asset not in assets or len(pair) != 2:
+                    continue
+                for threshold in p.get('threshold', [0.0]):
+                    for smooth in p.get('smooth', [5]):
+                        yield {
+                            'asset': asset,
+                            'strategy_type': 'alpha4',
+                            'strategy_name': 'rates_carry',
+                            'params': {
+                                'y_short': pair[0], 'y_long': pair[1],
+                                'threshold': threshold, 'smooth': smooth,
+                            },
+                            'related_asset': None,
+                        }
+
+        if 'rates_value' in alpha_config:
+            p = alpha_config['rates_value']
+            for asset, y_own in (sy.get('tradeable_yield_map', {}) or {}).items():
+                if asset not in assets:
+                    continue
+                for lookback in p.get('lookback', [252]):
+                    for entry_z in p.get('entry_z', [1.0]):
+                        yield {
+                            'asset': asset,
+                            'strategy_type': 'alpha4',
+                            'strategy_name': 'rates_value',
+                            'params': {
+                                'y_own': y_own,
+                                'lookback': lookback, 'entry_z': entry_z,
+                            },
+                            'related_asset': None,
+                        }
+
+        if 'real_rate_fx' in alpha_config:
+            p = alpha_config['real_rate_fx']
+            fxmap = (sy.get('fx_short_yield', {}) or {})
+            y_us = fxmap.get('US')
+            for fx, y_foreign in fxmap.items():
+                if fx == 'US' or fx not in assets or not y_us:
+                    continue
+                # KRW Curncy is USDKRW spot (inverted quote): KRW strength = down
+                quote_sign = -1 if fx == 'KRW Curncy' else 1
+                for period in p.get('period', [20]):
+                    yield {
+                        'asset': fx,
+                        'strategy_type': 'alpha4',
+                        'strategy_name': 'real_rate_fx',
+                        'params': {
+                            'y_foreign': y_foreign, 'y_us': y_us,
+                            'period': period, 'quote_sign': quote_sign,
+                        },
+                        'related_asset': None,
+                    }
+
+        if 'policy_momentum' in alpha_config:
+            p = alpha_config['policy_momentum']
+            for asset, y_policy in (sy.get('policy_rate_map', {}) or {}).items():
+                if asset not in assets:
+                    continue
+                for period in p.get('period', [60]):
+                    yield {
+                        'asset': asset,
+                        'strategy_type': 'alpha4',
+                        'strategy_name': 'policy_momentum',
+                        'params': {'y_policy': y_policy, 'period': period},
+                        'related_asset': None,
+                    }
+
+        if 'month_end_seasonal' in alpha_config:
+            p = alpha_config['month_end_seasonal']
+            # Documented for bonds (index duration extension) - rates futures only
+            for asset in assets:
+                if 'Comdty' not in asset:
+                    continue
+                for days_before in p.get('days_before', [3]):
+                    yield {
+                        'asset': asset,
+                        'strategy_type': 'alpha4',
+                        'strategy_name': 'month_end_seasonal',
+                        'params': {'days_before': days_before},
+                        'related_asset': None,
+                    }
+
 
     def generate_all_strategies(
         self,
@@ -573,15 +698,18 @@ class StrategyGenerator:
         # Assets removed from the strategy search universe entirely; their
         # prices may still feed other strategies as related/basket inputs.
         excluded_assets = set(scope.get('exclude_assets', []) or [])
+        excluded_assets |= self._signal_only_tickers()
         # Strategy archetypes disabled for persistent live underperformance.
         disabled_names = set(scope.get('disabled_strategies', []) or [])
+        enabled_cells = self._enabled_cells(scope)
 
         if excluded_assets:
             assets = [a for a in assets if a not in excluded_assets]
 
         def _skip(strategy: Dict[str, Any]) -> bool:
             return (strategy.get('asset') in excluded_assets
-                    or strategy.get('strategy_name') in disabled_names)
+                    or strategy.get('strategy_name') in disabled_names
+                    or not self._cell_ok(strategy, enabled_cells))
 
         # Momentum strategies
         if 'momentum' in enabled:
@@ -645,19 +773,22 @@ class StrategyGenerator:
         """
         scope = self.config.get('discovery', {}) or {}
         excluded_assets = set(scope.get('exclude_assets', []) or [])
+        excluded_assets |= self._signal_only_tickers()
         disabled_names = set(scope.get('disabled_strategies', []) or [])
+        enabled_cells = self._enabled_cells(scope)
         if excluded_assets:
             assets = [a for a in assets if a not in excluded_assets]
 
         def _ok(s: Dict[str, Any]) -> bool:
             return (s.get('asset') not in excluded_assets
-                    and s.get('strategy_name') not in disabled_names)
+                    and s.get('strategy_name') not in disabled_names
+                    and self._cell_ok(s, enabled_cells))
 
         momentum_count = sum(1 for s in self.generate_momentum_strategies(assets, related_assets) if _ok(s))
         mean_rev_count = sum(1 for s in self.generate_mean_reversion_strategies(assets, related_assets) if _ok(s))
         advanced_count = sum(1 for s in self.generate_advanced_strategies(assets, related_assets) if _ok(s))
 
-        alpha_counts = {'alpha1': 0, 'alpha2': 0}
+        alpha_counts = {'alpha1': 0, 'alpha2': 0, 'alpha3': 0, 'alpha4': 0}
         for s in self.generate_alpha_strategies(assets, related_assets):
             if not _ok(s):
                 continue
@@ -672,5 +803,7 @@ class StrategyGenerator:
             'advanced': advanced_count,
             'alpha1': alpha_counts['alpha1'],
             'alpha2': alpha_counts['alpha2'],
+            'alpha3': alpha_counts['alpha3'],
+            'alpha4': alpha_counts['alpha4'],
             'total': momentum_count + mean_rev_count + advanced_count + alpha_total,
         }

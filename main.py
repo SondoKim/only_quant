@@ -192,9 +192,17 @@ class GlobalMacroTradingSystem:
                 self.sharpe_6m_threshold = bt_config.get('sharpe_threshold_6m', 0.5)
                 self.sortino_6m_threshold = bt_config.get('sortino_threshold_6m', 0.5)
                 self.min_trades = bt_config.get('min_trades', 20)
+                self.min_trades_slow = bt_config.get('min_trades_slow', 4)
                 self.max_drawdown = bt_config.get('max_drawdown', -0.20)
                 self.trail_stop_pct = bt_config.get('trail_stop_pct', 0)
                 self.max_hold_days = bt_config.get('max_hold_days', 0)
+                self.transaction_cost_bps = bt_config.get('transaction_cost_bps', 2.0)
+                # Ensemble mode: relax the 3Y storage gates so more (shrunk-
+                # weighted) strategies make it into the book.
+                ens = (config.get('discovery', {}) or {}).get('ensemble', {}) or {}
+                if ens.get('enabled'):
+                    self.sharpe_3y_threshold = ens.get('sharpe_threshold_3y', 0.5)
+                    self.sortino_3y_threshold = ens.get('sortino_threshold_3y', 0.5)
                 # #5a: per-asset-class threshold overrides (rates/fx/index)
                 self.asset_class_thresholds = bt_config.get('asset_class_thresholds', {}) or {}
 
@@ -205,15 +213,23 @@ class GlobalMacroTradingSystem:
             self.sortino_3y_threshold = 0.8
             self.sharpe_6m_threshold = 0.5
             self.sortino_6m_threshold = 0.5
+            self.transaction_cost_bps = 2.0
             self.trail_stop_pct = 0
             self.max_hold_days = 0
             self.min_trades = 20
+            self.min_trades_slow = 4
             self.max_drawdown = -0.20
             self.asset_class_thresholds = {}
 
-    def _thresholds_for_asset(self, asset: str) -> Dict[str, float]:
+    # Slow structural strategies trade a handful of times per window by
+    # design (curve carry / value reversals); the default min_trades=20 gate
+    # blocks their evaluation entirely, so they get a lower floor.
+    SLOW_STRATEGIES = {'rates_carry', 'rates_value'}
+
+    def _thresholds_for_asset(self, asset: str, strategy_name: str = '') -> Dict[str, float]:
         """#5a: Resolve storage thresholds for an asset, applying per-class
         overrides from config.asset_class_thresholds when present, else globals.
+        Slow strategies (SLOW_STRATEGIES) get min_trades_slow instead.
         """
         from src.portfolio.selector import classify_asset_class
         defaults = {
@@ -223,7 +239,10 @@ class GlobalMacroTradingSystem:
             'max_drawdown': self.max_drawdown,
         }
         overrides = self.asset_class_thresholds.get(classify_asset_class(asset), {})
-        return {**defaults, **overrides}
+        th = {**defaults, **overrides}
+        if strategy_name in self.SLOW_STRATEGIES:
+            th['min_trades'] = self.min_trades_slow
+        return th
     
     def run_discovery(
         self,
@@ -256,6 +275,7 @@ class GlobalMacroTradingSystem:
         prices = self.data_loader.load_data(start_date=start_date, end_date=end_date)
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
+        prices = self.data_loader.merge_signal_yields(prices)  # signal-only yield cols
         
         # Filter prices by target_tickers if provided
         if target_tickers:
@@ -289,6 +309,7 @@ class GlobalMacroTradingSystem:
         # 4. Initialize backtester
         backtester = VectorBTEngine(
             prices,
+            transaction_cost_bps=self.transaction_cost_bps,
             trail_stop_pct=self.trail_stop_pct,
             max_hold_days=self.max_hold_days,
         )
@@ -392,6 +413,7 @@ class GlobalMacroTradingSystem:
         prices = self.data_loader.load_data(start_date=start_date, end_date=end_date)
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
+        prices = self.data_loader.merge_signal_yields(prices)  # signal-only yield cols
 
         if target_tickers:
             available_tickers = [t for t in target_tickers if t in prices.columns]
@@ -403,6 +425,7 @@ class GlobalMacroTradingSystem:
         related_assets = self._build_related_assets_map()
         backtester = VectorBTEngine(
             prices,
+            transaction_cost_bps=self.transaction_cost_bps,
             trail_stop_pct=self.trail_stop_pct,
             max_hold_days=self.max_hold_days,
         )
@@ -515,7 +538,7 @@ class GlobalMacroTradingSystem:
         for strategy, result in zip(strategies, results):
             # Check if qualifies for storage: Sharpe 3Y AND Sortino 3Y.
             # #5a: thresholds can differ per asset class (e.g. rates).
-            th = self._thresholds_for_asset(strategy.get('asset', ''))
+            th = self._thresholds_for_asset(strategy.get('asset', ''), strategy.get('strategy_name', ''))
             if (result.sharpe_3y >= th['sharpe_threshold_3y'] and
                 result.sortino_ratio >= th['sortino_threshold_3y'] and
                 result.num_trades >= th['min_trades'] and
@@ -569,10 +592,12 @@ class GlobalMacroTradingSystem:
         prices = self.data_loader.load_data()
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
+        prices = self.data_loader.merge_signal_yields(prices)  # signal-only yield cols
         
         # 2. Update strategy performance
         backtester = VectorBTEngine(
             prices,
+            transaction_cost_bps=self.transaction_cost_bps,
             trail_stop_pct=self.trail_stop_pct,
             max_hold_days=self.max_hold_days,
         )
@@ -588,9 +613,10 @@ class GlobalMacroTradingSystem:
         
         logger.info(f"   Updated {updated} strategy performances")
         
-        # 4. Generate trading signals
+        # 4. Generate trading signals (factory FX book + sleeve rates book)
         report = self.strategy_selector.get_trading_report(prices, max_correlation=max_correlation)
-        
+        report = self._merge_sleeve_rates(report)
+
         logger.info("✅ Daily update complete!")
         return report
     
@@ -611,8 +637,10 @@ class GlobalMacroTradingSystem:
         prices = self.data_loader.load_data()
         preprocessor = DataPreprocessor(prices)
         prices = preprocessor.clean().get_data()
+        prices = self.data_loader.merge_signal_yields(prices)  # signal-only yield cols
 
         result = self.strategy_selector.get_trading_report(prices, max_correlation=max_correlation)
+        result = self._merge_sleeve_rates(result)
 
         # Compute Hurst Exponent regime for each asset
         from src.indicators.technical import TechnicalIndicators
@@ -628,6 +656,59 @@ class GlobalMacroTradingSystem:
 
         return result
     
+    def _merge_sleeve_rates(self, report: Dict[str, Any]) -> Dict[str, Any]:
+        """Production architecture (2026-06-11 honest-execution audit):
+        FX book = strategy factory (fx-alpha1/alpha4 cells, honest SR 0.94);
+        RATES book = SleeveEngine (slow trend/value/carry/policy, honest SR
+        0.31 full / 0.58 since 2016, half-split stable). This replaces the
+        report's rates rows with the sleeve's latest target positions so
+        `--mode signals` is the single combined live feed.
+
+        Fails soft: on any error the factory report is returned unchanged
+        with rates rows intact, and the error is logged.
+        """
+        try:
+            from src.sleeves.sleeve_engine import SleeveEngine
+            import yaml as _yaml
+            cfg_path = Path(__file__).parent / 'config' / 'indicators.yaml'
+            with open(cfg_path, 'r', encoding='utf-8') as f:
+                sleeves_cfg = (_yaml.safe_load(f) or {}).get('sleeves', {}) or {}
+
+            # Long history: value (504d) / trend (252d) need years of warmup,
+            # so the sleeve gets its own 2010+ panel (cached) regardless of
+            # the shorter panel used by the factory report.
+            prices = self.data_loader.load_data(start_date='2010-01-01', use_cache=True)
+            prices = DataPreprocessor(prices).clean().get_data()
+            yields = self.data_loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
+
+            engine = SleeveEngine(prices, config=sleeves_cfg, yields=yields)
+            pos = engine.compute_target_positions()
+            smooth = float(sleeves_cfg.get('position_smooth', 0.0) or 0.0)
+            if smooth > 0:
+                pos = pos.ewm(alpha=1.0 - smooth, min_periods=1).mean()
+            last = pos.iloc[-1]
+            as_of = pos.index[-1].date()
+
+            for row in report.get('asset_positions', []):
+                asset = row.get('asset')
+                if asset not in engine.rates_assets:
+                    continue
+                tp = float(last.get(asset, 0.0))
+                row['engine'] = 'sleeve'
+                row['target_pos'] = round(tp, 3)
+                row['confidence'] = round(abs(tp), 3)
+                row['position'] = ('🟢 LONG' if tp > 0.02 else
+                                   '🔴 SHORT' if tp < -0.02 else '⚪ FLAT')
+                row['strategies'] = 0
+                row['momentum'] = row['mean_reversion'] = row['advanced'] = 0
+            report['rates_engine'] = 'sleeve'
+            report['sleeve_as_of'] = str(as_of)
+            logger.info(f"   🧩 Rates book ← SleeveEngine (as of {as_of}, "
+                        f"{len(engine.rates_assets)} assets)")
+        except Exception as e:
+            logger.error(f"Sleeve rates merge failed — keeping factory rates rows: {e}")
+        return report
+
     def get_factory_summary(self) -> Dict[str, Any]:
         """Get strategy factory summary."""
         return self.strategy_factory.get_summary()
@@ -650,8 +731,10 @@ def main():
                        help='Ratio of strategies to sample (0.0 to 1.0)')
     parser.add_argument('--sample-count', type=int, default=None,
                         help='Target number of strategies to test (overrides sample-ratio)')
-    parser.add_argument('--max-corr', type=float, default=0.5,
-                        help='Maximum allowed correlation between strategies (0.0 to 1.0)')
+    parser.add_argument('--max-corr', type=float, default=1.0,
+                        help='Maximum allowed correlation between strategies (0.0 to 1.0). '
+                             '1.0 = no correlation filter (2026-06-11 honest A/B: the '
+                             'filter collapsed the fx ensemble, SR 0.44 vs 0.85 without).')
     parser.add_argument('--tickers', nargs='+', 
                         help='Specific tickers to process (e.g. "NQ1 Index" "USGG10YR Index")')
     parser.add_argument('--include-index', action='store_true',
@@ -738,9 +821,13 @@ def main():
             if 'NQ' in pos['asset']:
                 continue
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
-            print(f"      {pos['asset']}: {pos['position']} "
-                  f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
-                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
+            if pos.get('engine') == 'sleeve':
+                print(f"      {pos['asset']}: {pos['position']} "
+                      f"(목표포지션 {pos['target_pos']:+.2f} | SLEEVE{delta_str})")
+            else:
+                print(f"      {pos['asset']}: {pos['position']} "
+                      f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
+                      f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str})")
 
         if rate_positions:
             long_cnt  = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)
@@ -762,6 +849,8 @@ def main():
         print("\n🎯 Trading Signals:")
         print(f"   Date: {result['date']}")
         print(f"   Active strategies: {result['total_active_strategies']}")
+        if result.get('rates_engine') == 'sleeve':
+            print(f"   📐 금리 북: SleeveEngine (기준 {result.get('sleeve_as_of')}) | FX 북: 전략 공장")
         positions = result['asset_positions']
         if not args.include_index:
             positions = [p for p in positions if 'NQ' not in p['asset']]
@@ -818,9 +907,13 @@ def main():
             delta_str = f", 델타: {delta_map[pos['asset']]:+d}만원" if pos['asset'] in delta_map else ""
             ri = regime_info.get(pos['asset'])
             regime_str = f" | {'📈' if ri['regime'] == 'trending' else '↔️'} H={ri['hurst']:.3f}" if ri else ""
-            print(f"      {pos['asset']}: {pos['position']} "
-                  f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
-                  f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str}{regime_str})")
+            if pos.get('engine') == 'sleeve':
+                print(f"      {pos['asset']}: {pos['position']} "
+                      f"(목표포지션 {pos['target_pos']:+.2f} | SLEEVE{delta_str}{regime_str})")
+            else:
+                print(f"      {pos['asset']}: {pos['position']} "
+                      f"(신뢰도: {pos['confidence']:.2f}, 전략개수: {pos['strategies']} "
+                      f"[MOM: {pos['momentum']}, MR: {pos['mean_reversion']}, ADV: {pos['advanced']}]{delta_str}{regime_str})")
 
         if rate_positions:
             fut_long_cnt  = sum(1 for p in rate_positions if p['position'] in LONG_KEYWORDS)

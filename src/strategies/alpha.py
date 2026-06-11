@@ -185,6 +185,138 @@ class AlphaStrategies:
     # ──────────────────────────────────────────────────────────────────
 
     @classmethod
+    @staticmethod
+    def _empty_signals(index) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        f = pd.Series(False, index=index)
+        return f, f.copy(), f.copy(), f.copy()
+
+    # ── Alpha4: Yield-based Carry / Value ────────────────────────────────────
+    @staticmethod
+    def rates_carry(
+        prices: pd.DataFrame,
+        asset: str,
+        y_short: str,
+        y_long: str,
+        threshold: float = 0.0,
+        smooth: int = 5,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        """Curve carry+rolldown for long-end bond futures.
+
+        slope = own 10Y − funding 2Y (%). A steep curve means positive carry
+        and rolldown for holding duration → long futures; an inverted curve
+        → short. Signals fire on threshold crossings; exits at slope sign flip.
+        """
+        if y_short not in prices.columns or y_long not in prices.columns:
+            return AlphaStrategies._empty_signals(prices.index)
+        slope = (prices[y_long] - prices[y_short]).rolling(smooth).mean()
+        long_entries = (slope > threshold) & (slope.shift(1) <= threshold)
+        long_exits = (slope < 0) & (slope.shift(1) >= 0)
+        short_entries = (slope < -threshold) & (slope.shift(1) >= -threshold)
+        short_exits = (slope > 0) & (slope.shift(1) <= 0)
+        return long_entries, long_exits, short_entries, short_exits
+
+    @staticmethod
+    def rates_value(
+        prices: pd.DataFrame,
+        asset: str,
+        y_own: str,
+        lookback: int = 252,
+        entry_z: float = 1.0,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        """Bond value: own yield z-score vs its trailing history.
+
+        Yield far ABOVE its history → bonds historically cheap → long futures;
+        far below → short. Exit when the z-score mean-reverts through 0.
+        """
+        if y_own not in prices.columns:
+            return AlphaStrategies._empty_signals(prices.index)
+        y = prices[y_own]
+        mean = y.rolling(lookback).mean()
+        std = y.rolling(lookback).std()
+        z = (y - mean) / std.replace(0, float('nan'))
+        long_entries = (z > entry_z) & (z.shift(1) <= entry_z)
+        long_exits = (z < 0) & (z.shift(1) >= 0)
+        short_entries = (z < -entry_z) & (z.shift(1) >= -entry_z)
+        short_exits = (z > 0) & (z.shift(1) <= 0)
+        return long_entries, long_exits, short_entries, short_exits
+
+    @staticmethod
+    def real_rate_fx(
+        prices: pd.DataFrame,
+        asset: str,
+        y_foreign: str,
+        y_us: str,
+        period: int = 20,
+        quote_sign: int = 1,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        """FX direction from ACTUAL 2Y yield differential momentum.
+
+        Widening (foreign − US) differential → foreign currency strength.
+        quote_sign=-1 for inverted quotes (KRW Curncy = USDKRW: KRW strength
+        moves the series DOWN). Direction is economic — no selector flip.
+        """
+        if y_foreign not in prices.columns or y_us not in prices.columns:
+            return AlphaStrategies._empty_signals(prices.index)
+        diff = prices[y_foreign] - prices[y_us]
+        mom = (diff - diff.shift(period)) * quote_sign
+        long_entries = (mom > 0) & (mom.shift(1) <= 0)
+        long_exits = (mom < 0) & (mom.shift(1) >= 0)
+        short_entries = long_exits.copy()
+        short_exits = long_entries.copy()
+        return long_entries, long_exits, short_entries, short_exits
+
+    @staticmethod
+    def policy_momentum(
+        prices: pd.DataFrame,
+        asset: str,
+        y_policy: str,
+        period: int = 60,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        """Central-bank cycle momentum from the country 2Y (policy-proxy) yield.
+
+        2Y yield falling over `period` days = easing cycle -> long duration
+        (bond futures up); rising = hiking cycle -> short.
+        """
+        if y_policy not in prices.columns:
+            return AlphaStrategies._empty_signals(prices.index)
+        chg = prices[y_policy] - prices[y_policy].shift(period)
+        long_entries = (chg < 0) & (chg.shift(1) >= 0)
+        long_exits = (chg > 0) & (chg.shift(1) <= 0)
+        short_entries = long_exits.copy()
+        short_exits = long_entries.copy()
+        return long_entries, long_exits, short_entries, short_exits
+
+    @staticmethod
+    def month_end_seasonal(
+        prices: pd.DataFrame,
+        asset: str,
+        days_before: int = 3,
+    ) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+        """Month-end duration-extension seasonality (long-only).
+
+        Bond index funds extend duration at month-end rebalancing; go long the
+        last `days_before` business days of each month, flat otherwise. Uses
+        the weekday CALENDAR (known in advance), not the data index: counting
+        positions within the observed index breaks on the live, incomplete
+        month — today is always the group's last row, so the signal would be
+        long every single day.
+        """
+        idx = prices.index
+        d = idx.normalize()
+        month_end = d + pd.offsets.BMonthEnd(0)
+        # Business days strictly after t through the month's last business day
+        rev_rank = np.busday_count(
+            (d + pd.Timedelta(days=1)).values.astype('datetime64[D]'),
+            (month_end + pd.Timedelta(days=1)).values.astype('datetime64[D]'),
+        )
+        in_window = pd.Series(rev_rank < days_before, index=idx)
+        prev = in_window.shift(1, fill_value=False)
+        long_entries = in_window & ~prev
+        long_exits = ~in_window & prev
+        f = pd.Series(False, index=idx)
+        return long_entries, long_exits, f, f.copy()
+
+    @classmethod
     def generate_signals(
         cls,
         prices: pd.DataFrame,
@@ -204,5 +336,15 @@ class AlphaStrategies:
             return cls.curve_to_fx(prices, asset, **params)
         elif strategy_name == 'rate_diff_to_fx':
             return cls.rate_diff_to_fx(prices, asset, **params)
+        elif strategy_name == 'rates_carry':
+            return cls.rates_carry(prices, asset, **params)
+        elif strategy_name == 'rates_value':
+            return cls.rates_value(prices, asset, **params)
+        elif strategy_name == 'real_rate_fx':
+            return cls.real_rate_fx(prices, asset, **params)
+        elif strategy_name == 'policy_momentum':
+            return cls.policy_momentum(prices, asset, **params)
+        elif strategy_name == 'month_end_seasonal':
+            return cls.month_end_seasonal(prices, asset, **params)
         else:
             raise ValueError(f"Unknown alpha strategy: {strategy_name}")

@@ -61,22 +61,35 @@ def perf_stats(daily: pd.Series) -> dict:
     return {'sharpe': sharpe, 'vol': vol, 'ret': ann_ret, 'maxdd': maxdd}
 
 
-def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True):
+def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
+        data_start='2010-01-01', cfg_override=None):
     print("📊 Loading price data...")
     loader = DataLoader()
-    prices = DataPreprocessor(loader.load_data(use_cache=True)).clean().get_data()
+    prices = DataPreprocessor(loader.load_data(start_date=data_start,
+                                               use_cache=True)).clean().get_data()
     if start_date:
         prices = prices[prices.index >= pd.to_datetime(start_date)]
     if end_date:
         prices = prices[prices.index <= pd.to_datetime(end_date)]
 
-    # Signal-only yields (Carry/Value). Empty → engine uses price proxies.
-    yields = loader.load_signal_yields(use_cache=True)
+    # Signal-only yields (Carry/Value/Curve/Policy). Fixed 2010+ cache so the
+    # window never triggers per-run Bloomberg fetches.
+    yields = loader.load_signal_yields(start_date="2010-01-01", use_cache=True)
 
     cfg = load_sleeve_config()
+    if cfg_override:
+        for k, v in cfg_override.items():
+            if isinstance(v, dict) and isinstance(cfg.get(k), dict):
+                cfg[k] = {**cfg[k], **v}
+            else:
+                cfg[k] = v
     if target_vol is not None:
         cfg['target_port_vol'] = target_vol
     costs = {**DEFAULT_COSTS_BPS, **(cfg.get('costs_bps', {}) or {})}
+
+    # Position smoothing: CLI --smooth overrides config position_smooth
+    if not smooth:
+        smooth = float(cfg.get('position_smooth', 0.0) or 0.0)
 
     engine = SleeveEngine(prices, config=cfg, yields=yields)
     src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
@@ -155,10 +168,18 @@ def main():
                    help='Target annualized portfolio vol (overrides config)')
     p.add_argument('--smooth', type=float, default=0.0,
                    help='EWMA position smoothing 0..1 (fraction of prior held); 0=off')
+    p.add_argument('--data-start', default='2010-01-01',
+                   help='Price-panel load start (loader truncates to common inception)')
+    p.add_argument('--config-json', default=None,
+                   help='JSON dict merged over the sleeves config, e.g. '
+                        '\'{"sleeve_weights": {"curve": 1.0}}\'')
     p.add_argument('--no-plot', action='store_true')
     args = p.parse_args()
+    import json
+    cfg_override = json.loads(args.config_json) if args.config_json else None
     run(start_date=args.start_date, end_date=args.end_date,
-        target_vol=args.target_vol, smooth=args.smooth, plot=not args.no_plot)
+        target_vol=args.target_vol, smooth=args.smooth, plot=not args.no_plot,
+        data_start=args.data_start, cfg_override=cfg_override)
 
 
 if __name__ == "__main__":

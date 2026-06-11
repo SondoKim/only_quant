@@ -217,7 +217,7 @@ class VectorBTEngine:
             long_entries, long_exits = entries, exits
             short_entries = pd.Series(False, index=prices.index)
             short_exits = pd.Series(False, index=prices.index)
-        elif strategy_type in ('alpha1', 'alpha2', 'alpha3'):
+        elif strategy_type in ('alpha1', 'alpha2', 'alpha3', 'alpha4'):
             long_entries, long_exits, short_entries, short_exits = \
                 AlphaStrategies.generate_signals(
                     prices, asset, strategy_name, params, related_asset

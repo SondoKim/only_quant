@@ -141,6 +141,34 @@ signal_yields:
     KE1 Comdty:  GVSK3YR Index     # Korea 3Y
     KAA1 Comdty: GVSK10YR Index    # Korea 10Y
 
+  # Long-end futures → [short yield, own long yield] for carry/rolldown slope
+  # (alpha4 rates_carry). FR/IT use the German 2Y as the euro funding anchor.
+  curve_slope_map:
+    TY1 Comdty:  [USGG2YR Index, USGG10YR Index]
+    RX1 Comdty:  [GDBR2 Index, GDBR10 Index]
+    G 1 Comdty:  [GUKG2 Index, GUKG10 Index]
+    OAT1 Comdty: [GDBR2 Index, GFRN10 Index]
+    IK1 Comdty:  [GDBR2 Index, GBTPGR10 Index]
+    JB1 Comdty:  [GJGB2 Index, GJGB10 Index]
+    XM1 Comdty:  [GTAUD2YR Corp, GTAUD10YR Corp]
+    KAA1 Comdty: [GVSK3YR Index, GVSK10YR Index]
+
+  # Each TRADED rates future → its country's 2Y (policy-proxy) yield.
+  # alpha4 policy_momentum: 2Y falling = easing cycle → long duration.
+  policy_rate_map:
+    TU1 Comdty:  USGG2YR Index
+    TY1 Comdty:  USGG2YR Index
+    DU1 Comdty:  GDBR2 Index
+    RX1 Comdty:  GDBR2 Index
+    OAT1 Comdty: GDBR2 Index
+    IK1 Comdty:  GDBR2 Index
+    G 1 Comdty:  GUKG2 Index
+    JB1 Comdty:  GJGB2 Index
+    YM1 Comdty:  GTAUD2YR Corp
+    XM1 Comdty:  GTAUD2YR Corp
+    KE1 Comdty:  GVSK3YR Index
+    KAA1 Comdty: GVSK3YR Index
+
   # Each TRADED FX future → its 2Y (short) govt yield. 'US' is the carry anchor.
   # FX carry = foreign 2Y − US 2Y (long high-yield currency).
   fx_short_yield:

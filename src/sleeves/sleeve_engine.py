@@ -83,7 +83,10 @@ class SleeveEngine:
         self.carry_pairs = self._load_carry_pairs(assets_config_path)
         # tradeable_yield_map: futures ticker → its tenor govt-yield ticker
         # fx_short_yield:      fx ticker → its 2Y yield ticker (+ 'US' anchor)
-        self.tradeable_yield_map, self.fx_short_yield = self._load_yield_maps(assets_config_path)
+        # curve_slope_map:     long-end futures → [short yield, long yield]
+        # policy_rate_map:     futures → country 2Y/3Y (policy-proxy) yield
+        (self.tradeable_yield_map, self.fx_short_yield,
+         self.curve_slope_map, self.policy_rate_map) = self._load_yield_maps(assets_config_path)
 
         # ── Parameters (with defaults) ───────────────────────────────────
         # Slower horizons (6-12m) are the robust TSMOM standard; the fast 63d
@@ -102,12 +105,18 @@ class SleeveEngine:
 
         self.sleeve_weights = self.cfg.get('sleeve_weights', {
             'trend': 1.0, 'value': 0.5, 'carry': 1.0,
+            # Rates-only directional sleeves (need curve_slope_map / policy_rate_map
+            # yields; silently inactive without them). Default 0 = off until A/B'd.
+            'curve': 0.0, 'policy': 0.0,
         })
+        # Policy momentum lookback (2Y yield change, trading days)
+        self.policy_period = int(self.cfg.get('policy_period', 126))
         # Per-sleeve cross-sectional neutralization (1.0 = fully market-neutral RV,
         # 0.0 = keep directional/time-series component). Trend's edge IS the
         # directional CTA premium, so it stays directional by default; Value and
         # Carry are relative-value and neutralized. Accepts a scalar for all.
-        xn = self.cfg.get('xs_neutralize', {'trend': 0.0, 'value': 1.0, 'carry': 1.0})
+        xn = self.cfg.get('xs_neutralize', {'trend': 0.0, 'value': 1.0, 'carry': 1.0,
+                                            'curve': 0.0, 'policy': 0.0})
         if isinstance(xn, (int, float)):
             xn = {'trend': float(xn), 'value': float(xn), 'carry': float(xn)}
         self.xs_neutralize = {k: float(v) for k, v in xn.items()}
@@ -165,10 +174,12 @@ class SleeveEngine:
             with open(path, 'r', encoding='utf-8') as f:
                 acfg = yaml.safe_load(f) or {}
         except Exception:
-            return {}, {}
+            return {}, {}, {}, {}
         sy = acfg.get('signal_yields', {}) or {}
         return (sy.get('tradeable_yield_map', {}) or {},
-                sy.get('fx_short_yield', {}) or {})
+                sy.get('fx_short_yield', {}) or {},
+                sy.get('curve_slope_map', {}) or {},
+                sy.get('policy_rate_map', {}) or {})
 
     def _y(self, ticker: Optional[str]) -> Optional[pd.Series]:
         """Fetch a yield series by ticker, or None if unavailable."""
@@ -259,6 +270,46 @@ class SleeveEngine:
                 return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
         return pd.DataFrame(index=self.prices.index, columns=assets)
 
+    def curve_signal(self, assets: List[str]) -> pd.DataFrame:
+        """Own-curve slope carry (rates, time-series/directional).
+
+        slope = long-end yield − funding (2Y) yield from curve_slope_map. A
+        steep curve = positive carry + rolldown for holding duration → LONG;
+        inverted → SHORT. Z-scored vs its own trailing history so the signal
+        is the slope's RICHNESS, not its absolute level. Empty when the curve
+        yields are unavailable (sleeve silently inactive).
+        """
+        cols = {}
+        for a in assets:
+            pair = self.curve_slope_map.get(a)
+            if not pair or len(pair) != 2:
+                continue
+            y_s, y_l = self._y(pair[0]), self._y(pair[1])
+            if y_s is not None and y_l is not None:
+                cols[a] = y_l - y_s
+        if not cols:
+            return pd.DataFrame(index=self.prices.index, columns=assets)
+        z = _zscore(pd.DataFrame(cols), self.carry_window)
+        return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
+
+    def policy_signal(self, assets: List[str]) -> pd.DataFrame:
+        """Central-bank cycle momentum (rates, time-series/directional).
+
+        Change of the country's 2Y/3Y (policy-proxy) yield over policy_period
+        days: falling short yield = easing cycle → LONG duration; rising =
+        hiking → SHORT. Continuous version of the factory's policy_momentum
+        (its strongest alpha4). Empty without policy_rate_map yields.
+        """
+        cols = {}
+        for a in assets:
+            y = self._y(self.policy_rate_map.get(a))
+            if y is not None:
+                cols[a] = -(y - y.shift(self.policy_period))
+        if not cols:
+            return pd.DataFrame(index=self.prices.index, columns=assets)
+        z = _zscore(pd.DataFrame(cols), self.trend_z_window)
+        return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
+
     # ──────────────────────────────────────────────────────────────────────
     def _regime_gate(self, assets: List[str]) -> pd.DataFrame:
         """(가) Per-asset trend multiplier from rolling Hurst.
@@ -304,17 +355,15 @@ class SleeveEngine:
             return sig
         return sig - strength * sig.mean(axis=1).values.reshape(-1, 1)
 
-    def _combine_class(self, assets: List[str], asset_class: str) -> pd.DataFrame:
-        """Weighted conviction for one asset class.
+    def _class_sleeves(self, assets: List[str], asset_class: str) -> Dict[str, pd.DataFrame]:
+        """Active, neutralized sleeve signals for one asset class.
 
-        Each sleeve is neutralized by ITS OWN xs_neutralize strength before
-        weighting: Trend stays directional (time-series), Value/Carry become
-        relative-value (market-neutral within the class). Carry is active on FX
-        always (yield or price proxy) and on rates only when yields are present.
+        Returns {sleeve_name: signal DataFrame} containing only sleeves with a
+        non-zero weight and usable data, each already xs-neutralized by its own
+        strength. Single source of truth shared by _combine_class (positions)
+        and sleeve_snapshot (dashboard).
         """
         w = self.sleeve_weights
-        combined = pd.DataFrame(0.0, index=self.prices.index, columns=assets)
-        contrib = 0.0
 
         trend = self.trend_signal(assets)
         if self.regime_enabled:
@@ -328,11 +377,39 @@ class SleeveEngine:
         if include_carry:
             sleeves['carry'] = self.carry_signal(assets, asset_class).reindex(columns=assets)
 
+        # Rates-only directional sleeves (yield-driven; silently absent when
+        # the yield maps have no data).
+        if asset_class == 'rates':
+            if w.get('curve', 0.0) != 0.0:
+                cs = self.curve_signal(assets).reindex(columns=assets)
+                if cs.notna().any().any():
+                    sleeves['curve'] = cs
+            if w.get('policy', 0.0) != 0.0:
+                ps = self.policy_signal(assets).reindex(columns=assets)
+                if ps.notna().any().any():
+                    sleeves['policy'] = ps
+
+        out = {}
         for name, sig in sleeves.items():
-            wt = w.get(name, 0.0)
-            if wt == 0.0 or sig is None or sig.empty:
+            if w.get(name, 0.0) == 0.0 or sig is None or sig.empty:
                 continue
-            sig = self._xs_demean(sig.fillna(0.0), self.xs_neutralize.get(name, 0.0))
+            out[name] = self._xs_demean(sig.fillna(0.0), self.xs_neutralize.get(name, 0.0))
+        return out
+
+    def _combine_class(self, assets: List[str], asset_class: str) -> pd.DataFrame:
+        """Weighted conviction for one asset class.
+
+        Each sleeve is neutralized by ITS OWN xs_neutralize strength before
+        weighting: Trend stays directional (time-series), Value/Carry become
+        relative-value (market-neutral within the class). Carry is active on FX
+        always (yield or price proxy) and on rates only when yields are present.
+        """
+        w = self.sleeve_weights
+        combined = pd.DataFrame(0.0, index=self.prices.index, columns=assets)
+        contrib = 0.0
+
+        for name, sig in self._class_sleeves(assets, asset_class).items():
+            wt = w.get(name, 0.0)
             combined = combined.add(wt * sig, fill_value=0.0)
             contrib += abs(wt)
 
@@ -341,6 +418,34 @@ class SleeveEngine:
         if self.signal_smooth_span > 1:
             combined = combined.ewm(span=self.signal_smooth_span, min_periods=1).mean()
         return combined
+
+    def sleeve_snapshot(self, asset_class: str = 'rates') -> Dict[str, Any]:
+        """Latest-date view of the sleeve book for dashboards.
+
+        Returns:
+          {'date': Timestamp,
+           'sleeves': {name: {'weight': float, 'xs_neutralize': float,
+                              'signals': {asset: latest neutralized value}}},
+           'target': {asset: final target position (vol-sized, vol-targeted,
+                      position_smooth applied per config)}}
+        """
+        assets = self.rates_assets if asset_class == 'rates' else self.fx_assets
+        sleeves_out = {}
+        for name, sig in self._class_sleeves(assets, asset_class).items():
+            sleeves_out[name] = {
+                'weight': float(self.sleeve_weights.get(name, 0.0)),
+                'xs_neutralize': float(self.xs_neutralize.get(name, 0.0)),
+                'signals': {a: round(float(sig[a].iloc[-1]), 3) for a in sig.columns},
+            }
+
+        pos = self.compute_target_positions()
+        smooth = float(self.cfg.get('position_smooth', 0.0) or 0.0)
+        if smooth > 0:
+            pos = pos.ewm(alpha=1.0 - smooth, min_periods=1).mean()
+        last = pos.iloc[-1]
+        target = {a: round(float(last.get(a, 0.0)), 3) for a in assets}
+
+        return {'date': pos.index[-1], 'sleeves': sleeves_out, 'target': target}
 
     # ──────────────────────────────────────────────────────────────────────
     def _realized_vol(self) -> pd.DataFrame:

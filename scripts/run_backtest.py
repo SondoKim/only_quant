@@ -122,6 +122,10 @@ def load_config() -> dict:
             for key in ri_defaults:
                 ri_defaults[key] = ri_cfg.get(key, ri_defaults[key])
             discovery_cfg = config.get('discovery', {}) or {}
+            defaults['transaction_cost_bps'] = bt_cfg.get('transaction_cost_bps', 0.0)
+            ens = discovery_cfg.get('ensemble', {}) or {}
+            if ens.get('enabled'):
+                ri_defaults['weight_shrinkage'] = float(ens.get('weight_shrinkage', 0.5))
     defaults['rates_improvements'] = ri_defaults
     defaults['discovery'] = discovery_cfg
     return defaults
@@ -161,7 +165,8 @@ def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
     result = {}
     for asset, sigs in by_asset.items():
         is_rates = classify_asset_class(asset) == 'rates'
-        avg = sharpe_weighted_position(sigs, is_rates=is_rates, alpha_weight_boost=alpha_boost)
+        avg = sharpe_weighted_position(sigs, is_rates=is_rates, alpha_weight_boost=alpha_boost,
+                                       weight_shrinkage=ri_cfg.get('weight_shrinkage', 0.0))
         raw_position = float(np.clip(avg, -1.0, 1.0))
 
         if inverse_vol:
@@ -184,7 +189,7 @@ def _aggregate_raw_signals(raw_signals: list, prices: pd.DataFrame,
 # ─────────────────────────────────────────────────────────────────────────────
 def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: Path,
                           incremental: bool = False, full_scan_interval: int = 3,
-                          window_months: int = 42):
+                          window_months: int = 42, data_start: str = "2020-01-01"):
     """
     Pre-discover strategies at each month-end business day.
     Uses main.py's GlobalMacroTradingSystem for reliable discovery.
@@ -220,9 +225,9 @@ def run_phase1_discovery(prices: pd.DataFrame, month_ends: list, factory_base: P
 
         if window_months > 0:
             window_start = (month_end - pd.DateOffset(months=window_months)).strftime('%Y-%m-%d')
-            discovery_start = max("2020-01-01", window_start)
+            discovery_start = max(data_start, window_start)
         else:
-            discovery_start = "2020-01-01"
+            discovery_start = data_start
 
         if incremental:
             result = system.run_incremental_discovery(
@@ -254,7 +259,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
                            regime_filter: bool = False,
                            regime_hurst_window: int = 120,
                            regime_hurst_threshold: float = 0.5,
-                           regime_hurst_method: str = 'rs'):
+                           regime_hurst_method: str = 'rs',
+                          signal_only_assets: set = None,
+                          signal_lag: int = 1,
+                          rebalance_band: float = 0.0):
     """
     Simulate monthly trading using pre-cached strategies.
     Each month uses the previous month-end's strategies.
@@ -268,6 +276,18 @@ def run_phase2_simulation(prices: pd.DataFrame,
                    correlation filtering at each rebalance.
     regime_hurst_window: Price history window (days) for Hurst computation.
     regime_hurst_threshold: H above which asset is considered trending (default 0.5).
+    signal_lag: 1 (default) = realistic next-bar convention matching the
+                discovery engine (_run_simple_backtest: pos[t-1] × ret[t]).
+                0 = legacy same-bar convention (position at t earns the t-1→t
+                return even though its signal needs t's close — LOOK-AHEAD,
+                inflated rates/fx SR from -0.11/0.03 to 1.42/1.54 in the
+                2016-2026 A/B; kept only for reproducing old results).
+    rebalance_band: only trade when |target − current| exceeds this band,
+                otherwise hold the current position. Kills the daily
+                re-aggregation churn (sharpe weights + inverse-vol scale move
+                a little every day) that was paying 2bp on every wiggle —
+                measured tx drag on rates was 5.4 PnL-units/yr vs 5.0 gross.
+                0 = trade to target daily (legacy).
     """
     cfg = load_config()
     ri_cfg = cfg.get('rates_improvements', {})
@@ -289,6 +309,7 @@ def run_phase2_simulation(prices: pd.DataFrame,
     # (discovery.exclude_assets — e.g. NQ1 Index since 2026-06). Their prices
     # stay in `prices` as inputs for related/cross-asset signals.
     excluded_assets = set((cfg.get('discovery', {}) or {}).get('exclude_assets', []) or [])
+    excluded_assets |= set(signal_only_assets or [])   # yield cols: inputs only
     all_assets = sorted([a for a in prices.columns if a not in excluded_assets],
                         key=asset_sort_key)
     if excluded_assets:
@@ -305,17 +326,23 @@ def run_phase2_simulation(prices: pd.DataFrame,
     
     # Track state
     cum_pnl = {asset: 0.0 for asset in all_assets}
+    prev_positions = {asset: 0.0 for asset in all_assets}
+    tc_pct = float(cfg.get('transaction_cost_bps', 0.0)) / 100.0  # bps → % units
+    if tc_pct > 0:
+        print(f"💸 Transaction cost: {cfg.get('transaction_cost_bps')}bp per unit turnover")
     # Naive momentum/mean_reversion categories were pruned (discovery.enabled_categories
     # = [advanced, alpha]); only Advanced + Alpha attribution is tracked now.
     cum_pnl_adv = 0.0   # Advanced strategies
     cum_pnl_a1  = 0.0   # Alpha1: Cross-Sectional
     cum_pnl_a2  = 0.0   # Alpha2: Cross-Asset Predictive
     cum_pnl_a3  = 0.0   # Alpha3: Regime-Adaptive
+    cum_pnl_a4  = 0.0   # Alpha4: Yield-based carry/value/policy/seasonal
     # Per-type per-class cumulative PnL
     cum_pnl_adv_rates = 0.0
     cum_pnl_adv_fx = 0.0
     cum_pnl_a1_rates = 0.0;  cum_pnl_a2_rates = 0.0;  cum_pnl_a3_rates = 0.0
     cum_pnl_a1_fx = 0.0;     cum_pnl_a2_fx = 0.0;     cum_pnl_a3_fx = 0.0
+    cum_pnl_a4_rates = 0.0;  cum_pnl_a4_fx = 0.0
     log_data = []
 
     # Drawdown scaling state
@@ -352,7 +379,11 @@ def run_phase2_simulation(prices: pd.DataFrame,
             regime_cache[asset] = pd.Series(h_values)
         print(f"   Hurst cache ready ({len(regime_cache)} assets)")
 
-    print(f"🚀 Running Phase 2 Simulation (Start: {start_date_str}, MaxCorr: {max_correlation})...")
+    if signal_lag <= 0:
+        print("⚠️  signal_lag=0: legacy SAME-BAR convention (1-day look-ahead) — "
+              "results are NOT realistic, use only to reproduce old numbers.")
+    print(f"🚀 Running Phase 2 Simulation (Start: {start_date_str}, MaxCorr: {max_correlation}, "
+          f"SignalLag: {signal_lag})...")
 
     for date in target_dates:
         prev_idx = all_dates.get_loc(date) - 1
@@ -432,7 +463,10 @@ def run_phase2_simulation(prices: pd.DataFrame,
             continue
         
         # Generate signals — O(1) cache lookup per strategy instead of full recompute
-        date_ts = pd.Timestamp(date)
+        # signal_lag=1: use the PREVIOUS day's position (decided at t-1 close,
+        # held during day t) so a crossover firing at t's close cannot collect
+        # the t-1→t return it was computed from.
+        date_ts = pd.Timestamp(prev_date) if signal_lag > 0 else pd.Timestamp(date)
         raw = []
         for strategy in current_selector.active_strategies:
             sid = strategy['strategy_id']
@@ -496,8 +530,13 @@ def run_phase2_simulation(prices: pd.DataFrame,
 
             sig_info = sig_map.get(asset, {'position': 0})
             pos = sig_info.get('position', 0) * dd_scale
+            if rebalance_band > 0 and abs(pos - prev_positions[asset]) <= rebalance_band:
+                pos = prev_positions[asset]   # inside band: don't touch
 
             daily_pnl = (p_curr / p_prev - 1) * 100 * pos  # % 수익률 (전체 선물 기준)
+            # Transaction cost on turnover: tc_pct = bps/100 → same % units as PnL
+            daily_pnl -= abs(pos - prev_positions[asset]) * tc_pct
+            prev_positions[asset] = pos
 
             cum_pnl[asset] += daily_pnl
             day_total_pnl += daily_pnl
@@ -537,16 +576,16 @@ def run_phase2_simulation(prices: pd.DataFrame,
         # Per-strategy-type daily PnL  (ADV / Alpha) split by Rates / FX
         # ------------------------------------------------------------------
         daily_adv = 0.0
-        daily_a1 = daily_a2 = daily_a3 = 0.0
-        n_adv = n_a1 = n_a2 = n_a3 = 0
+        daily_a1 = daily_a2 = daily_a3 = daily_a4 = 0.0
+        n_adv = n_a1 = n_a2 = n_a3 = n_a4 = 0
         daily_adv_rates = 0.0
         daily_adv_fx = 0.0
-        daily_a1_rates = daily_a2_rates = daily_a3_rates = 0.0
-        daily_a1_fx = daily_a2_fx = daily_a3_fx = 0.0
+        daily_a1_rates = daily_a2_rates = daily_a3_rates = daily_a4_rates = 0.0
+        daily_a1_fx = daily_a2_fx = daily_a3_fx = daily_a4_fx = 0.0
         n_adv_rates = 0
         n_adv_fx = 0
-        n_a1_rates = n_a2_rates = n_a3_rates = 0
-        n_a1_fx = n_a2_fx = n_a3_fx = 0
+        n_a1_rates = n_a2_rates = n_a3_rates = n_a4_rates = 0
+        n_a1_fx = n_a2_fx = n_a3_fx = n_a4_fx = 0
 
         for sig in raw:
             asset = sig['asset']
@@ -569,6 +608,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
                 daily_a2 += dpnl; n_a2 += 1
             elif stype == 'alpha3':
                 daily_a3 += dpnl; n_a3 += 1
+            elif stype == 'alpha4':
+                daily_a4 += dpnl; n_a4 += 1
 
             # Split by asset class
             if is_fx:
@@ -580,6 +621,8 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     daily_a2_fx += dpnl; n_a2_fx += 1
                 elif stype == 'alpha3':
                     daily_a3_fx += dpnl; n_a3_fx += 1
+                elif stype == 'alpha4':
+                    daily_a4_fx += dpnl; n_a4_fx += 1
             elif is_rates_asset:
                 if stype == 'advanced':
                     daily_adv_rates += dpnl; n_adv_rates += 1
@@ -589,33 +632,41 @@ def run_phase2_simulation(prices: pd.DataFrame,
                     daily_a2_rates += dpnl; n_a2_rates += 1
                 elif stype == 'alpha3':
                     daily_a3_rates += dpnl; n_a3_rates += 1
+                elif stype == 'alpha4':
+                    daily_a4_rates += dpnl; n_a4_rates += 1
 
         # Normalise by number of strategies (so scale is comparable to per-asset PnL)
         cum_pnl_adv += (daily_adv / n_adv if n_adv else 0.0)
         cum_pnl_a1  += (daily_a1  / n_a1  if n_a1  else 0.0)
         cum_pnl_a2  += (daily_a2  / n_a2  if n_a2  else 0.0)
         cum_pnl_a3  += (daily_a3  / n_a3  if n_a3  else 0.0)
+        cum_pnl_a4  += (daily_a4  / n_a4  if n_a4  else 0.0)
         cum_pnl_adv_rates += (daily_adv_rates / n_adv_rates if n_adv_rates else 0.0)
         cum_pnl_a1_rates  += (daily_a1_rates  / n_a1_rates  if n_a1_rates  else 0.0)
         cum_pnl_a2_rates  += (daily_a2_rates  / n_a2_rates  if n_a2_rates  else 0.0)
         cum_pnl_a3_rates  += (daily_a3_rates  / n_a3_rates  if n_a3_rates  else 0.0)
+        cum_pnl_a4_rates  += (daily_a4_rates  / n_a4_rates  if n_a4_rates  else 0.0)
         cum_pnl_adv_fx += (daily_adv_fx / n_adv_fx if n_adv_fx else 0.0)
         cum_pnl_a1_fx  += (daily_a1_fx  / n_a1_fx  if n_a1_fx  else 0.0)
         cum_pnl_a2_fx  += (daily_a2_fx  / n_a2_fx  if n_a2_fx  else 0.0)
         cum_pnl_a3_fx  += (daily_a3_fx  / n_a3_fx  if n_a3_fx  else 0.0)
+        cum_pnl_a4_fx  += (daily_a4_fx  / n_a4_fx  if n_a4_fx  else 0.0)
 
         row['total_adv_cumpnl'] = round(cum_pnl_adv, 4)
         row['total_a1_cumpnl']  = round(cum_pnl_a1,  4)
         row['total_a2_cumpnl']  = round(cum_pnl_a2,  4)
         row['total_a3_cumpnl']  = round(cum_pnl_a3,  4)
+        row['total_a4_cumpnl']  = round(cum_pnl_a4,  4)
         row['adv_rates_cumpnl'] = round(cum_pnl_adv_rates, 4)
         row['a1_rates_cumpnl']  = round(cum_pnl_a1_rates,  4)
         row['a2_rates_cumpnl']  = round(cum_pnl_a2_rates,  4)
         row['a3_rates_cumpnl']  = round(cum_pnl_a3_rates,  4)
+        row['a4_rates_cumpnl']  = round(cum_pnl_a4_rates,  4)
         row['adv_fx_cumpnl']    = round(cum_pnl_adv_fx, 4)
         row['a1_fx_cumpnl']     = round(cum_pnl_a1_fx,  4)
         row['a2_fx_cumpnl']     = round(cum_pnl_a2_fx,  4)
         row['a3_fx_cumpnl']     = round(cum_pnl_a3_fx,  4)
+        row['a4_fx_cumpnl']     = round(cum_pnl_a4_fx,  4)
 
         # Dominant regime per asset class (majority vote across assets)
         if current_regime_map:
@@ -644,10 +695,13 @@ def run_phase2_simulation(prices: pd.DataFrame,
                       'regime_rates', 'regime_fx',
                       'total_adv_cumpnl',
                       'total_a1_cumpnl', 'total_a2_cumpnl', 'total_a3_cumpnl',
+                      'total_a4_cumpnl',
                       'adv_rates_cumpnl',
                       'a1_rates_cumpnl', 'a2_rates_cumpnl', 'a3_rates_cumpnl',
+                      'a4_rates_cumpnl',
                       'adv_fx_cumpnl',
-                      'a1_fx_cumpnl', 'a2_fx_cumpnl', 'a3_fx_cumpnl']
+                      'a1_fx_cumpnl', 'a2_fx_cumpnl', 'a3_fx_cumpnl',
+                      'a4_fx_cumpnl']
     # regime_rates/regime_fx only exist when --regime-filter is on; keep only
     # columns actually present so the no-regime run doesn't KeyError on save.
     total_pnl_cols = [c for c in total_pnl_cols if c in df_log.columns]
@@ -663,9 +717,11 @@ def run_phase2_simulation(prices: pd.DataFrame,
     dd_tag = f"_dd{int(dd_threshold)}" if dd_threshold > 0 else ""
     ma_tag = f"_ma{pnl_ma}" if pnl_ma > 0 else ""
     regime_tag = f"_hurst{regime_hurst_method}{regime_hurst_threshold}" if regime_filter else ""
+    lag_tag = f"_lag{signal_lag}" if signal_lag else ""
+    band_tag = f"_band{rebalance_band}" if rebalance_band > 0 else ""
     try:
         plot_pnl(max_correlation=max_correlation,
-                 mode=f'backtest{dd_tag}{ma_tag}{regime_tag}',
+                 mode=f'backtest{dd_tag}{ma_tag}{regime_tag}{lag_tag}{band_tag}',
                  start_date=start_date_str,
                  end_date=prices.index[-1].strftime('%Y-%m-%d'))
     except Exception as e:
@@ -681,8 +737,10 @@ def main():
                         help='Backtest start date (YYYY-MM-DD)')
     parser.add_argument('--end-date', default=None,
                         help='Backtest end date (YYYY-MM-DD, default: latest)')
-    parser.add_argument('--max-corr', type=float, default=0.5,
-                        help='Maximum correlation threshold')
+    parser.add_argument('--max-corr', type=float, default=1.0,
+                        help='Maximum correlation threshold. 1.0 = no correlation '
+                             'filter (2026-06-11 honest A/B: filter collapsed the fx '
+                             'ensemble, SR 0.44 vs 0.85 without).')
     parser.add_argument('--skip-discovery', action='store_true',
                         help='Skip Phase 1 (use existing cached strategies)')
     parser.add_argument('--dd-threshold', type=float, default=0.0,
@@ -699,6 +757,10 @@ def main():
                         help='Rolling data window (months) per discovery; 3y metrics '
                              '+ 6mo indicator warmup. 0 = expanding from 2020 (legacy). '
                              '(default: 42)')
+    parser.add_argument('--data-start', default='2010-01-01',
+                        help='Price history start for the master panel; the loader '
+                             'truncates to the latest common inception (currently '
+                             '2012-04-16, OAT1 listing). (default: 2010-01-01)')
     parser.add_argument('--regime-filter', action='store_true',
                         help='Enable Hurst Exponent regime meta-filter: '
                              'trending (H>0.5) → MOM/ADV + inverted MR, '
@@ -709,15 +771,27 @@ def main():
                         help='Hurst threshold above which asset is trending (default: 0.5)')
     parser.add_argument('--regime-hurst-method', choices=['rs', 'dfa'], default='rs',
                         help='Hurst computation method: rs=R/S analysis (default), dfa=Detrended Fluctuation Analysis')
+    parser.add_argument('--rebalance-band', type=float, default=0.2,
+                        help='Only trade when |target − current position| exceeds '
+                             'this band (position units). Cuts daily re-aggregation '
+                             'churn and its 2bp cost (fx SR 0.91→0.94 in the 2016-26 '
+                             'honest A/B). 0 = rebalance to target daily (legacy).')
+    parser.add_argument('--signal-lag', type=int, default=1,
+                        help='Days to lag signal→position in Phase 2 (default: 1, '
+                             'realistic next-bar execution matching the discovery '
+                             'engine). 0 = legacy same-bar convention which had a '
+                             '1-day look-ahead — only for reproducing old results.')
 
     args = parser.parse_args()
     
     # Load data
     print("📊 Loading price data...")
     loader = DataLoader()
-    prices_raw = loader.load_data(use_cache=True)
+    prices_raw = loader.load_data(start_date=args.data_start, use_cache=True)
     preprocessor = DataPreprocessor(prices_raw)
     prices = preprocessor.clean().get_data()
+    prices = loader.merge_signal_yields(prices)        # signal-only yield cols
+    signal_only_assets = loader.signal_only_tickers()  # never traded
     
     factory_base = Path(__file__).parent.parent / 'src' / 'factory'
     factory_base.mkdir(exist_ok=True)
@@ -737,7 +811,8 @@ def main():
         run_phase1_discovery(prices, month_ends, factory_base,
                              incremental=args.incremental,
                              full_scan_interval=args.full_scan_interval,
-                             window_months=args.discovery_window_months)
+                             window_months=args.discovery_window_months,
+                             data_start=args.data_start)
     else:
         print("\n⏭️  Skipping Phase 1 (--skip-discovery)")
     
@@ -762,6 +837,9 @@ def main():
         regime_hurst_window=args.regime_hurst_window,
         regime_hurst_threshold=args.regime_hurst_threshold,
         regime_hurst_method=args.regime_hurst_method,
+        signal_only_assets=signal_only_assets,
+        signal_lag=args.signal_lag,
+        rebalance_band=args.rebalance_band,
     )
 
 

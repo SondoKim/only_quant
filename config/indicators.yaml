@@ -9,6 +9,11 @@ sleeves:
     trend: 1.0
     value: 0.5
     carry: 1.0
+    # 2026-06-11 A/B (2012-2026, net of costs): policy momentum (2Y yield
+    # 6m change via policy_rate_map) lifted rates SR 0.14→0.20 (0.31 with
+    # position smoothing); curve-slope carry HURT (0.14→0.08) — keep 0.
+    curve: 0.0
+    policy: 1.0
   # Per-sleeve cross-sectional neutralization (1=market-neutral RV, 0=directional).
   # Trend keeps its directional CTA premium; Value/Carry are relative-value.
   xs_neutralize:
@@ -16,6 +21,9 @@ sleeves:
     value: 1.0
     carry: 1.0
   signal_smooth_span: 5     # EWMA span on conviction to damp turnover (1=off)
+  # EWMA on final positions (fraction of prior held; 0=off). 2026-06-11 A/B:
+  # 0.8 halved turnover 134x→73x and lifted full-period port SR 0.40→0.51.
+  position_smooth: 0.8
 
   # (가) Regime gate: turn the TREND sleeve down in ranging/choppy regimes
   # (Hurst ≤ threshold) to avoid whipsaw (the 2023-25 rates problem).
@@ -161,6 +169,40 @@ alpha_strategies:
     top_n:
     - 1
     - 2
+  # Alpha4: Yield-based Carry / Value (2026-06-10) — uses signal_yields panel.
+  # rates_carry: curve slope (10Y−2Y) as carry+rolldown proxy for long-end futures
+  rates_carry:
+    threshold:   # slope(%) entry level
+    - 0.0
+    - 0.25
+    - 0.5
+    smooth:      # slope smoothing (days)
+    - 5
+    - 20
+  # rates_value: own yield z-score vs trailing history → mean reversion
+  rates_value:
+    lookback:    # trading days
+    - 252
+    - 504
+    entry_z:
+    - 1.0
+    - 1.5
+  # real_rate_fx: actual 2Y yield differential momentum → FX direction
+  real_rate_fx:
+    period:      # differential change lookback (days)
+    - 20
+    - 60
+  # policy_momentum: country 2Y yield change = CB cycle direction → duration
+  policy_momentum:
+    period:      # yield change lookback (days)
+    - 20
+    - 60
+    - 120
+  # month_end_seasonal: bond index duration-extension buying into month-end
+  month_end_seasonal:
+    days_before: # enter N business days before month-end, exit at month turn
+    - 3
+    - 5
   # Alpha2: Cross-Asset Predictive
   curve_to_fx:
     period:
@@ -210,16 +252,53 @@ discovery:
   # Strategy archetypes no longer searched — persistent post-discovery
   # underperformance across 53 monthly DBs (avg 6M Sharpe of stored
   # strategies: adx_momentum 0.14, carry_trade 0.36 vs ~1.0 for others).
-  disabled_strategies: [adx_momentum, carry_trade]
+  # rates_carry + rates_value added 2026-06-10 after forward A/B validation:
+  # both dragged portfolio rates SR 1.42→~1.05 despite good-looking trailing
+  # stats (rates_value stored avg 6M Sharpe 1.20 — but forward it fights yield
+  # trends with a 2× alpha boost). policy_momentum covers the rates-macro
+  # factor better (1.20 avg, no SR drag).
+  disabled_strategies: [adx_momentum, carry_trade, rates_carry, rates_value]
+  # 2026-06-11 honest-execution audit (signal_lag=1, same-bar look-ahead
+  # removed): only asset-class × category cells whose equal-weight strategy
+  # PnL had positive Sharpe in BOTH halves of 2016-2026 stay tradeable.
+  #   fx-alpha1 0.93/0.96, fx-alpha4 0.63/0.42, rates-advanced 0.17/0.70.
+  # Dropped: fx-advanced (-0.47/-0.16), rates-alpha1 (-0.58/0.00),
+  # alpha2 (-0.51/+0.24 unstable), rates-alpha4 (-0.12/-0.05).
+  # Remove a class from this map to allow ALL categories on it again;
+  # delete the whole key to disable cell filtering.
+  # 2026-06-11 PM: rates removed from the FACTORY entirely — the live rates
+  # book now comes from the SleeveEngine (main._merge_sleeve_rates; honest SR
+  # 0.31 full / 0.58 since 2016 vs factory rates ~0 net of costs). The factory
+  # is the FX specialist. Re-add `rates: [advanced]` here to restore the old
+  # factory rates book.
+  enabled_cells:
+    fx: [alpha1, alpha4]
+  # Ensemble mode (2026-06-10): relax the 3Y storage gates and shrink
+  # Sharpe weights toward equal-weight — more, smaller bets instead of a
+  # concentrated book. A/B-validate before enabling permanently.
+  ensemble:
+    enabled: true
+    sharpe_threshold_3y: 0.5
+    sortino_threshold_3y: 0.5
+    # 1.0 = full equal-weight across active strategies (2026-06-11: trailing
+    # sharpe_6m weighting showed no forward edge at signal_lag=1; equal weight
+    # lifted honest fx SR 0.85→0.91).
+    weight_shrinkage: 1.0
 
 backtest:
   max_drawdown: -0.25
   min_trades: 20
+  # Slow structural strategies (rates_carry, rates_value) trade 1-5×/window
+  # by design — they get this lower trade-count floor instead.
+  min_trades_slow: 4
   sharpe_threshold_3y: 0.8
   sortino_threshold_3y: 0.8
   trail_stop_pct: 0.02
   max_hold_days: 60
-  transaction_cost_bps: 0
+  # 2026-06-10: 0 → 2bp. Applied BOTH in discovery metrics (engine) and the
+  # Phase 2 simulation (charged on |Δposition| turnover) so fast strategies
+  # are no longer flattered by free trading.
+  transaction_cost_bps: 2
   # Alpha3: Regime filter (applied in selector, not as a strategy type)
   # Set via --regime-filter CLI flag. Parameters below are defaults.
   regime_adx_period: 14

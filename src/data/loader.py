@@ -239,7 +239,31 @@ class DataLoader:
             tickers.append(t)
         for t in (sy.get('fx_short_yield', {}) or {}).values():
             tickers.append(t)
+        for t in (sy.get('policy_rate_map', {}) or {}).values():
+            tickers.append(t)
+        for pair in (sy.get('curve_slope_map', {}) or {}).values():
+            tickers.extend(pair)
         return sorted(set(tickers))
+
+    def signal_only_tickers(self) -> set:
+        """Tickers that exist only as signal inputs (never traded)."""
+        return set(self._extract_yield_tickers())
+
+    def merge_signal_yields(self, prices: 'pd.DataFrame') -> 'pd.DataFrame':
+        """Append signal-only yield columns to a price panel (aligned, ffilled).
+
+        Yields are loaded once from the long 2010+ cache and reindexed to the
+        panel dates, so callers never trigger per-window Bloomberg fetches.
+        Returns `prices` unchanged when no yield data is available.
+        """
+        y = self.load_signal_yields(start_date="2010-01-01", use_cache=True)
+        if y is None or y.empty:
+            return prices
+        y = y.reindex(prices.index).ffill()
+        new_cols = [c for c in y.columns if c not in prices.columns]
+        if not new_cols:
+            return prices
+        return prices.join(y[new_cols])
 
     def load_signal_yields(
         self,

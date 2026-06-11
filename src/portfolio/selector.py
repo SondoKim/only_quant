@@ -71,6 +71,7 @@ def sharpe_weighted_position(
     signals: List[Dict[str, Any]],
     is_rates: bool = False,
     alpha_weight_boost: float = 1.0,
+    weight_shrinkage: float = 0.0,
 ) -> float:
     """Sharpe-weighted average position for one asset's strategy signals.
 
@@ -85,11 +86,15 @@ def sharpe_weighted_position(
     weights = np.array([s.get('sharpe_6m', 0.0) for s in signals], dtype=float)
     if is_rates and alpha_weight_boost != 1.0:
         boost = np.array(
-            [alpha_weight_boost if s.get('strategy_type') in ('alpha1', 'alpha2') else 1.0
+            [alpha_weight_boost if s.get('strategy_type') in ('alpha1', 'alpha2', 'alpha4') else 1.0
              for s in signals],
             dtype=float,
         )
         weights = weights * boost
+    if weight_shrinkage > 0 and len(weights) > 1:
+        # Ensemble mode: shrink weights toward equal-weight so a single
+        # high-Sharpe strategy cannot dominate the book.
+        weights = (1.0 - weight_shrinkage) * weights + weight_shrinkage * weights.mean()
     if weights.sum() > 0:
         return float(np.average(positions, weights=weights))
     return float(positions.mean())
@@ -134,8 +139,17 @@ class StrategySelector:
         # strategies are used now — works on existing DBs without re-discovery.
         _scope = self.config.get('discovery', {}) or {}
         self.enabled_categories = _scope.get('enabled_categories')
+        _ens = _scope.get('ensemble', {}) or {}
+        self.weight_shrinkage: float = (
+            float(_ens.get('weight_shrinkage', 0.5)) if _ens.get('enabled') else 0.0
+        )
         self.excluded_assets = set(_scope.get('exclude_assets', []) or [])
         self.disabled_strategies = set(_scope.get('disabled_strategies', []) or [])
+        # enabled_cells: {asset_class: [category, ...]} — only listed
+        # class×category cells are tradeable (2026-06-11 honest-execution
+        # audit). None/empty = no cell filtering.
+        _cells = _scope.get('enabled_cells') or {}
+        self.enabled_cells = {k: set(v) for k, v in _cells.items()} if _cells else None
 
     def _get_default_config_path(self) -> str:
         """Get default path to indicators.yaml."""
@@ -190,7 +204,7 @@ class StrategySelector:
     @staticmethod
     def _strategy_category(stype: str) -> str:
         """Map strategy_type → coarse category (alpha1/2/3 → 'alpha')."""
-        return 'alpha' if stype in ('alpha1', 'alpha2', 'alpha3') else stype
+        return 'alpha' if stype in ('alpha1', 'alpha2', 'alpha3', 'alpha4') else stype
 
     def _filter_discovery_scope(
         self, strategies: List[Dict[str, Any]]
@@ -200,12 +214,22 @@ class StrategySelector:
         disabled_strategies. No-op for each criterion when unset. Works on
         existing DBs — excluded strategies are ignored without re-discovery."""
         allowed = set(self.enabled_categories) if self.enabled_categories else None
+
+        def _cell_ok(s) -> bool:
+            if self.enabled_cells is None:
+                return True
+            klass = classify_asset_class(s.get('asset', ''))
+            # Cell filter keys on the FINE strategy_type (alpha1/alpha2/...),
+            # not the coarse category, so e.g. fx can keep alpha1 but not alpha2.
+            return s.get('strategy_type', '') in self.enabled_cells.get(klass, set())
+
         kept = [
             s for s in strategies
             if (allowed is None
                 or self._strategy_category(s.get('strategy_type', '')) in allowed)
             and s.get('asset') not in self.excluded_assets
             and s.get('strategy_name') not in self.disabled_strategies
+            and _cell_ok(s)
         ]
         dropped = len(strategies) - len(kept)
         if dropped:
@@ -229,13 +253,17 @@ class StrategySelector:
         if len(covered) >= min_assets:
             return selected
 
-        # Best uncovered strategy per asset, sorted by sharpe_6m descending
+        # Best uncovered strategy per asset, sorted by sharpe_6m descending.
+        # Floor at sharpe_6m > 0: coverage must not force in strategies that
+        # are currently losing money (e.g. JY1 at -1.52 was being added).
         asset_best: Dict[str, Dict[str, Any]] = {}
         for s in all_candidates:
             asset = s['asset']
             if asset in covered:
                 continue
             sharpe = s['performance']['sharpe_6m']
+            if sharpe <= 0:
+                continue
             if asset not in asset_best or sharpe > asset_best[asset]['performance']['sharpe_6m']:
                 asset_best[asset] = s
 
@@ -479,7 +507,7 @@ class StrategySelector:
                 prices, asset, strategy_name, params, related_asset
             )
             position = self._calculate_position_momentum(entries, exits)
-        elif strategy_type in ('alpha1', 'alpha2', 'alpha3'):
+        elif strategy_type in ('alpha1', 'alpha2', 'alpha3', 'alpha4'):
             long_entries, long_exits, short_entries, short_exits = \
                 AlphaStrategies.generate_signals(
                     prices, asset, strategy_name, params, related_asset
@@ -653,6 +681,7 @@ class StrategySelector:
                     asset_signals.to_dict('records'),
                     is_rates=is_rates,
                     alpha_weight_boost=self.rates_alpha_weight_boost,
+                    weight_shrinkage=self.weight_shrinkage,
                 )
 
             elif method == 'vote':
