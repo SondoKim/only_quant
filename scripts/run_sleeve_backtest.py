@@ -87,10 +87,6 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
         cfg['target_port_vol'] = target_vol
     costs = {**DEFAULT_COSTS_BPS, **(cfg.get('costs_bps', {}) or {})}
 
-    # Position smoothing: CLI --smooth overrides config position_smooth
-    if not smooth:
-        smooth = float(cfg.get('position_smooth', 0.0) or 0.0)
-
     engine = SleeveEngine(prices, config=cfg, yields=yields)
     src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
     src_rt = 'yields' if engine._has_rates_yields() else 'OFF (no yields)'
@@ -98,11 +94,15 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
           f"target portfolio vol = {engine.target_port_vol:.0%}")
     print(f"   Carry source — FX: {src_fx} | Rates carry/value: {src_rt}")
 
-    positions = engine.compute_target_positions()
-
-    # Optional EWMA position smoothing to damp turnover (0 = none)
-    if smooth and smooth > 0:
-        positions = positions.ewm(alpha=1 - smooth, min_periods=1).mean()
+    # Overlays (position_smooth + rates book stop) applied inside the engine —
+    # same path as the live feed and dashboard. CLI --smooth overrides config.
+    positions = engine.finalize_positions(
+        engine.compute_target_positions(),
+        smooth_override=smooth if smooth and smooth > 0 else None,
+    )
+    if engine.book_stop_enabled:
+        print(f"   🛑 Rates book stop ON (shadow-DD half {engine.book_stop_dd_half:.0f}% "
+              f"/ flat {engine.book_stop_dd_flat:.0f}%)")
 
     traded = list(positions.columns)
     dir_returns = engine.dir_returns[traded].reindex(positions.index).fillna(0.0)

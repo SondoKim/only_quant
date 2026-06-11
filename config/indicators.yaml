@@ -25,6 +25,35 @@ sleeves:
   # 0.8 halved turnover 134x→73x and lifted full-period port SR 0.40→0.51.
   position_smooth: 0.8
 
+  # Shadow-equity trailing stop on the RATES book (2026-06-11): un-stopped
+  # book drawdown ≤ dd_half → full size, ≤ dd_flat → half, beyond → flat;
+  # re-engages as the shadow book recovers. Responds to realized damage, not
+  # regime forecasts — fast price/vol gates (21d veto / 63d agreement / vol
+  # brake) all LOWERED SR in A/B, while this kept SR ≈0.5 and cut rates MaxDD
+  # -33%→-14%. Robust across the 2/4...6/12 threshold sweep; 4/8 = the
+  # pre-registered prototype values (3/6 scored best but within noise).
+  book_stop:
+    enabled: true
+    dd_half: 4.0
+    dd_flat: 8.0
+
+  # Fast cross-sectional reversal sub-book on rates (2026-06-11, prop-desk
+  # "don't sit flat" request — the stopped book was flat 77% of days). Fades
+  # each market's 10d move RELATIVE to global duration (market-neutral;
+  # ts-fade of the aggregate move scored -0.5 SR — never enable that).
+  # Always-on (Hurst range-gating cut SR 0.70→0.51); runs OUTSIDE book_stop;
+  # blended (1-w)·main + w·reversion in finalize_positions. Rates book A/B:
+  # SR 0.55 → 0.89, MaxDD -14% → -9%, flat days 77% → 0%.
+  # ⚠ COST CLIFF (turnover ~600x/yr): net SR 0.70 @0.5bp, 0.31 @1bp, ≤0
+  # @1.5bp — execute passively; cut weight or disable if real costs exceed
+  # ~1bp. Earns mainly in JGB/AU/KR; ~flat in US/EU.
+  reversion:
+    enabled: true
+    weight: 0.5
+    lookback: 10
+    z_window: 120
+    smooth: 0.5
+
   # (가) Regime gate: turn the TREND sleeve down in ranging/choppy regimes
   # (Hurst ≤ threshold) to avoid whipsaw (the 2023-25 rates problem).
   regime_gate:

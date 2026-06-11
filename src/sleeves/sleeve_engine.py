@@ -123,6 +123,35 @@ class SleeveEngine:
 
         # Position smoothing (EWMA on conviction) to damp turnover. 0 = off.
         self.signal_smooth_span = int(self.cfg.get('signal_smooth_span', 5))
+        # EWMA on FINAL positions (fraction of prior held; 0 = off).
+        self.position_smooth = float(self.cfg.get('position_smooth', 0.0) or 0.0)
+
+        # Book stop (2026-06-11): shadow-equity trailing stop on the RATES
+        # book. Watches the hypothetical (un-stopped) book PnL; drawdown
+        # beyond dd_half → halve rates positions, beyond dd_flat → flat,
+        # automatically re-engages as the shadow book recovers. Responds to
+        # REALIZED damage instead of predicting inflections — fast price/vol
+        # regime gates (21d veto, 63d agreement, vol brake) all LOWERED SR in
+        # the 2016-26 A/B; this kept SR (~0.5) while cutting MaxDD -33%→-14%.
+        bs = self.cfg.get('book_stop', {}) or {}
+        self.book_stop_enabled = bool(bs.get('enabled', False))
+        self.book_stop_dd_half = float(bs.get('dd_half', 4.0))   # %-points
+        self.book_stop_dd_flat = float(bs.get('dd_flat', 8.0))
+
+        # Reversion sub-book (2026-06-11, prop-desk "don't sit flat" request):
+        # fast CROSS-SECTIONAL reversal on rates — fade each market's 10d move
+        # relative to the global-duration average (market-neutral, so it does
+        # not fight trends; ts-fade of the aggregate move was tested and lost
+        # -0.5 SR). Always-on (Hurst range-gating LOWERED SR 0.70→0.51), runs
+        # OUTSIDE the book stop, blended with the main book in
+        # finalize_positions. ⚠ COST CLIFF: net SR 0.70 @0.5bp, 0.31 @1bp,
+        # ≤0 @1.5bp — requires passive execution.
+        rv = self.cfg.get('reversion', {}) or {}
+        self.reversion_enabled = bool(rv.get('enabled', False))
+        self.reversion_weight = float(rv.get('weight', 0.5))
+        self.reversion_lookback = int(rv.get('lookback', 10))
+        self.reversion_z_window = int(rv.get('z_window', 120))
+        self.reversion_smooth = float(rv.get('smooth', 0.5))
 
         # Regime gate (가): scale the TREND sleeve down in ranging regimes
         # (Hurst ≤ threshold) so it stops whipsawing in choppy markets.
@@ -437,15 +466,28 @@ class SleeveEngine:
                 'xs_neutralize': float(self.xs_neutralize.get(name, 0.0)),
                 'signals': {a: round(float(sig[a].iloc[-1]), 3) for a in sig.columns},
             }
+        if asset_class == 'rates' and self.reversion_enabled:
+            rsig = self._reversion_signal().iloc[-1]
+            sleeves_out['reversion'] = {
+                'weight': self.reversion_weight,
+                'xs_neutralize': 1.0,
+                'signals': {a: round(float(rsig.get(a, 0.0)), 3) for a in assets},
+            }
 
-        pos = self.compute_target_positions()
-        smooth = float(self.cfg.get('position_smooth', 0.0) or 0.0)
-        if smooth > 0:
-            pos = pos.ewm(alpha=1.0 - smooth, min_periods=1).mean()
+        pos = self.finalize_positions(self.compute_target_positions())
         last = pos.iloc[-1]
         target = {a: round(float(last.get(a, 0.0)), 3) for a in assets}
+        prev_row = pos.iloc[-2] if len(pos) >= 2 else last
+        prev = {a: round(float(prev_row.get(a, 0.0)), 3) for a in assets}
+        cols = [a for a in assets if a in pos.columns]
 
-        return {'date': pos.index[-1], 'sleeves': sleeves_out, 'target': target}
+        return {'date': pos.index[-1], 'sleeves': sleeves_out, 'target': target,
+                'prev': prev,
+                # recent per-asset position history (sparklines) + full net /
+                # gross book series (delta- & gross-budget calibration)
+                'history': pos[cols].tail(120),
+                'net_hist': pos[cols].sum(axis=1),
+                'gross_hist': pos[cols].abs().sum(axis=1)}
 
     # ──────────────────────────────────────────────────────────────────────
     def _realized_vol(self) -> pd.DataFrame:
@@ -477,6 +519,74 @@ class SleeveEngine:
         pos = self._apply_portfolio_vol_target(pos, traded)
 
         return pos
+
+    def finalize_positions(self, pos: pd.DataFrame,
+                           smooth_override: Optional[float] = None) -> pd.DataFrame:
+        """Apply the production overlays to raw target positions, in order:
+        ① position_smooth (EWMA, turnover damping) ② rates book stop.
+        Single path shared by the backtest, the live feed and the dashboard
+        snapshot so they can never diverge.
+        """
+        smooth = self.position_smooth if smooth_override is None else float(smooth_override)
+        if smooth > 0:
+            pos = pos.ewm(alpha=1.0 - smooth, min_periods=1).mean()
+        pos = self._apply_book_stop(pos)
+        # ③ blend in the always-on reversion sub-book (rates only, un-stopped)
+        if self.reversion_enabled and self.rates_assets:
+            mr = self.reversion_positions()
+            R = [a for a in self.rates_assets if a in pos.columns]
+            w = self.reversion_weight
+            pos = pos.copy()
+            pos[R] = (1.0 - w) * pos[R] + w * mr[R]
+        return pos
+
+    def _reversion_signal(self) -> pd.DataFrame:
+        """xs-demeaned fade of each rates market's `reversion_lookback`-day
+        directional move (relative to the global-duration average)."""
+        R = self.rates_assets
+        fade = (-_zscore(self.dir_px[R].pct_change(self.reversion_lookback),
+                         self.reversion_z_window)).clip(-self.signal_clip, self.signal_clip)
+        return fade.sub(fade.mean(axis=1), axis=0)
+
+    def reversion_positions(self) -> pd.DataFrame:
+        """Fast market-neutral reversal book on rates (own vol targeting,
+        light smoothing — heavier smoothing lags the 10d signal and loses
+        more alpha than it saves in costs)."""
+        R = self.rates_assets
+        fade = self._reversion_signal()
+        inv_vol = (self.target_asset_vol / self._realized_vol()[R]).clip(
+            upper=self.max_asset_pos * 5)
+        pos = (fade * inv_vol).clip(-self.max_asset_pos, self.max_asset_pos).fillna(0.0)
+        pos = self._apply_portfolio_vol_target(pos, R)
+        if self.reversion_smooth > 0:
+            pos = pos.ewm(alpha=1.0 - self.reversion_smooth, min_periods=1).mean()
+        return pos
+
+    def _apply_book_stop(self, pos: pd.DataFrame) -> pd.DataFrame:
+        """Shadow-equity trailing stop on the rates book (causal).
+
+        Shadow PnL = what the un-stopped rates book would earn (pos.shift(1) ×
+        dir_returns, gross). Its drawdown drives a scale applied with a 1-day
+        lag: ≤dd_half → 1.0, ≤dd_flat → 0.5, beyond → 0.0. Using the SHADOW
+        book (not the stopped one) means the stop re-engages on recovery
+        instead of staying flat forever.
+        """
+        if not self.book_stop_enabled or not self.rates_assets:
+            return pos
+        R = [a for a in self.rates_assets if a in pos.columns]
+        if not R:
+            return pos
+        shadow = (pos[R].shift(1).fillna(0.0) * self.dir_returns[R].fillna(0.0)).sum(axis=1)
+        eq = shadow.cumsum()
+        dd = (eq.cummax() - eq) * 100.0
+        scale = pd.Series(
+            np.select([dd <= self.book_stop_dd_half, dd <= self.book_stop_dd_flat],
+                      [1.0, 0.5], 0.0),
+            index=pos.index,
+        ).shift(1).fillna(1.0)
+        out = pos.copy()
+        out[R] = out[R].mul(scale, axis=0)
+        return out
 
     def _apply_portfolio_vol_target(self, pos: pd.DataFrame, traded: List[str]) -> pd.DataFrame:
         """Scale whole book each day so trailing portfolio vol ≈ target.

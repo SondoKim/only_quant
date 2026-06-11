@@ -682,10 +682,7 @@ class GlobalMacroTradingSystem:
             yields = self.data_loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
 
             engine = SleeveEngine(prices, config=sleeves_cfg, yields=yields)
-            pos = engine.compute_target_positions()
-            smooth = float(sleeves_cfg.get('position_smooth', 0.0) or 0.0)
-            if smooth > 0:
-                pos = pos.ewm(alpha=1.0 - smooth, min_periods=1).mean()
+            pos = engine.finalize_positions(engine.compute_target_positions())
             last = pos.iloc[-1]
             as_of = pos.index[-1].date()
 
