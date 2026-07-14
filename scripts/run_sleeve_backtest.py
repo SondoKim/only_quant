@@ -59,8 +59,12 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
     is written (the dashboard slices to its own display start on read). This lets
     the dashboard READ these instead of re-deriving them, so changing the engine
     here can never silently desync the chart.
+
+    NOTE: 모니터링 유니버스 = 가격 패널의 전체 금리자산 (exclude_assets 로 거래에서
+    빠진 자산 포함 — 유로존 등 비거래 시장도 팩터 관찰 가치가 있어 차트에는 유지).
+    거래 포지션(pos::)은 sleeve_backtest_log.csv 쪽이 축소 유니버스 기준.
     """
-    ra = engine.rates_assets
+    ra = [c for c in engine.prices.columns if 'Comdty' in c and 'NQ' not in c]
     if not ra:
         print("⚠ No rates assets — factor signals not saved.")
         return None

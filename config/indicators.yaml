@@ -4,6 +4,17 @@
 # scripts/run_sleeve_backtest.py.
 # ───────────────────────────────────────────────────────────────────────────
 sleeves:
+  # 거래 유니버스 제외 (C안, 2026-07-14 A/B — test_universe_reduction.py):
+  # 유로존 4종 제외로 rates SR 0.88→1.20, MaxDD -8.8%→-5.0%, 전/후반 모두 개선
+  # (독일 10년 누적 기여 음수, 佛·伊는 리스크 예산 대비 기여 미미 → 제외 시
+  # 볼타겟팅이 한국·일본·호주·미국에 재배분). 가격 데이터는 계속 로드되고
+  # 거래(시그널·포지션)에서만 빠짐. 되돌리려면 이 리스트를 비우면 됨.
+  exclude_assets:
+    - DU1 Comdty    # 독일 2Y (Schatz)
+    - RX1 Comdty    # 독일 10Y (Bund)
+    - OAT1 Comdty   # 프랑스 10Y
+    - IK1 Comdty    # 이탈리아 10Y (BTP)
+
   # Sleeve blend weights (per asset class; carry applies to FX only)
   sleeve_weights:
     trend: 1.0

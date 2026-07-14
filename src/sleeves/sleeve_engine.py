@@ -62,9 +62,15 @@ class SleeveEngine:
             self.yields = yields.reindex(self.prices.index).ffill()
 
         # ── Universes ────────────────────────────────────────────────────
+        # exclude_assets: 거래 유니버스에서만 제외 (가격 컬럼은 유지 — FX 캐리
+        # price-proxy 등이 금리선물 가격을 참조할 수 있으므로 데이터는 남긴다).
+        # 2026-07-14 유니버스 축소 A/B (scripts/test_universe_reduction.py):
+        # 유로존 4종 제외 시 rates SR 0.88→1.20, MaxDD -8.8%→-5.0%, H1/H2 모두 개선.
         cols = list(self.prices.columns)
-        self.rates_assets = [c for c in cols if 'Comdty' in c and 'NQ' not in c]
-        self.fx_assets = [c for c in cols if 'Curncy' in c]
+        excluded = set(self.cfg.get('exclude_assets', []) or [])
+        self.rates_assets = [c for c in cols
+                             if 'Comdty' in c and 'NQ' not in c and c not in excluded]
+        self.fx_assets = [c for c in cols if 'Curncy' in c and c not in excluded]
 
         # ── Sign map: normalize every series to "long = duration / long-foreign".
         #    Rates futures up = bond price up = long duration  → +1

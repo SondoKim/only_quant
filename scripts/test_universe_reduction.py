@@ -41,8 +41,11 @@ def main():
     results = []
     for name, excl in CONFIGS:
         print(f"\n{'='*70}\n▶ {name}\n{'='*70}")
+        # cfg_override 로 config 의 sleeves.exclude_assets 를 무력화 — 이 실험은
+        # 항상 12종 원본 대비 비교 (제외는 아래 exclude_assets 인자로만 제어).
         df = run(start_date=START, plot=False, save_outputs=False,
-                 exclude_assets=excl or None)
+                 exclude_assets=excl or None,
+                 cfg_override={'exclude_assets': []})
         rates = df['rates'].dropna()
         st = perf_stats(rates)
         h1, h2 = half_stats(rates)
