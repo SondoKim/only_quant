@@ -1,0 +1,708 @@
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2010-01-01_2026-06-11.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (3685, 18)
+INFO:src.data.loader:📂 Loading cached yields from D:\김선도\Python\only_quant\data\cache\yields_2010-01-01_2026-06-11.parquet
+INFO:__main__:📊 Rebalance at 2015-12-31: 58 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 50 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 8 strategies...
+INFO:__main__:📊 Rebalance at 2016-01-29: 70 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 61 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2016-02-29: 83 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 76 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 7 strategies...
+INFO:__main__:📊 Rebalance at 2016-03-31: 70 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 60 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 10 strategies...
+INFO:__main__:📊 Rebalance at 2016-04-29: 62 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 54 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 8 strategies...
+INFO:__main__:📊 Rebalance at 2016-05-31: 50 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 43 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 7 strategies...
+INFO:__main__:📊 Rebalance at 2016-06-30: 69 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 61 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 8 strategies...
+INFO:__main__:📊 Rebalance at 2016-07-29: 76 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 67 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2016-08-31: 66 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 60 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 6 strategies...
+INFO:__main__:📊 Rebalance at 2016-09-30: 65 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 58 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 7 strategies...
+INFO:__main__:📊 Rebalance at 2016-10-31: 57 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 46 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2016-11-30: 55 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 44 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2016-12-30: 61 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 47 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2017-01-31: 59 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 44 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2017-02-28: 52 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 40 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 12 strategies...
+INFO:__main__:📊 Rebalance at 2017-03-31: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 34 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2017-04-28: 51 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 34 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2017-05-31: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 30 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2017-06-30: 50 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 32 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2017-07-31: 53 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 35 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2017-08-31: 56 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2017-09-29: 46 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 32 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2017-10-31: 53 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 38 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2017-11-30: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 35 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2017-12-29: 43 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 30 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2018-01-31: 38 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 25 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2018-02-28: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 31 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2018-03-30: 41 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 27 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2018-04-30: 49 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 36 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2018-05-31: 50 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 38 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 12 strategies...
+INFO:__main__:📊 Rebalance at 2018-06-29: 55 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 41 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2018-07-31: 52 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 39 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2018-08-31: 51 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 38 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2018-09-28: 52 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 38 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2018-10-31: 51 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2018-11-30: 55 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 38 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2018-12-31: 53 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 39 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2019-01-31: 53 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2019-02-28: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2019-03-29: 51 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 33 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2019-04-30: 49 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 34 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2019-05-31: 54 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2019-06-28: 52 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2019-07-31: 44 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2019-08-30: 47 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 31 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2019-09-30: 52 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2019-10-31: 50 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 34 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2019-11-29: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 30 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2019-12-31: 39 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 22 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2020-01-31: 39 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 24 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 15 strategies...
+INFO:__main__:📊 Rebalance at 2020-02-28: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 34 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2020-03-31: 56 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 43 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2020-04-30: 56 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 46 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 10 strategies...
+INFO:__main__:📊 Rebalance at 2020-05-29: 58 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 49 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2020-06-30: 55 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 44 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2020-07-31: 67 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 50 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2020-08-31: 47 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 31 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2020-09-30: 53 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2020-10-30: 46 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 28 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2020-11-30: 38 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2020-12-31: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2021-01-29: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2021-02-26: 44 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 27 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2021-03-31: 50 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 34 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2021-04-30: 42 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2021-05-31: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2021-06-30: 35 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 22 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2021-07-30: 39 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2021-08-31: 27 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 16 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2021-09-30: 35 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 24 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2021-10-29: 29 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 18 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2021-11-30: 24 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 13 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2021-12-31: 20 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 9 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2022-01-31: 24 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 13 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2022-02-28: 25 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 14 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2022-03-31: 22 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 11 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2022-04-29: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 23 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2022-05-31: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 23 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2022-06-30: 29 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 20 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2022-07-29: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 23 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2022-08-31: 43 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2022-09-30: 52 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 32 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 20 strategies...
+INFO:__main__:📊 Rebalance at 2022-10-31: 41 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 25 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2022-11-30: 39 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 25 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2022-12-30: 43 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 27 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2023-01-31: 47 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 28 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2023-02-28: 49 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 20 strategies...
+INFO:__main__:📊 Rebalance at 2023-03-31: 43 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 22 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 21 strategies...
+INFO:__main__:📊 Rebalance at 2023-04-28: 38 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 17 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 21 strategies...
+INFO:__main__:📊 Rebalance at 2023-05-31: 44 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 19 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 25 strategies...
+INFO:__main__:📊 Rebalance at 2023-06-30: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 17 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 20 strategies...
+INFO:__main__:📊 Rebalance at 2023-07-31: 33 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 11 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 22 strategies...
+INFO:__main__:📊 Rebalance at 2023-08-31: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 16 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 21 strategies...
+INFO:__main__:📊 Rebalance at 2023-09-29: 41 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 20 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 21 strategies...
+INFO:__main__:📊 Rebalance at 2023-10-31: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 23 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 22 strategies...
+INFO:__main__:📊 Rebalance at 2023-11-30: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 27 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 21 strategies...
+INFO:__main__:📊 Rebalance at 2023-12-29: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 30 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2024-01-31: 46 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 29 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2024-02-29: 42 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 28 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2024-03-29: 44 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 28 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2024-04-30: 51 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 35 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2024-05-31: 55 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 37 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2024-06-28: 48 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 31 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2024-07-31: 45 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 27 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2024-08-30: 50 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 31 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2024-09-30: 49 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 32 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2024-10-31: 61 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 42 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2024-11-29: 66 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 48 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2024-12-31: 68 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 49 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2025-01-31: 65 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 46 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 19 strategies...
+INFO:__main__:📊 Rebalance at 2025-02-28: 61 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 43 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 18 strategies...
+INFO:__main__:📊 Rebalance at 2025-03-31: 62 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 45 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 17 strategies...
+INFO:__main__:📊 Rebalance at 2025-04-30: 62 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 46 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 16 strategies...
+INFO:__main__:📊 Rebalance at 2025-05-30: 44 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 31 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 13 strategies...
+INFO:__main__:📊 Rebalance at 2025-06-30: 39 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 27 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 12 strategies...
+INFO:__main__:📊 Rebalance at 2025-07-31: 37 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 11 strategies...
+INFO:__main__:📊 Rebalance at 2025-08-29: 40 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 14 strategies...
+INFO:__main__:📊 Rebalance at 2025-09-30: 33 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 23 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 10 strategies...
+INFO:__main__:📊 Rebalance at 2025-10-31: 35 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2025-11-28: 35 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 26 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 9 strategies...
+INFO:__main__:📊 Rebalance at 2025-12-31: 28 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 20 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 8 strategies...
+INFO:__main__:📊 Rebalance at 2026-01-30: 23 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 16 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 7 strategies...
+INFO:__main__:📊 Rebalance at 2026-02-27: 13 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 9 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 4 strategies...
+INFO:__main__:📊 Rebalance at 2026-03-31: 13 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 7 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 6 strategies...
+INFO:__main__:📊 Rebalance at 2026-04-30: 14 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 9 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 5 strategies...
+INFO:__main__:📊 Rebalance at 2026-05-29: 13 active strategies
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 6 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:__main__:   Pre-computing position cache for 7 strategies...
+📊 Loading price data...
+
+📅 Month-end dates for discovery:
+   2015-12-31 (Thursday)
+   2016-01-29 (Friday)
+   2016-02-29 (Monday)
+   2016-03-31 (Thursday)
+   2016-04-29 (Friday)
+   2016-05-31 (Tuesday)
+   2016-06-30 (Thursday)
+   2016-07-29 (Friday)
+   2016-08-31 (Wednesday)
+   2016-09-30 (Friday)
+   2016-10-31 (Monday)
+   2016-11-30 (Wednesday)
+   2016-12-30 (Friday)
+   2017-01-31 (Tuesday)
+   2017-02-28 (Tuesday)
+   2017-03-31 (Friday)
+   2017-04-28 (Friday)
+   2017-05-31 (Wednesday)
+   2017-06-30 (Friday)
+   2017-07-31 (Monday)
+   2017-08-31 (Thursday)
+   2017-09-29 (Friday)
+   2017-10-31 (Tuesday)
+   2017-11-30 (Thursday)
+   2017-12-29 (Friday)
+   2018-01-31 (Wednesday)
+   2018-02-28 (Wednesday)
+   2018-03-30 (Friday)
+   2018-04-30 (Monday)
+   2018-05-31 (Thursday)
+   2018-06-29 (Friday)
+   2018-07-31 (Tuesday)
+   2018-08-31 (Friday)
+   2018-09-28 (Friday)
+   2018-10-31 (Wednesday)
+   2018-11-30 (Friday)
+   2018-12-31 (Monday)
+   2019-01-31 (Thursday)
+   2019-02-28 (Thursday)
+   2019-03-29 (Friday)
+   2019-04-30 (Tuesday)
+   2019-05-31 (Friday)
+   2019-06-28 (Friday)
+   2019-07-31 (Wednesday)
+   2019-08-30 (Friday)
+   2019-09-30 (Monday)
+   2019-10-31 (Thursday)
+   2019-11-29 (Friday)
+   2019-12-31 (Tuesday)
+   2020-01-31 (Friday)
+   2020-02-28 (Friday)
+   2020-03-31 (Tuesday)
+   2020-04-30 (Thursday)
+   2020-05-29 (Friday)
+   2020-06-30 (Tuesday)
+   2020-07-31 (Friday)
+   2020-08-31 (Monday)
+   2020-09-30 (Wednesday)
+   2020-10-30 (Friday)
+   2020-11-30 (Monday)
+   2020-12-31 (Thursday)
+   2021-01-29 (Friday)
+   2021-02-26 (Friday)
+   2021-03-31 (Wednesday)
+   2021-04-30 (Friday)
+   2021-05-31 (Monday)
+   2021-06-30 (Wednesday)
+   2021-07-30 (Friday)
+   2021-08-31 (Tuesday)
+   2021-09-30 (Thursday)
+   2021-10-29 (Friday)
+   2021-11-30 (Tuesday)
+   2021-12-31 (Friday)
+   2022-01-31 (Monday)
+   2022-02-28 (Monday)
+   2022-03-31 (Thursday)
+   2022-04-29 (Friday)
+   2022-05-31 (Tuesday)
+   2022-06-30 (Thursday)
+   2022-07-29 (Friday)
+   2022-08-31 (Wednesday)
+   2022-09-30 (Friday)
+   2022-10-31 (Monday)
+   2022-11-30 (Wednesday)
+   2022-12-30 (Friday)
+   2023-01-31 (Tuesday)
+   2023-02-28 (Tuesday)
+   2023-03-31 (Friday)
+   2023-04-28 (Friday)
+   2023-05-31 (Wednesday)
+   2023-06-30 (Friday)
+   2023-07-31 (Monday)
+   2023-08-31 (Thursday)
+   2023-09-29 (Friday)
+   2023-10-31 (Tuesday)
+   2023-11-30 (Thursday)
+   2023-12-29 (Friday)
+   2024-01-31 (Wednesday)
+   2024-02-29 (Thursday)
+   2024-03-29 (Friday)
+   2024-04-30 (Tuesday)
+   2024-05-31 (Friday)
+   2024-06-28 (Friday)
+   2024-07-31 (Wednesday)
+   2024-08-30 (Friday)
+   2024-09-30 (Monday)
+   2024-10-31 (Thursday)
+   2024-11-29 (Friday)
+   2024-12-31 (Tuesday)
+   2025-01-31 (Friday)
+   2025-02-28 (Friday)
+   2025-03-31 (Monday)
+   2025-04-30 (Wednesday)
+   2025-05-30 (Friday)
+   2025-06-30 (Monday)
+   2025-07-31 (Thursday)
+   2025-08-29 (Friday)
+   2025-09-30 (Tuesday)
+   2025-10-31 (Friday)
+   2025-11-28 (Friday)
+   2025-12-31 (Wednesday)
+   2026-01-30 (Friday)
+   2026-02-27 (Friday)
+   2026-03-31 (Tuesday)
+   2026-04-30 (Thursday)
+   2026-05-29 (Friday)
+   2026-06-11 (Thursday)
+
+⏭️  Skipping Phase 1 (--skip-discovery)
+
+============================================================
+  PHASE 2: Trading Simulation
+============================================================
+⚖️  Inverse-vol sizing ON (target=0.1, lookback=60d, cap=[0.25,3.0])
+⚖️  Rates alpha-weight boost = 2.0×
+🚫 Excluded from backtest universe: ['GBTPGR10 Index', 'GDBR10 Index', 'GDBR2 Index', 'GFRN10 Index', 'GJGB10 Index', 'GJGB2 Index', 'GTAUD10YR Corp', 'GTAUD2YR Corp', 'GTAUD3YR Corp', 'GUKG10 Index', 'GUKG2 Index', 'GVSK10YR Index', 'GVSK3YR Index', 'NQ1 Index', 'USGG10YR Index', 'USGG2YR Index']
+💸 Transaction cost: 2bp per unit turnover
+🚀 Running Phase 2 Simulation (Start: 2016-01-01, MaxCorr: 1.0, SignalLag: 1)...
+✅ Phase 2 complete! Trading log saved to trading_log.csv (2718 rows)
+Rates+FX PnL plot saved to trading_pnl_2016-01-01_to2026-06-11_corr1.0_backtest_lag1_band0.2_rates0.00_fx0.93.png
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2010-01-01_2026-06-11.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (3685, 18)
+INFO:src.data.loader:📂 Loading cached yields from D:\김선도\Python\only_quant\data\cache\yields_2010-01-01_2026-06-11.parquet
+📊 Loading price data...
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+
+================================================================
+  SLEEVE BACKTEST  2016-01-01 → 2026-06-11
+================================================================
+PORTFOLIO    Sharpe  0.94 | Vol  6.6% | AnnRet   6.2% | MaxDD -14.7%
+  Rates      Sharpe  0.98 | Vol  4.7% | AnnRet   4.6% | MaxDD  -8.4%
+  FX         Sharpe  0.36 | Vol  4.6% | AnnRet   1.5% | MaxDD -10.9%
+
+  Avg gross leverage: 5.10x | Annualized turnover: 330.9x
+
+📊 Saved plot → sleeve_backtest_2016-01-01_tv10.png
+✅ Saved sleeve_backtest_log.csv
+INFO:__main__:📂 [signals] Auto-selected strategy folder: strategies_2026-05-29
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2026-06-11.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (1675, 18)
+INFO:src.data.loader:📂 Loading cached yields from D:\김선도\Python\only_quant\data\cache\yields_2010-01-01_2026-06-11.parquet
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 6 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2010-01-01_2026-06-11.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (3685, 18)
+INFO:src.data.loader:📂 Loading cached yields from D:\김선도\Python\only_quant\data\cache\yields_2010-01-01_2026-06-11.parquet
+INFO:__main__:   🧩 Rates book ← SleeveEngine (as of 2026-06-11, 12 assets)
+
+🎯 Trading Signals:
+   Date: 2026-06-12
+   Active strategies: 7
+   📐 금리 북: SleeveEngine (기준 2026-06-11) | FX 북: 전략 공장
+
+   🌡️  시장 국면 (Hurst [RS], window=120):
+      [금리]
+         ↔️  횡보장  DU1 Comdty: H=0.480
+         📈 추세장  G 1 Comdty: H=0.608
+         ↔️  횡보장  IK1 Comdty: H=0.440
+         ↔️  횡보장  JB1 Comdty: H=0.486
+         📈 추세장  KAA1 Comdty: H=0.581
+         📈 추세장  KE1 Comdty: H=0.564
+         ↔️  횡보장  OAT1 Comdty: H=0.429
+         ↔️  횡보장  RX1 Comdty: H=0.453
+         📈 추세장  TU1 Comdty: H=0.693
+         📈 추세장  TY1 Comdty: H=0.664
+         📈 추세장  XM1 Comdty: H=0.569
+         📈 추세장  YM1 Comdty: H=0.552
+      [FX]
+         📈 추세장  AD1 Curncy: H=0.655
+         📈 추세장  BP1 Curncy: H=0.546
+         📈 추세장  EC1 Curncy: H=0.703
+         📈 추세장  JY1 Curncy: H=0.511
+         ↔️  횡보장  KRW Curncy: H=0.454
+
+   📊 금리 포지션 (선물 기준):
+      TU1 Comdty: 🔴 SHORT (목표포지션 -0.27 | SLEEVE, 델타: -23만원 | 📈 H=0.693)
+      TY1 Comdty: 🔴 SHORT (목표포지션 -0.15 | SLEEVE, 델타: -13만원 | 📈 H=0.664)
+      DU1 Comdty: 🟢 LONG (목표포지션 +0.68 | SLEEVE, 델타: +57만원 | ↔️ H=0.480)
+      RX1 Comdty: 🟢 LONG (목표포지션 +0.08 | SLEEVE, 델타: +6만원 | ↔️ H=0.453)
+      G 1 Comdty: 🔴 SHORT (목표포지션 -0.03 | SLEEVE, 델타: -2만원 | 📈 H=0.608)
+      XM1 Comdty: 🔴 SHORT (목표포지션 -0.65 | SLEEVE, 델타: -54만원 | 📈 H=0.569)
+      YM1 Comdty: 🔴 SHORT (목표포지션 -0.66 | SLEEVE, 델타: -55만원 | 📈 H=0.552)
+      JB1 Comdty: 🔴 SHORT (목표포지션 -0.59 | SLEEVE, 델타: -49만원 | ↔️ H=0.486)
+      KAA1 Comdty: 🟢 LONG (목표포지션 +0.10 | SLEEVE, 델타: +8만원 | 📈 H=0.581)
+      KE1 Comdty: 🔴 SHORT (목표포지션 -0.10 | SLEEVE, 델타: -8만원 | 📈 H=0.564)
+      IK1 Comdty: 🟢 LONG (목표포지션 +0.13 | SLEEVE, 델타: +11만원 | ↔️ H=0.440)
+      OAT1 Comdty: 🟢 LONG (목표포지션 +0.38 | SLEEVE, 델타: +32만원 | ↔️ H=0.429)
+
+      💰 선물 넷 델타: -90만원 숏 (선물롱 5 / 선물숏 7, 그로스: 318만원, 예산: 83만/자산)
+
+   💱 FX 포지션:
+      AD1 Curncy: 🔘 NOSTR (신뢰도: 0.00, 전략개수: 0 [MOM: 0, MR: 0, ADV: 0] | 📈 H=0.655)
+      BP1 Curncy: 🔘 NOSTR (신뢰도: 0.00, 전략개수: 0 [MOM: 0, MR: 0, ADV: 0] | 📈 H=0.546)
+      EC1 Curncy: 🔘 NOSTR (신뢰도: 0.00, 전략개수: 0 [MOM: 0, MR: 0, ADV: 0] | 📈 H=0.703)
+      JY1 Curncy: ⚪ FLAT (신뢰도: 0.00, 전략개수: 4 [MOM: 0, MR: 0, ADV: 0] | 📈 H=0.511)
+      KRW Curncy: 🟢 LONG (신뢰도: 0.33, 전략개수: 3 [MOM: 0, MR: 0, ADV: 0] | ↔️ H=0.454)
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2020-01-01_2026-06-11.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (1675, 18)
+INFO:src.data.loader:📂 Loading cached yields from D:\김선도\Python\only_quant\data\cache\yields_2010-01-01_2026-06-11.parquet
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 6 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+INFO:src.data.loader:📂 Loading cached data from D:\김선도\Python\only_quant\data\cache\prices_2010-01-01_2026-06-11.parquet
+INFO:src.data.preprocessor:✅ Data cleaned: (3685, 18)
+INFO:src.data.loader:📂 Loading cached yields from D:\김선도\Python\only_quant\data\cache\yields_2010-01-01_2026-06-11.parquet
+INFO:src.portfolio.selector:   🧹 Discovery-scope filter: dropped 6 strategies (categories=['advanced', 'alpha'], excluded_assets=['NQ1 Index'], disabled=['adx_momentum', 'carry_trade', 'rates_carry', 'rates_value'])
+📊 가격 데이터 로딩...
+
+▌ 오늘의 트레이딩 시그널  (기준일 2026-06-11 · 금리=슬리브 엔진 · FX=전략 공장(상관필터 1.0) — main.py --mode signals 동일)
+  공장 선택 전략 7개
+  자산                                   기초지표        가격 방향          확신도     포지션     Δ전일만원     델타만원     출처
+  ── 금리 ──
+  DU1 Comdty (독일 2Y)                 2.679%    105.68 ▲ 롱        0.68   +0.68       +38     +500    SLV
+  G 1 Comdty (영국 10Y)                4.905%    87.980 ▼ 숏        0.03   -0.03       +27      -20    SLV
+  IK1 Comdty (이탈리아 10Y)              3.797%    117.48 ▲ 롱        0.13   +0.13        +4      +97    SLV
+  JB1 Comdty (일본 10Y)                2.690%    128.70 ▼ 숏        0.59   -0.59       +79     -434    SLV
+  KAA1 Comdty (한국 10Y)               4.315%    105.66 ▲ 롱        0.10   +0.10        +1      +73    SLV
+  KE1 Comdty (한국 3Y)                 3.906%    103.07 ▼ 숏        0.10   -0.10      -163      -73    SLV
+  OAT1 Comdty (프랑스 10Y)              3.802%    118.62 ▲ 롱        0.38   +0.38       +26     +277    SLV
+  RX1 Comdty (독일 10Y)                3.032%    125.63 ▲ 롱        0.08   +0.08        -4      +56    SLV
+  TU1 Comdty (미국 2Y)                 4.062%    103.24 ▼ 숏        0.27   -0.27       -77     -201    SLV
+  TY1 Comdty (미국 10Y)                4.461%    109.94 ▼ 숏        0.15   -0.15       -30     -111    SLV
+  XM1 Comdty (호주 10Y)                4.895%    95.090 ▼ 숏        0.65   -0.65       -65     -473    SLV
+  YM1 Comdty (호주 3Y)                 4.495%    95.500 ▼ 숏        0.66   -0.66       -59     -481    SLV
+  ── 통화(FX) ──
+  AD1 Curncy (AUD)            AUDUSD 0.7029    70.290 · 중립       0.00   +0.00         -        -    전략0
+  BP1 Curncy (GBP)            GBPUSD 1.3398    133.98 · 중립       0.00   +0.00         -        -    전략0
+  EC1 Curncy (EUR)            EURUSD 1.1560    1.1560 · 중립       0.00   +0.00         -        -    전략0
+  JY1 Curncy (JPY)            USDJPY 160.04    62.485 · 중립       0.00   +0.00         -        -    전략4
+  KRW Curncy (KRW(원화))       USDKRW 1,531.2   1,531.2 ▲ 롱        0.33   +0.29         -        -    전략3
+
+  💰 금리 북 순델타 -789만원 / 한도 ±5,000만원 (사용률 16%) · 그로스 2,795만원 / 한도 8,000만원 (사용률 35%)
+     환산: 포지션 1.0 = 733만원 — 과거 최대 |순포지션| 6.82 / 그로스 8.18 중 순델타 한도가 결정
+
+▌ 슬리브 엔진 — 금리 북  (기준일 2026-06-11 · 연속 시그널 · 볼타게팅 — main.py --mode signals 금리 SLEEVE 행과 동일)
+  ── 추세 (TSMOM)     (가중 1.0)  6/12개월 가격 추세 z-score · 레짐게이트로 횡보장 차단 · 방향성
+       독일 2Y ▼-1.37    영국 10Y ▼-0.96   이탈리아 10Y ▼-1.31  일본 10Y ▼-0.81   한국 10Y ▼-1.47   한국 3Y ▼-1.21  
+       프랑스 10Y ▼-0.26  독일 10Y ▼-0.28   미국 2Y ▼-1.89    미국 10Y ▼-1.40   호주 10Y ▼-0.36   호주 3Y ▼-0.58  
+  ── 밸류 (평균회귀)      (가중 0.5)  2년 평균 대비 가격 괴리 — 과열 숏 / 과매도 롱 · 시장중립
+       독일 2Y ▲+0.42    영국 10Y ·-0.08   이탈리아 10Y ▼-0.14  일본 10Y ▲+0.32   한국 10Y ▲+0.42   한국 3Y ▲+0.42  
+       프랑스 10Y ▲+0.39  독일 10Y ·+0.03   미국 2Y ▼-0.99    미국 10Y ▼-0.59   호주 10Y ▼-0.13   호주 3Y ·-0.07  
+  ── 캐리 (일드 레벨)     (가중 1.0)  국가간 장기 일드 레벨 z — 고금리국 롱 / 저금리국 숏 · 시장중립
+       독일 2Y ▲+0.22    영국 10Y ▼-0.24   이탈리아 10Y ▼-0.25  일본 10Y ▲+0.19   한국 10Y ▲+0.39   한국 3Y ▲+0.39  
+       프랑스 10Y ▲+0.39  독일 10Y ▼-0.16   미국 2Y ▲+0.38    미국 10Y ·-0.05   호주 10Y ▼-0.65   호주 3Y ▼-0.60  
+  ── 정책 모멘텀         (가중 1.0)  2Y 금리 6개월 변화 — 인하 사이클 롱 / 인상 사이클 숏 · 방향성
+       독일 2Y ▼-1.13    영국 10Y ▼-1.70   이탈리아 10Y ▼-1.13  일본 10Y ▼-0.46   한국 10Y ▼-1.22   한국 3Y ▼-1.22  
+       프랑스 10Y ▼-1.13  독일 10Y ▼-1.13   미국 2Y ▼-2.00    미국 10Y ▼-2.00   호주 10Y ▼-0.16   호주 3Y ▼-0.16  
+  ── 단기 평균회귀        (가중 0.5)  10일 무브의 글로벌 평균 대비 과열/과매도 페이드 · 시장중립 · 상시가동(스탑 미적용)
+       독일 2Y ▲+0.50    영국 10Y ·+0.04   이탈리아 10Y ▲+0.44  일본 10Y ▼-0.72   한국 10Y ▲+0.29   한국 3Y ▼-0.35  
+       프랑스 10Y ▲+1.18  독일 10Y ▲+0.16   미국 2Y ▼-0.20    미국 10Y ▼-0.35   호주 10Y ▼-0.34   호주 3Y ▼-0.65  
+  ── 최종 목표          (인버스볼 × 포트 볼타게팅 × 스무딩 — 주문 기준)
+       독일 2Y ▲+0.68    영국 10Y ▼-0.03   이탈리아 10Y ▲+0.13  일본 10Y ▼-0.59   한국 10Y ▲+0.10   한국 3Y ▼-0.10  
+       프랑스 10Y ▲+0.38  독일 10Y ▲+0.08   미국 2Y ▼-0.27    미국 10Y ▼-0.15   호주 10Y ▼-0.65   호주 3Y ▼-0.66  
+
+============================================================================================
+  전략 공장 대시보드  |  폴더: strategies_2026-06-09  |  기준일: 2026-06-11
+  탐색 공간 125개 조합  |  이번 달 활성 7개  |  오늘 진입 1개
+============================================================================================
+
+▒▒▒ ALPHA1 ▒▒▒
+  ── xsect_carry              후보  40개 · 활성  4개 · 진입  0개
+       [활성✓]     JPY          Sh6m  0.26  | 통화군 금리차 순위 상·하위 1 롱숏 (크로스섹셔널 캐리)
+       [활성✓]     JPY          Sh6m  0.26  | 통화군 금리차 순위 상·하위 2 롱숏 (크로스섹셔널 캐리)
+       [활성✓]     JPY          Sh6m  0.69  | 통화군 금리차 순위 상·하위 1 롱숏 (크로스섹셔널 캐리)
+       [활성✓]     JPY          Sh6m  0.69  | 통화군 금리차 순위 상·하위 2 롱숏 (크로스섹셔널 캐리)
+  ── xsect_momentum           후보  75개 · 활성  2개 · 진입  1개
+       [진입✓] ▲L  KRW(원화)      Sh6m  0.03  | fx 내 10일 수익률 상·하위 2 롱숏 (크로스섹셔널 모멘텀)
+       [활성✓]     KRW(원화)      Sh6m  1.03  | fx 내 3일 수익률 상·하위 1 롱숏 (크로스섹셔널 모멘텀)
+
+▒▒▒ ALPHA4 ▒▒▒
+  ── real_rate_fx             후보  10개 · 활성  1개 · 진입  0개
+       [활성✓]     KRW(원화)      Sh6m  0.24  | 실제 2Y 금리차의 20일 변화로 환율 방향 예측 (실금리 캐리)
+
+============================================================================================
+
+📊 HTML 대시보드 저장: strategy_dashboard_2026-06-12.html
+================================================================
+0  캐시 갱신
+================================================================
+  end_date 기준: 2026-06-11
+  결과: already_current
+
+================================================================
+1  FX 북 백테스트  (run_backtest.py --skip-discovery)
+================================================================
+
+================================================================
+2  금리 북 백테스트  (run_sleeve_backtest.py)
+================================================================
+
+================================================================
+3  시그널  (main.py --mode signals)
+================================================================
+
+================================================================
+4  대시보드  (strategy_dashboard.py --html)
+================================================================
+
+================================================================
+  0 캐시 갱신    : already_current
+  1 FX 북 로그   : OK
+  2 금리 북 로그 : OK
+  3 시그널       : OK
+  4 대시보드     : OK
+================================================================

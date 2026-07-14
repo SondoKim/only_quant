@@ -49,6 +49,48 @@ def cost_bps_for(asset: str, costs: dict) -> float:
     return costs.get('index', 1.0)
 
 
+def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
+    """Persist the rates factor z-score time-series (Trend/Value/Carry/Curve/
+    Policy) exactly as the SleeveEngine computes them — the authoritative source
+    for total_dashboard's '금리 팩터 모니터링' chart.
+
+    Saved wide, one column per factor×asset ('{factor}::{ticker}'), matching the
+    'pos::' / 'rpnl::' prefix convention in sleeve_backtest_log.csv. Full history
+    is written (the dashboard slices to its own display start on read). This lets
+    the dashboard READ these instead of re-deriving them, so changing the engine
+    here can never silently desync the chart.
+    """
+    ra = engine.rates_assets
+    if not ra:
+        print("⚠ No rates assets — factor signals not saved.")
+        return None
+    factors = {
+        'trend':  engine.trend_signal(ra),
+        'value':  engine.value_signal(ra, 'rates'),
+        'carry':  engine.carry_signal(ra, 'rates'),
+        'curve':  engine.curve_signal(ra),
+        'policy': engine.policy_signal(ra),
+    }
+    blocks = []
+    for fac, df in factors.items():
+        if df is None or df.empty:
+            continue
+        d = df.reindex(columns=ra).dropna(how='all')
+        if d.empty:
+            continue
+        blocks.append(d.rename(columns={a: f'{fac}::{a}' for a in d.columns}))
+    if not blocks:
+        print("⚠ Factor signals all empty — nothing saved.")
+        return None
+    out = pd.concat(blocks, axis=1).sort_index()
+    out.index.name = 'date'
+    out.to_csv(out_path)
+    facs = sorted({c.split('::', 1)[0] for c in out.columns})
+    print(f"✅ Saved {out_path}  ({out.shape[0]} rows × {out.shape[1]} cols; "
+          f"factors: {', '.join(facs)})")
+    return out
+
+
 def perf_stats(daily: pd.Series) -> dict:
     daily = daily.dropna()
     if daily.empty or daily.std() == 0:
@@ -62,11 +104,18 @@ def perf_stats(daily: pd.Series) -> dict:
 
 
 def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
-        data_start='2010-01-01', cfg_override=None):
+        data_start='2010-01-01', cfg_override=None, exclude_assets=None,
+        save_outputs=True):
     print("📊 Loading price data...")
     loader = DataLoader()
     prices = DataPreprocessor(loader.load_data(start_date=data_start,
                                                use_cache=True)).clean().get_data()
+    if exclude_assets:
+        # 유니버스 축소 실험/운용: 엔진 유니버스는 prices 컬럼에서 결정되므로
+        # 여기서 제외하면 시그널·xs-demean·볼타겟팅 모두 축소 유니버스로 재계산됨.
+        drop = [a for a in exclude_assets if a in prices.columns]
+        prices = prices.drop(columns=drop)
+        print(f"   ⛔ Excluded {len(drop)} assets: {', '.join(drop)}")
     if start_date:
         prices = prices[prices.index >= pd.to_datetime(start_date)]
     if end_date:
@@ -107,9 +156,31 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     traded = list(positions.columns)
     dir_returns = engine.dir_returns[traded].reindex(positions.index).fillna(0.0)
 
+    # 금리 자산 손익은 연속선물({ticker}1) 수익률 대신 '캐시금리 변동(bp) × 회귀 베타'로
+    # 환산한 이론 수익률로 계산한다 → 연속선물 롤 점프(아티팩트) 제거.
+    # 포지션 사이징은 그대로 실제 선물수익률 기반이고, 손익 귀속만 금리 기준으로 바꾼다.
+    # beta = d(directional return)/d(yield bp), 최근 LB일 회귀(룩어헤드 방지로 1일 시프트).
+    rates_cols = engine.rates_assets
+    pnl_returns = dir_returns.copy()
+    LB = 250
+    yblk = engine.yields
+    for a in rates_cols:
+        if a not in pnl_returns.columns:
+            continue
+        yt = engine.tradeable_yield_map.get(a)
+        if yblk is None or yt is None or yt not in yblk.columns:
+            continue
+        dy_bp = yblk[yt].reindex(dir_returns.index).diff() * 100.0
+        fr = dir_returns[a]
+        beta = (fr.rolling(LB, min_periods=60).cov(dy_bp)
+                / dy_bp.rolling(LB, min_periods=60).var()).shift(1)
+        implied = beta * dy_bp
+        # 베타 워밍업 전이나 금리 결측 구간은 실제 수익률로 폴백.
+        pnl_returns[a] = implied.where(implied.notna(), dir_returns[a])
+
     # PnL: yesterday's position earns today's directional return
     held = positions.shift(1).fillna(0.0)
-    gross_pnl = held * dir_returns
+    gross_pnl = held * pnl_returns
 
     # Transaction costs on daily turnover
     turnover = positions.diff().abs().fillna(0.0)
@@ -155,8 +226,20 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     # Save daily series for further analysis
     out_df = pd.DataFrame({'portfolio': port, 'rates': rates, 'fx': fx})
     out_df['equity'] = (1 + port).cumprod()
-    out_df.to_csv('sleeve_backtest_log.csv')
-    print("✅ Saved sleeve_backtest_log.csv")
+    # 자산별 금리 일별 순손익 (대시보드 '금리 자산별 누적손익(억원)' 차트용).
+    # 컬럼 합 = 'rates' 와 동일. prefix 'rpnl::' 로 기존 컬럼과 구분.
+    for a in rates_cols:
+        out_df[f'rpnl::{a}'] = net_pnl[a]
+    # 자산별 일별 포지션 (대시보드 '총/net 델타 시계열' 차트용). prefix 'pos::'.
+    for a in rates_cols:
+        out_df[f'pos::{a}'] = positions[a]
+    if save_outputs:
+        out_df.to_csv('sleeve_backtest_log.csv')
+        print("✅ Saved sleeve_backtest_log.csv")
+
+        # 대시보드 '금리 팩터 모니터링' 소스 — 엔진 산출 팩터 z-score를 그대로 저장.
+        save_factor_signals(engine)
+
     return out_df
 
 

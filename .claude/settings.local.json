@@ -69,7 +69,8 @@
       "Bash(PYTHONPATH=. PYTHONIOENCODING=utf-8 python scripts/strategy_dashboard.py --html)",
       "Bash(sed -n '470,560p' src/portfolio/selector.py)",
       "Bash(sed -n '190,240p' src/backtester/vectorbt_engine.py)",
-      "Bash(awk '/elif args.mode == .signals.:/,/elif args.mode == .summary.:/' main.py)"
+      "Bash(awk '/elif args.mode == .signals.:/,/elif args.mode == .summary.:/' main.py)",
+      "Bash(python -c \"import docx; print\\(docx.__version__\\)\")"
     ]
   }
 }

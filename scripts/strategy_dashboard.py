@@ -358,12 +358,8 @@ QUANT_STRATS_INFO = {
         'desc': 'p일 상대강도(RS) 순위 기반 상위 자산 편입 및 모멘텀 추종',
         'overnight': 'O'
     },
-    'volatility_breakout': {
-        'name': '변동성 돌파 전략 (Advanced)',
-        'asset': '미국금리, JPY, G',
-        'desc': '전일 가격 변동성 range의 k배 당일 돌파 시 추세 추종',
-        'overnight': 'X'
-    },
+    # volatility_breakout 제거 (2026-06-15): fx-advanced forward 음수로 disabled_strategies
+    # 에 등재 — 전략공장에서 더 이상 탐색/저장하지 않으므로 카탈로그에서도 제외.
     # 알파1 전략
     'xsect_momentum': {
         'name': '크로스섹셔널 모멘텀 전략 (Alpha1)',
@@ -551,6 +547,68 @@ def attach_underlying(sig_rows, prices):
                 pass
 
 
+def attach_pnl_1d(sig_rows, sleeve_snap, capital_억=100.0,
+                  fx_notional_만달러=300.0, fx_usdkrw=1500.0):
+    """전일(최신 거래일) 자산별 손익 및 전일 실행 포지션을 행에 부착.
+
+    r['pnl1d_bp']  — bp (공통 단위)
+    r['pnl1d_w']   — 만원 환산
+                     금리: bp × capital_억  (배정자본 기준)
+                     FX:  bp × fx_bp_to_w  (명목금액 기준)
+    r['pos_prev']  — 어제 실행된 포지션 (전일 손익의 원천 포지션)
+                     금리: sleeve pos[-2] (T-2 신호 → T-1 실행)
+                     FX:   trading_log pos[-1] (T-2 신호 → T-1 실행, 동일 개념)
+
+    FX 만원 환산:
+      fx_bp_to_w = fx_notional_만달러 × fx_usdkrw / 10_000
+      기본값: 300만달러 × 1500원 / 10000 = 45 (1bp = 45만원)
+
+    금리 = 슬리브 엔진 pos[-2]×ret[-1] (비용 차감 전),
+    FX  = trading_log.csv CumPnL 차분 = pos[-1]×ret[-1] (비용 차감 후).
+    반환: {'rates': {'bp': ..., 'w': ...}, 'fx': ..., 'fx_bp_to_w': ...} (없으면 None).
+    """
+    # FX: 1bp × 명목금액 환산 (만원)
+    # 명목 KRW = fx_notional_만달러 × 10000달러 × fx_usdkrw원 = (단위: 원)
+    # 만원/bp  = 명목 KRW × (1/10000bp) / 10000(원→만원)
+    #          = fx_notional_만달러 × fx_usdkrw / 10000
+    fx_bp_to_w = fx_notional_만달러 * fx_usdkrw / 10_000
+
+    totals = {}
+    sl      = (sleeve_snap or {}).get('pnl_1d') or {}
+    sl_prev = (sleeve_snap or {}).get('prev') or {}   # T-2 신호 = T-1 실행 포지션
+    if sl:
+        for r in sig_rows:
+            if r.get('src') == 'sleeve' and r['asset'] in sl:
+                bp = sl[r['asset']] * 1e4
+                r['pnl1d_bp'] = bp
+                r['pnl1d_w']  = bp * capital_억
+            if r.get('src') == 'sleeve' and r['asset'] in sl_prev:
+                r['pos_prev'] = sl_prev[r['asset']]
+        rates_bp = sum(v * 1e4 for v in sl.values())
+        totals['rates'] = {'bp': rates_bp, 'w': rates_bp * capital_억}
+    try:
+        root = Path(__file__).parent.parent
+        df = pd.read_csv(root / 'trading_log.csv', parse_dates=['Date']).set_index('Date')
+        fx_bp_total, n = 0.0, 0
+        for r in sig_rows:
+            col_pnl = f"{r['asset']}_CumPnL"
+            col_pos = f"{r['asset']}_Pos"
+            if r['klass'] == 'fx' and col_pnl in df.columns:
+                bp = float(df[col_pnl].diff().iloc[-1]) * 100.0   # fraction → bp
+                r['pnl1d_bp'] = bp
+                r['pnl1d_w']  = bp * fx_bp_to_w
+                fx_bp_total += bp
+                n += 1
+            if r['klass'] == 'fx' and col_pos in df.columns:
+                r['pos_prev'] = float(df[col_pos].iloc[-1])
+        if n:
+            totals['fx'] = {'bp': fx_bp_total, 'w': fx_bp_total * fx_bp_to_w,
+                            'fx_bp_to_w': fx_bp_to_w}
+    except Exception:
+        pass
+    return totals or None
+
+
 def _px_fmt(v):
     """자산 가격 표시용 자릿수 자동 포맷."""
     try:
@@ -727,12 +785,13 @@ def build_signal_table(selector, prices, max_corr, tradeable):
     return rows, report.get('total_active_strategies', 0)
 
 
-def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=None):
+def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=None,
+                       pnl_totals=None):
     print(f"\n▌ 오늘의 트레이딩 시그널  (기준일 {signal_date} · 금리=슬리브 엔진 · "
           f"FX=전략 공장(상관필터 {max_corr}) — main.py --mode signals 동일)")
     print(f"  공장 선택 전략 {n_active}개")
     print(f"  {'자산':<26} {'기초지표':>14} {'가격':>9} {'방향':<8} {'확신도':>6} "
-          f"{'포지션':>7} {'Δ전일만원':>9} {'델타만원':>8} {'출처':>6}")
+          f"{'포지션':>7} {'델타증감만원':>12} {'델타만원':>8} {'손익bp':>7} {'손익만원':>8} {'출처':>6}")
     last_klass = None
     for r in sig_rows:
         if r['klass'] != last_klass:
@@ -740,12 +799,21 @@ def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=Non
             last_klass = r['klass']
         arrow = {'LONG': '▲ 롱', 'SHORT': '▼ 숏', '-': '· 중립'}[r['dir']]
         src = 'SLV' if r.get('src') == 'sleeve' else f"전략{r['n']}"
-        ddw = f"{r['ddelta_w']:>+9.0f}" if 'ddelta_w' in r else f"{'-':>9}"
-        dw = f"{r['delta_w']:>+8.0f}" if 'delta_w' in r else f"{'-':>8}"
-        px = _px_fmt(r.get('price'))
-        und = r.get('underlying', '-')
+        ddw  = f"{r['ddelta_w']:>+12.0f}" if 'ddelta_w' in r else f"{'-':>12}"
+        dw   = f"{r['delta_w']:>+8.0f}"   if 'delta_w'  in r else f"{'-':>8}"
+        pbp  = f"{r['pnl1d_bp']:>+7.1f}"  if 'pnl1d_bp' in r else f"{'-':>7}"
+        pw   = f"{r['pnl1d_w']:>+8.0f}"   if 'pnl1d_w'  in r else f"{'-':>8}"
+        px   = _px_fmt(r.get('price'))
+        und  = r.get('underlying', '-')
         print(f"  {asset_label(r['asset']):<26} {und:>14} {px:>9} {arrow:<8} {r['conf']:>6.2f} "
-              f"{r['pos']:>+7.2f} {ddw} {dw} {src:>6}")
+              f"{r['pos']:>+7.2f} {ddw} {dw} {pbp} {pw} {src:>6}")
+    if pnl_totals:
+        seg = []
+        for key, lbl in [('rates', '금리'), ('fx', 'FX')]:
+            t = pnl_totals.get(key)
+            if t:
+                seg.append(f"{lbl} {t['bp']:+.1f}bp ({t['w']:+,.0f}만원)")
+        print(f"\n  📈 전일 손익 합계: {' · '.join(seg)}")
     if delta_info:
         d = delta_info
         g_txt = (f" · 그로스 {d['gross_w']:,.0f}만원 / 한도 {d['gross_budget']:,.0f}만원 "
@@ -823,7 +891,8 @@ def _spark_svg(vals, w=150, h=30, guides=()):
 
 def write_html(rows, factory_dir, signal_date, out_path,
                sig_rows=None, n_active_sel=0, max_corr=0.5, official_dir=None,
-               sleeve_snap=None, delta_info=None, perf_html=None, fx_hist=None):
+               sleeve_snap=None, delta_info=None, perf_html=None, fx_hist=None,
+               pnl_totals=None):
     rows = sorted(rows, key=sort_key)
     c = counts(rows)
     total = len(rows)
@@ -903,7 +972,7 @@ def write_html(rows, factory_dir, signal_date, out_path,
 
     # 슬리브 엔진 — 금리 북: 가중치 > 0 인 슬리브(스냅샷에 존재)만 ON
     active_sleeves = set((sleeve_snap or {}).get('sleeves', {}).keys())
-    parts.append("<tr style='background:#1b1e27;'><td colspan='6' style='font-weight:bold;color:#c4b5fd;font-size:12.5px;'>슬리브 엔진 — 금리 북 (2016+ 검증 SR 0.97 · 통합 북 1.39)</td></tr>")
+    parts.append("<tr style='background:#1b1e27;'><td colspan='6' style='font-weight:bold;color:#c4b5fd;font-size:12.5px;'>슬리브 엔진 — 금리 북 (2016+ 검증 SR 1.02 · 통합 북 1.42)</td></tr>")
     for key, name, desc in SLEEVE_STRATS:
         on = key in active_sleeves
         status, s_class = ('ON', 'st_on') if on else ('OFF', 'st_off')
@@ -943,15 +1012,39 @@ def write_html(rows, factory_dir, signal_date, out_path,
                 f"환산 <b>포지션 1.0 = {d['per_unit']:,.0f}만원</b> "
                 f"(과거 최대 |순| {d['max_net_units']:.2f} / 그로스 {d['max_gross_units']:.2f} 중 "
                 f"{'그로스' if d['binding'] == 'gross' else '순델타'} 한도가 결정)</div>")
+        if pnl_totals:
+            segs, total_w = [], 0.0
+            for key, lbl in [('rates', '금리'), ('fx', 'FX')]:
+                t = pnl_totals.get(key)
+                if not t:
+                    continue
+                cls = 'long' if t['bp'] > 0 else ('short' if t['bp'] < 0 else 'flat')
+                segs.append(f"{lbl} <b class='{cls}' style='font-size:15px;font-weight:700;'>"
+                            f"{t['bp']:+.1f}bp ({t['w']:+,.0f}만원)</b>")
+                total_w += t['w']
+            if segs:
+                fx_t = pnl_totals.get('fx', {})
+                bpw  = fx_t.get('fx_bp_to_w')
+                fx_note = (f"FX 1bp={bpw:.0f}만원" if bpw else "")
+                tot_cls = 'long' if total_w > 0 else ('short' if total_w < 0 else 'flat')
+                parts.append(
+                    f"<div class='meta'>📈 전일 손익: {' · '.join(segs)} "
+                    f"| 합계 <b class='{tot_cls}' style='font-size:15px;font-weight:700;'>"
+                    f"{total_w:+,.0f}만원</b> "
+                    f"— 금리=슬리브 분해(비용 차감 전) / FX=백테스트 로그(비용 차감 후)"
+                    f"{f' / {fx_note}' if fx_note else ''}</div>")
         sig_hist = (sleeve_snap or {}).get('history')
-        parts.append("<table style='max-width:1060px;border:1px solid #1e2330;border-radius:6px;overflow:hidden;'>")
-        parts.append("<tr style='background:#171b24;'><th>자산</th><th>기초 금리/환율</th><th>방향</th>"
-                     "<th>확신도</th><th>포지션(변동성조정)</th><th>Δ전일(만원)</th><th>델타(만원)</th>"
+        parts.append("<table style='min-width:1560px;border:1px solid #1e2330;border-radius:6px;overflow:hidden;'>")
+        parts.append("<tr style='background:#171b24;white-space:nowrap;'>"
+                     "<th>자산</th><th>기초 금리/환율</th><th>방향</th>"
+                     "<th>확신도</th><th>전일 포지션</th><th>오늘 포지션</th>"
+                     "<th>전일 델타 증감(만원)</th><th>델타(만원)</th>"
+                     "<th>전일 손익(bp)</th><th>전일 손익(만원)</th>"
                      "<th>출처</th><th>최근 120일간의 포지션 변동</th></tr>")
         last_k = None
         for r in sig_rows:
             if r['klass'] != last_k:
-                parts.append(f"<tr><td colspan='9' class='klass' style='background:#13161f;padding:6px 12px;font-size:13px;'>"
+                parts.append(f"<tr><td colspan='12' class='klass' style='background:#13161f;padding:6px 12px;font-size:13px;'>"
                              f"{CLASS_LABEL.get(r['klass'], r['klass'])}</td></tr>")
                 last_k = r['klass']
             dcls = {'LONG': 'long', 'SHORT': 'short', '-': 'flat'}[r['dir']]
@@ -975,13 +1068,35 @@ def write_html(rows, factory_dir, signal_date, out_path,
             px_span = (f" <span class='params'>{_px_fmt(r['price'])}</span>"
                        if r.get('price') is not None else "")
             und = html.escape(r.get('underlying', '–'))
+            # 전일 포지션 (어제 실행된 포지션 = 전일 손익의 원천)
+            if 'pos_prev' in r:
+                pp = r['pos_prev']
+                pp_cls = ('long' if pp > 0.02 else ('short' if pp < -0.02 else 'flat'))
+                pp_txt = {'long': '▲', 'short': '▼', 'flat': '·'}[pp_cls]
+                pos_prev_td = (f"<td class='{pp_cls}' style='font-variant-numeric:tabular-nums;'>"
+                               f"{pp_txt} {pp:+.2f}</td>")
+            else:
+                pos_prev_td = "<td class='sh'>–</td>"
+            if 'pnl1d_bp' in r:
+                p_cls = ('long' if r['pnl1d_bp'] > 0.05 else
+                         ('short' if r['pnl1d_bp'] < -0.05 else 'flat'))
+                pnl_bp_td = (f"<td class='{p_cls}' style='font-variant-numeric:tabular-nums;'>"
+                             f"{r['pnl1d_bp']:+.1f}</td>")
+                pnl_w_td  = (f"<td class='{p_cls}' style='font-variant-numeric:tabular-nums;'>"
+                             f"{r['pnl1d_w']:+,.0f}</td>")
+            else:
+                pnl_bp_td = "<td class='sh'>–</td>"
+                pnl_w_td  = "<td class='sh'>–</td>"
             parts.append(f"<tr><td>{html.escape(asset_label(r['asset']))}{px_span}</td>"
                          f"<td class='sh'>{und}</td>"
                          f"<td class='{dcls}'>{dtxt}</td>"
                          f"<td class='sh'>{r['conf']:.2f}</td>"
-                         f"<td class='sh'>{r['pos']:+.2f}</td>"
+                         f"{pos_prev_td}"
+                         f"<td class='{'long' if r['pos'] > 0.02 else ('short' if r['pos'] < -0.02 else 'flat')}' style='font-variant-numeric:tabular-nums;'>{'▲' if r['pos'] > 0.02 else ('▼' if r['pos'] < -0.02 else '·')} {r['pos']:+.2f}</td>"
                          f"{dpos_td}"
                          f"<td class='sh'>{dw}</td>"
+                         f"{pnl_bp_td}"
+                         f"{pnl_w_td}"
                          f"<td class='sh'>{src}</td>"
                          f"<td>{spark}</td></tr>")
         parts.append("</table>")
@@ -1120,6 +1235,12 @@ def main():
     ap.add_argument('--max-corr', type=float, default=1.0,
                     help="공식 시그널 집계의 상관 필터 (1.0=필터 없음, 2026-06-11 "
                          "정직 A/B 검증 구성. 백테스트 기본과 동일)")
+    ap.add_argument('--capital', type=float, default=100.0,
+                    help="금리 북 배정자본 (억원, 기본 100억). 금리 bp → 만원: 1bp × capital_억")
+    ap.add_argument('--fx-notional', type=float, default=300.0,
+                    help="FX 자산별 명목금액 (만달러, 기본 300만달러)")
+    ap.add_argument('--fx-usdkrw', type=float, default=1500.0,
+                    help="FX 만원 환산 기준환율 (KRW/USD, 기본 1500)")
     ap.add_argument('--delta-budget', type=float, default=5000.0,
                     help="금리 북 순델타 한도 (만원, 기본 5000)")
     ap.add_argument('--gross-budget', type=float, default=8000.0,
@@ -1184,8 +1305,11 @@ def main():
         if r['asset'] in last_px.index:
             r['price'] = float(last_px[r['asset']])
     attach_underlying(sig_rows, prices)
+    pnl_totals = attach_pnl_1d(sig_rows, sleeve_snap, capital_억=args.capital,
+                               fx_notional_만달러=args.fx_notional,
+                               fx_usdkrw=args.fx_usdkrw)
     print_signal_table(sig_rows, n_active_sel, args.max_corr, signal_date,
-                       delta_info=delta_info)
+                       delta_info=delta_info, pnl_totals=pnl_totals)
     if sleeve_snap:
         print_sleeve_console(sleeve_snap)
 
@@ -1208,7 +1332,7 @@ def main():
                    sig_rows=sig_rows, n_active_sel=n_active_sel, max_corr=args.max_corr,
                    official_dir=official_dir, sleeve_snap=sleeve_snap,
                    delta_info=delta_info, perf_html=perf_html,
-                   fx_hist=load_fx_pos_history())
+                   fx_hist=load_fx_pos_history(), pnl_totals=pnl_totals)
 
     factory.close()
 

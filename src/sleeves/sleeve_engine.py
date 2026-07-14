@@ -256,8 +256,14 @@ class SleeveEngine:
 
         FX: differential (foreign 2Y − US 2Y). Higher → long foreign currency.
             Fallback (no yields): price proxy (us_rate_price − foreign_rate_price).
-        Rates: yield LEVEL per market (cross-country bond carry). Higher yield
-            market → LONG (xs-demean later makes it long high / short low).
+        Rates: USD-HEDGED yield level per market (cross-country bond carry from
+            a USD investor's seat). Hedge cost is proxied by the short-rate
+            differential (covered interest parity):
+                hedged_yield = local_yield − (local_2Y − US_2Y)
+            so a high local yield financed by an equally high local short rate
+            (e.g. classic EM/JPY cases in reverse) no longer scores as free
+            carry. US assets: hedge cost = 0 → raw yield. Higher hedged yield
+            → LONG (xs-demean later makes it long high / short low).
             No price fallback (returns empty → sleeve simply inactive on rates).
         """
         if asset_class == 'fx':
@@ -287,13 +293,20 @@ class SleeveEngine:
             z = _zscore(pd.DataFrame(diffs), self.carry_window)
             return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
 
-        # rates carry — yield level, only when yields available
+        # rates carry — USD-hedged yield level, only when yields available.
+        # hedged = local_yield − (local funding(2Y/3Y) − US 2Y)  [CIP 근사]
         if asset_class == 'rates' and self._has_rates_yields():
+            us_fund = self._y(self.fx_short_yield.get('US'))   # USD 펀딩 앵커 (US 2Y)
             ydf = {}
             for a in assets:
                 ys = self._y(self.tradeable_yield_map.get(a))
-                if ys is not None:
-                    ydf[a] = ys
+                if ys is None:
+                    continue
+                fund = self._y(self.policy_rate_map.get(a))
+                if us_fund is not None and fund is not None:
+                    ydf[a] = ys - (fund - us_fund)     # 환헤지 후 달러환산 금리
+                else:
+                    ydf[a] = ys                        # 펀딩 데이터 없으면 원금리 폴백
             if ydf:
                 z = _zscore(pd.DataFrame(ydf), self.carry_window)
                 return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
@@ -481,8 +494,12 @@ class SleeveEngine:
         prev = {a: round(float(prev_row.get(a, 0.0)), 3) for a in assets}
         cols = [a for a in assets if a in pos.columns]
 
+        # per-asset 1-day PnL contribution (fraction of book capital, ex-costs)
+        pnl_last = (pos[cols].shift(1) * self.dir_returns[cols]).iloc[-1]
+        pnl_1d = {a: float(pnl_last.get(a, 0.0)) for a in cols}
+
         return {'date': pos.index[-1], 'sleeves': sleeves_out, 'target': target,
-                'prev': prev,
+                'prev': prev, 'pnl_1d': pnl_1d,
                 # recent per-asset position history (sparklines) + full net /
                 # gross book series (delta- & gross-budget calibration)
                 'history': pos[cols].tail(120),

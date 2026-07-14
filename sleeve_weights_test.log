@@ -1,0 +1,49 @@
+=== V0 현행 (t1.0 v0.5 c1.0 p1.0, rev0.5) ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.94 | Vol  6.6% | AnnRet   6.2% | MaxDD -14.7%
+  FX         Sharpe  0.36 | Vol  4.6% | AnnRet   1.5% | MaxDD -10.9%
+
+=== V1 균등 (value 1.0) ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.97 | Vol  6.5% | AnnRet   6.3% | MaxDD -15.0%
+  FX         Sharpe  0.34 | Vol  4.4% | AnnRet   1.4% | MaxDD -11.3%
+
+=== V2 value 제거 ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.86 | Vol  7.0% | AnnRet   5.9% | MaxDD -14.9%
+  FX         Sharpe  0.34 | Vol  5.1% | AnnRet   1.6% | MaxDD -12.1%
+
+=== V3 trend 경량 (0.5) ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.94 | Vol  6.3% | AnnRet   5.9% | MaxDD -13.8%
+  FX         Sharpe  0.32 | Vol  4.0% | AnnRet   1.2% | MaxDD -10.1%
+
+=== V4 carry 중량 (1.5) ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.92 | Vol  6.6% | AnnRet   6.0% | MaxDD -14.7%
+  FX         Sharpe  0.32 | Vol  4.6% | AnnRet   1.4% | MaxDD -11.4%
+
+=== V5 reversion 0.3 ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.91 | Vol  6.5% | AnnRet   5.8% | MaxDD -15.4%
+  FX         Sharpe  0.36 | Vol  4.6% | AnnRet   1.5% | MaxDD -10.9%
+
+=== V6 reversion 0.7 ===
+   Rates: 12 | FX: 5 | target portfolio vol = 10%
+   Carry source — FX: yields | Rates carry/value: yields
+   🛑 Rates book stop ON (shadow-DD half 4% / flat 8%)
+PORTFOLIO    Sharpe  0.89 | Vol  7.4% | AnnRet   6.5% | MaxDD -15.4%
+  FX         Sharpe  0.36 | Vol  4.6% | AnnRet   1.5% | MaxDD -10.9%
+
