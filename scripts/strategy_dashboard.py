@@ -497,18 +497,22 @@ def sleeve_signal_rows(snap, delta_per_unit=None):
     """스냅샷 → 공식 시그널 테이블용 금리 행 (main.py SLEEVE 행과 동일).
 
     delta_per_unit: 포지션 1.0당 만원 환산 계수 (--delta-budget 캘리브레이션).
+
+    ⚠ signal_only_assets(英·日·豪)는 여기서 **제외한다**. 이 표는 주문 후보
+    목록이고, 주문할 수 없는 자산이 섞이면 혼선만 준다 (포지션 0 이 '중립 판단'
+    으로 오독됨). 이들의 팩터 시계열은 sleeve_factor_signals.csv →
+    '금리 팩터 시그널 시계열' 차트에 그대로 남아 맥락을 제공한다.
     """
     sig_only = set(snap.get('signal_only') or [])
     rows = []
     for a in sorted(snap['target'], key=lambda x: (CLASS_ORDER.get(classify_asset_class(x), 9), x)):
+        if a in sig_only:
+            continue
         p = snap['target'][a]
         q = snap.get('prev', {}).get(a, p)
         r = {'asset': a, 'klass': classify_asset_class(a),
              'dir': _sleeve_dir(p), 'conf': abs(p), 'pos': p,
-             'n': 0, 'src': 'sleeve', 'prev': q, 'dpos': p - q,
-             # 시그널 전용 = 주문 대상 아님. 포지션 0 이 '중립 판단'이 아니라
-             # '애초에 매매하지 않음'임을 트레이더가 오해하지 않도록 구분한다.
-             'signal_only': a in sig_only}
+             'n': 0, 'src': 'sleeve', 'prev': q, 'dpos': p - q}
         if delta_per_unit:
             r['delta_w'] = p * delta_per_unit
             r['ddelta_w'] = (p - q) * delta_per_unit
@@ -834,10 +838,7 @@ def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=Non
             print(f"  ── {CLASS_LABEL.get(r['klass'], r['klass'])} ──")
             last_klass = r['klass']
         arrow = {'LONG': '▲ 롱', 'SHORT': '▼ 숏', '-': '· 중립'}[r['dir']]
-        if r.get('signal_only'):
-            arrow = '─ 매매X'          # 중립이 아니라 '주문 대상 아님'
-        src = ('시그널' if r.get('signal_only') else
-               'SLV' if r.get('src') == 'sleeve' else f"전략{r['n']}")
+        src = 'SLV' if r.get('src') == 'sleeve' else f"전략{r['n']}"
         ddw  = f"{r['ddelta_w']:>+12.0f}" if 'ddelta_w' in r else f"{'-':>12}"
         dw   = f"{r['delta_w']:>+8.0f}"   if 'delta_w'  in r else f"{'-':>8}"
         pbp  = f"{r['pnl1d_bp']:>+7.1f}"  if 'pnl1d_bp' in r else f"{'-':>7}"
@@ -1039,13 +1040,12 @@ def write_html(rows, factory_dir, signal_date, out_path,
         if _so:
             parts.append(
                 "<div class='meta' style='border-left:3px solid #c4b5fd;padding-left:10px;'>"
-                "🎯 <b>주문 대상은 한국·미국 국채선물뿐입니다.</b> "
-                f"<b>{html.escape(' · '.join(_so))}</b> 는 <b>시그널 전용</b> — "
-                "횡단면 z·demean 기준선을 만드는 데만 쓰이고 포지션은 항상 0입니다 "
-                "(집행 시간 제약). 이 행들의 '· 중립'은 판단이 아니라 매매 대상이 "
-                "아니라는 뜻이므로 주문 후보로 읽지 마세요. 유로존(獨·佛·伊)은 "
-                "시그널 유니버스에서도 빠져 있고 아래 '금리 팩터 모니터링' "
-                "차트에만 관찰용으로 남습니다.</div>")
+                "🎯 이 표는 <b>주문 후보</b>입니다 — 금리는 한국·미국 국채선물만 "
+                "올라옵니다. "
+                f"<b>{html.escape(' · '.join(_so))}</b> 는 집행 시간 제약으로 매매하지 "
+                "않으므로 표에서 제외했습니다. 다만 이들은 횡단면 z·demean 기준선을 "
+                "만들어 위 한국·미국 포지션을 실제로 좌우하므로, 팩터 값은 "
+                "'금리 팩터 시그널 시계열'에 그대로 남겨 뒀습니다.</div>")
         parts.append("<div class='meta'>포지션 = 기준자본 대비 <b>명목 배수</b>. "
                      "인버스볼 사이징이 반영돼 저변동 자산이 큰 숫자를 받음 — "
                      "명목이 커도 리스크 기여는 변동성에 비례. "
@@ -1110,10 +1110,6 @@ def write_html(rows, factory_dir, signal_date, out_path,
             dcls = {'LONG': 'long', 'SHORT': 'short', '-': 'flat'}[r['dir']]
             dtxt = {'LONG': '▲ 롱', 'SHORT': '▼ 숏', '-': '· 중립'}[r['dir']]
             src = '슬리브' if r.get('src') == 'sleeve' else f"전략 {r['n']}개"
-            if r.get('signal_only'):
-                # 포지션 0 이지만 '중립 판단'이 아니라 '집행 유니버스 밖' —
-                # 트레이더가 주문 후보로 오해하지 않도록 명시적으로 구분.
-                dcls, dtxt, src = 'flat', '─ 매매 안 함', '시그널 전용'
             if 'ddelta_w' in r:
                 dp_cls = ('long' if r['ddelta_w'] > 0.5 else
                           ('short' if r['ddelta_w'] < -0.5 else 'flat'))

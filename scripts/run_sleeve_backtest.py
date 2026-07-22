@@ -60,27 +60,37 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
     the dashboard READ these instead of re-deriving them, so changing the engine
     here can never silently desync the chart.
 
-    모니터링 유니버스 = **시그널 유니버스**(engine.rates_assets) — 즉 이 북의
-    포지션을 실제로 만들어내는 자산들.
+    범위는 sleeves.factor_monitor_scope 로 결정한다:
+      traded (기본) — 실제 매매 자산만 (韓美 4종). 대시보드 '금리 자산 시그널'
+                      표가 곧 주문 후보 목록이 되어 혼선이 없다.
+      signal        — 시그널 유니버스 8종 (+英·日·豪).
+      all           — 가격 패널 전체 12종 (+유로존).
 
-    2026-07-22 변경 (이전에는 가격 패널의 전체 금리자산 12종을 기록했다):
-    유로존(獨·佛·伊)은 exclude_assets 라 어떤 시그널에도 기여하지 않는다. 그
-    팩터 z 를 '매매 후보' 옆에 띄우면 (1) 아무것도 구동하지 않는 장식이고,
-    (2) 트레이더에게 체계적 북을 뒤집을 근거 없는 압력을 준다. 더구나 佛·伊에서
-    실제로 정보가 있는 양은 아웃라이트 방향이 아니라 對분트 스프레드(OAT-Bund,
-    BTP-Bund = 유럽 국가신용 스트레스)인데, 여기 찍히는 건 아웃라이트 팩터라
-    유용한 형태조차 아니다. 유럽 스트레스를 보고 싶으면 스프레드 지표를 따로
-    만들 것 — 이 차트에 아웃라이트를 남겨두는 것은 그 대용이 되지 못한다.
-
-    ⚠ 시그널 전용 자산(英·日·豪)은 '남긴다'. 포지션은 0 이지만 횡단면 z·demean
-    기준선을 만들어 韓美 포지션을 실제로 좌우하므로, "왜 KTB 숏인가"를 설명하는
-    데 필요하다. 되돌리려면 sleeves.factor_monitor_scope: all.
+    2026-07-22, 두 단계로 좁혔다. ① 유로존(獨·佛·伊) 제거: exclude_assets 라
+    어떤 시그널에도 기여하지 않아 장식일 뿐이고, 검증된 적 없는 신호를 '매매
+    후보' 옆에 띄우면 트레이더에게 근거 없는 재량 개입 압력을 준다 (유로존은
+    오히려 '매매하면 손해'가 확인된 자산군). 더구나 佛·伊의 실제 정보는 아웃라이트
+    방향이 아니라 對분트 스프레드(OAT-Bund, BTP-Bund = 유럽 국가신용 스트레스)에
+    있는데 여기 찍히는 건 아웃라이트라 유용한 형태조차 아니다 — 유럽 스트레스가
+    필요하면 스프레드 지표를 따로 만들 것.
+    ② 시그널 전용(英·日·豪)도 제거 (운용자 판단): 이들은 횡단면 기준선을 만들어
+    韓美 포지션을 실제로 좌우하지만, 주문할 수 없는 자산이 후보 표에 섞이는 혼선이
+    그 설명 가치보다 크다. 되돌리려면 scope: signal.
     """
     scope = str((engine.cfg or {}).get('factor_monitor_scope', 'signal')).lower()
     if scope == 'all':
         ra = [c for c in engine.prices.columns if 'Comdty' in c and 'NQ' not in c]
+    elif scope == 'traded':
+        ra = [a for a in engine.rates_assets if a not in engine.signal_only_assets]
     else:
         ra = list(engine.rates_assets)
+    # factor_monitor_extra: 시그널에도 매매에도 안 쓰지만 맥락용으로 차트에만
+    # 얹는 자산 (예: 분트 = 유럽 듀레이션 벤치마크). 위 다섯 팩터는 전부 컬럼별
+    # 시계열 연산(_zscore 롤링)이라 자산을 얹어도 기존 자산의 값은 변하지 않는다
+    # — 횡단면 demean 은 여기가 아니라 _class_sleeves 에서 일어난다.
+    for a in ((engine.cfg or {}).get('factor_monitor_extra', []) or []):
+        if a in engine.prices.columns and a not in ra:
+            ra.append(a)
     if not ra:
         print("⚠ No rates assets — factor signals not saved.")
         return None
