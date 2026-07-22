@@ -93,8 +93,12 @@ def main() -> None:
                     help="백테스트 시작일 (기본 2016-01-01)")
     ap.add_argument('--max-corr',      type=float, default=1.0,
                     help="FX 전략 상관 필터 (기본 1.0 = 꺼짐)")
-    ap.add_argument('--capital',        type=float, default=500.0,
-                    help="금리 북 배정자본 (억원, 기본 500억)")
+    ap.add_argument('--per-unit',      type=float, default=1252.0,
+                    help="금리 '포지션 1.0 = N만원' 환산 계수 (기본 1252, 2026-07-22 "
+                         "고정). 델타·손익 공통 기준자본. 0 = 한도에서 자동 역산"
+                         "(히스토리 의존 → 표시 금액이 흔들림). 이전의 "
+                         "--capital(500억) 은 손익 열에만 쓰여 델타와 1만배 어긋나 "
+                         "있었다 — 제거됨")
     ap.add_argument('--fx-notional',   type=float, default=300.0,
                     help="FX 자산별 명목금액 (만달러, 기본 300만달러)")
     ap.add_argument('--fx-usdkrw',     type=float, default=1500.0,
@@ -164,7 +168,7 @@ def main() -> None:
     rc2 = _run([
         'scripts/strategy_dashboard.py', '--html',
         '--max-corr',     str(args.max_corr),
-        '--capital',      str(args.capital),
+    ] + (['--per-unit', str(args.per_unit)] if args.per_unit else []) + [
         '--fx-notional',  str(args.fx_notional),
         '--fx-usdkrw',    str(args.fx_usdkrw),
         '--delta-budget', str(args.delta_budget),

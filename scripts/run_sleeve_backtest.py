@@ -60,11 +60,27 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
     the dashboard READ these instead of re-deriving them, so changing the engine
     here can never silently desync the chart.
 
-    NOTE: 모니터링 유니버스 = 가격 패널의 전체 금리자산 (exclude_assets 로 거래에서
-    빠진 자산 포함 — 유로존 등 비거래 시장도 팩터 관찰 가치가 있어 차트에는 유지).
-    거래 포지션(pos::)은 sleeve_backtest_log.csv 쪽이 축소 유니버스 기준.
+    모니터링 유니버스 = **시그널 유니버스**(engine.rates_assets) — 즉 이 북의
+    포지션을 실제로 만들어내는 자산들.
+
+    2026-07-22 변경 (이전에는 가격 패널의 전체 금리자산 12종을 기록했다):
+    유로존(獨·佛·伊)은 exclude_assets 라 어떤 시그널에도 기여하지 않는다. 그
+    팩터 z 를 '매매 후보' 옆에 띄우면 (1) 아무것도 구동하지 않는 장식이고,
+    (2) 트레이더에게 체계적 북을 뒤집을 근거 없는 압력을 준다. 더구나 佛·伊에서
+    실제로 정보가 있는 양은 아웃라이트 방향이 아니라 對분트 스프레드(OAT-Bund,
+    BTP-Bund = 유럽 국가신용 스트레스)인데, 여기 찍히는 건 아웃라이트 팩터라
+    유용한 형태조차 아니다. 유럽 스트레스를 보고 싶으면 스프레드 지표를 따로
+    만들 것 — 이 차트에 아웃라이트를 남겨두는 것은 그 대용이 되지 못한다.
+
+    ⚠ 시그널 전용 자산(英·日·豪)은 '남긴다'. 포지션은 0 이지만 횡단면 z·demean
+    기준선을 만들어 韓美 포지션을 실제로 좌우하므로, "왜 KTB 숏인가"를 설명하는
+    데 필요하다. 되돌리려면 sleeves.factor_monitor_scope: all.
     """
-    ra = [c for c in engine.prices.columns if 'Comdty' in c and 'NQ' not in c]
+    scope = str((engine.cfg or {}).get('factor_monitor_scope', 'signal')).lower()
+    if scope == 'all':
+        ra = [c for c in engine.prices.columns if 'Comdty' in c and 'NQ' not in c]
+    else:
+        ra = list(engine.rates_assets)
     if not ra:
         print("⚠ No rates assets — factor signals not saved.")
         return None
@@ -143,8 +159,12 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     engine = SleeveEngine(prices, config=cfg, yields=yields)
     src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
     src_rt = 'yields' if engine._has_rates_yields() else 'OFF (no yields)'
-    print(f"   Rates: {len(engine.rates_assets)} | FX: {len(engine.fx_assets)} | "
+    _so = [a for a in engine.rates_assets if a in engine.signal_only_assets]
+    print(f"   Rates: {len(engine.rates_assets)} 시그널 / "
+          f"{len(engine.rates_assets) - len(_so)} 매매 | FX: {len(engine.fx_assets)} | "
           f"target portfolio vol = {engine.target_port_vol:.0%}")
+    if _so:
+        print(f"   🎯 시그널 전용 (포지션 0): {', '.join(_so)}")
     print(f"   Carry source — FX: {src_fx} | Rates carry/value: {src_rt}")
 
     # Overlays (position_smooth + rates book stop) applied inside the engine —
@@ -154,8 +174,12 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
         smooth_override=smooth if smooth and smooth > 0 else None,
     )
     if engine.book_stop_enabled:
+        _w = engine.book_stop_dd_window
         print(f"   🛑 Rates book stop ON (shadow-DD half {engine.book_stop_dd_half:.0f}% "
-              f"/ flat {engine.book_stop_dd_flat:.0f}%)")
+              f"/ flat {engine.book_stop_dd_flat:.0f}%, peak = "
+              f"{f'{_w}d rolling' if _w > 0 else 'all-time ⚠latch risk'})")
+    if not engine.reversion_enabled:
+        print("   ⛔ Reversion sub-book OFF (비동시 종가 아티팩트 — 2026-07-22 감사)")
 
     traded = list(positions.columns)
     dir_returns = engine.dir_returns[traded].reindex(positions.index).fillna(0.0)
@@ -232,10 +256,13 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     out_df['equity'] = (1 + port).cumprod()
     # 자산별 금리 일별 순손익 (대시보드 '금리 자산별 누적손익(억원)' 차트용).
     # 컬럼 합 = 'rates' 와 동일. prefix 'rpnl::' 로 기존 컬럼과 구분.
-    for a in rates_cols:
+    # 2026-07-22: 시그널 전용 자산(signal_only_assets)은 포지션·손익이 항상 0 이라
+    # 차트 범례에 0 짜리 선만 늘린다 → 실제 매매 자산만 기록한다.
+    traded_cols = [a for a in rates_cols if a not in engine.signal_only_assets]
+    for a in traded_cols:
         out_df[f'rpnl::{a}'] = net_pnl[a]
     # 자산별 일별 포지션 (대시보드 '총/net 델타 시계열' 차트용). prefix 'pos::'.
-    for a in rates_cols:
+    for a in traded_cols:
         out_df[f'pos::{a}'] = positions[a]
     if save_outputs:
         out_df.to_csv('sleeve_backtest_log.csv')

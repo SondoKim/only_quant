@@ -498,13 +498,17 @@ def sleeve_signal_rows(snap, delta_per_unit=None):
 
     delta_per_unit: 포지션 1.0당 만원 환산 계수 (--delta-budget 캘리브레이션).
     """
+    sig_only = set(snap.get('signal_only') or [])
     rows = []
     for a in sorted(snap['target'], key=lambda x: (CLASS_ORDER.get(classify_asset_class(x), 9), x)):
         p = snap['target'][a]
         q = snap.get('prev', {}).get(a, p)
         r = {'asset': a, 'klass': classify_asset_class(a),
              'dir': _sleeve_dir(p), 'conf': abs(p), 'pos': p,
-             'n': 0, 'src': 'sleeve', 'prev': q, 'dpos': p - q}
+             'n': 0, 'src': 'sleeve', 'prev': q, 'dpos': p - q,
+             # 시그널 전용 = 주문 대상 아님. 포지션 0 이 '중립 판단'이 아니라
+             # '애초에 매매하지 않음'임을 트레이더가 오해하지 않도록 구분한다.
+             'signal_only': a in sig_only}
         if delta_per_unit:
             r['delta_w'] = p * delta_per_unit
             r['ddelta_w'] = (p - q) * delta_per_unit
@@ -547,17 +551,23 @@ def attach_underlying(sig_rows, prices):
                 pass
 
 
-def attach_pnl_1d(sig_rows, sleeve_snap, capital_억=100.0,
+def attach_pnl_1d(sig_rows, sleeve_snap, rates_per_unit,
                   fx_notional_만달러=300.0, fx_usdkrw=1500.0):
     """전일(최신 거래일) 자산별 손익 및 전일 실행 포지션을 행에 부착.
 
-    r['pnl1d_bp']  — bp (공통 단위)
+    r['pnl1d_bp']  — bp (공통 단위, 기준자본 대비)
     r['pnl1d_w']   — 만원 환산
-                     금리: bp × capital_억  (배정자본 기준)
+                     금리: 손익률 × rates_per_unit  (델타와 동일한 기준자본)
                      FX:  bp × fx_bp_to_w  (명목금액 기준)
     r['pos_prev']  — 어제 실행된 포지션 (전일 손익의 원천 포지션)
                      금리: sleeve pos[-2] (T-2 신호 → T-1 실행)
                      FX:   trading_log pos[-1] (T-2 신호 → T-1 실행, 동일 개념)
+
+    ⚠ rates_per_unit = '포지션 1.0 = N만원' 환산 계수, compute_delta_info 산출.
+    2026-07-22 이전에는 금리 손익만 별도의 --capital(기본 100억) 로 환산해서,
+    같은 표의 델타 열(순델타 한도에서 역산한 스케일)과 기준자본이 933배 어긋나
+    있었다 — TY1 이 델타 -421만원인데 하루 손익 +793만원으로 찍히는 식. 이제
+    델타·손익이 같은 계수를 쓰므로 구조적으로 어긋날 수 없다.
 
     FX 만원 환산:
       fx_bp_to_w = fx_notional_만달러 × fx_usdkrw / 10_000
@@ -576,16 +586,16 @@ def attach_pnl_1d(sig_rows, sleeve_snap, capital_억=100.0,
     totals = {}
     sl      = (sleeve_snap or {}).get('pnl_1d') or {}
     sl_prev = (sleeve_snap or {}).get('prev') or {}   # T-2 신호 = T-1 실행 포지션
-    if sl:
+    if sl and rates_per_unit:
         for r in sig_rows:
             if r.get('src') == 'sleeve' and r['asset'] in sl:
-                bp = sl[r['asset']] * 1e4
-                r['pnl1d_bp'] = bp
-                r['pnl1d_w']  = bp * capital_억
+                # sl[asset] = pos[-2] × ret[-1] = 기준자본 대비 손익률
+                r['pnl1d_bp'] = sl[r['asset']] * 1e4
+                r['pnl1d_w']  = sl[r['asset']] * rates_per_unit
             if r.get('src') == 'sleeve' and r['asset'] in sl_prev:
                 r['pos_prev'] = sl_prev[r['asset']]
-        rates_bp = sum(v * 1e4 for v in sl.values())
-        totals['rates'] = {'bp': rates_bp, 'w': rates_bp * capital_억}
+        rates_ret = sum(sl.values())
+        totals['rates'] = {'bp': rates_ret * 1e4, 'w': rates_ret * rates_per_unit}
     try:
         root = Path(__file__).parent.parent
         df = pd.read_csv(root / 'trading_log.csv', parse_dates=['Date']).set_index('Date')
@@ -609,6 +619,21 @@ def attach_pnl_1d(sig_rows, sleeve_snap, capital_억=100.0,
     return totals or None
 
 
+def _won_fmt(v, width=0):
+    """만원 금액 표시. 북 규모에 따라 만원 단위가 0으로 뭉개지므로 자동 소수점.
+
+    금리 북(순델타 한도 기준, 수천만원)과 FX 북(명목 수백억)이 같은 표에 있어
+    한쪽만 맞춘 고정 자릿수는 반드시 한쪽을 뭉갠다.
+    """
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return '-'.rjust(width)
+    a = abs(v)
+    s = f"{v:+,.2f}" if a < 1 else (f"{v:+,.1f}" if a < 100 else f"{v:+,.0f}")
+    return s.rjust(width) if width else s
+
+
 def _px_fmt(v):
     """자산 가격 표시용 자릿수 자동 포맷."""
     try:
@@ -626,11 +651,20 @@ def _px_fmt(v):
     return f"{v:.4f}"
 
 
-def compute_delta_info(snap, budget_w, gross_budget_w=None):
-    """순델타/그로스 한도(만원) → 환산 계수 C 역산.
+def compute_delta_info(snap, budget_w, gross_budget_w=None, per_unit_override=None):
+    """'포지션 1.0 = N만원' 환산 계수 C 와 그에 따른 델타·한도 사용률.
 
-    C = min(순한도/과거최대|순포지션|, 그로스한도/과거최대 그로스) — 역사상
-    최악의 날에도 두 한도를 모두 만족하는 가장 큰 환산 계수.
+    C 는 델타 열과 손익 열이 공유하는 단 하나의 기준자본이다 (attach_pnl_1d 참조).
+
+    per_unit_override 가 있으면 그 값을 그대로 쓴다. 없으면 기존처럼 한도에서
+    역산: C = min(순한도/과거최대|순포지션|, 그로스한도/과거최대 그로스) —
+    역사상 최악의 날에도 두 한도를 모두 만족하는 가장 큰 계수.
+
+    ⚠ 자동 역산은 '과거 최대'에 의존하므로 엔진 설정이 바뀌어 포지션 히스토리가
+    달라지면 C 가, 따라서 표시되는 모든 델타·손익 금액이 함께 재조정된다
+    (2026-07-22 리버전 OFF + 호주 원복만으로 713만원 → 1,072만원). 운용 중
+    금액을 고정하려면 --per-unit 으로 못박을 것. 'auto' 플래그로 어느 쪽인지
+    표시한다.
     """
     net_hist = snap.get('net_hist')
     if net_hist is None or len(net_hist) == 0:
@@ -638,14 +672,16 @@ def compute_delta_info(snap, budget_w, gross_budget_w=None):
     max_net = float(net_hist.abs().max())
     if max_net <= 0:
         return None
-    c = budget_w / max_net
     gross_hist = snap.get('gross_hist')
     max_gross = float(gross_hist.max()) if gross_hist is not None and len(gross_hist) else 0.0
-    binding = 'net'
-    if gross_budget_w and max_gross > 0:
-        c_gross = gross_budget_w / max_gross
-        if c_gross < c:
-            c, binding = c_gross, 'gross'
+    if per_unit_override:
+        c, binding, auto = float(per_unit_override), 'fixed', False
+    else:
+        c, binding, auto = budget_w / max_net, 'net', True
+        if gross_budget_w and max_gross > 0:
+            c_gross = gross_budget_w / max_gross
+            if c_gross < c:
+                c, binding = c_gross, 'gross'
     net_w = sum(snap['target'].values()) * c
     gross_w = sum(abs(v) for v in snap['target'].values()) * c
     return {'per_unit': c, 'budget': budget_w, 'gross_budget': gross_budget_w,
@@ -653,7 +689,7 @@ def compute_delta_info(snap, budget_w, gross_budget_w=None):
             'usage': abs(net_w) / budget_w,
             'gross_usage': (gross_w / gross_budget_w) if gross_budget_w else None,
             'max_net_units': max_net, 'max_gross_units': max_gross,
-            'binding': binding}
+            'binding': binding, 'auto': auto}
 
 
 def print_sleeve_console(snap):
@@ -798,11 +834,14 @@ def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=Non
             print(f"  ── {CLASS_LABEL.get(r['klass'], r['klass'])} ──")
             last_klass = r['klass']
         arrow = {'LONG': '▲ 롱', 'SHORT': '▼ 숏', '-': '· 중립'}[r['dir']]
-        src = 'SLV' if r.get('src') == 'sleeve' else f"전략{r['n']}"
+        if r.get('signal_only'):
+            arrow = '─ 매매X'          # 중립이 아니라 '주문 대상 아님'
+        src = ('시그널' if r.get('signal_only') else
+               'SLV' if r.get('src') == 'sleeve' else f"전략{r['n']}")
         ddw  = f"{r['ddelta_w']:>+12.0f}" if 'ddelta_w' in r else f"{'-':>12}"
         dw   = f"{r['delta_w']:>+8.0f}"   if 'delta_w'  in r else f"{'-':>8}"
         pbp  = f"{r['pnl1d_bp']:>+7.1f}"  if 'pnl1d_bp' in r else f"{'-':>7}"
-        pw   = f"{r['pnl1d_w']:>+8.0f}"   if 'pnl1d_w'  in r else f"{'-':>8}"
+        pw   = _won_fmt(r['pnl1d_w'], 8) if 'pnl1d_w'  in r else f"{'-':>8}"
         px   = _px_fmt(r.get('price'))
         und  = r.get('underlying', '-')
         print(f"  {asset_label(r['asset']):<26} {und:>14} {px:>9} {arrow:<8} {r['conf']:>6.2f} "
@@ -812,7 +851,7 @@ def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=Non
         for key, lbl in [('rates', '금리'), ('fx', 'FX')]:
             t = pnl_totals.get(key)
             if t:
-                seg.append(f"{lbl} {t['bp']:+.1f}bp ({t['w']:+,.0f}만원)")
+                seg.append(f"{lbl} {t['bp']:+.1f}bp ({_won_fmt(t['w'])}만원)")
         print(f"\n  📈 전일 손익 합계: {' · '.join(seg)}")
     if delta_info:
         d = delta_info
@@ -821,9 +860,15 @@ def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=Non
                  else f" · 그로스 {d['gross_w']:,.0f}만원")
         print(f"\n  💰 금리 북 순델타 {d['net_w']:+,.0f}만원 / 한도 ±{d['budget']:,.0f}만원 "
               f"(사용률 {d['usage']:.0%}){g_txt}")
-        print(f"     환산: 포지션 1.0 = {d['per_unit']:,.0f}만원 — 과거 최대 "
-              f"|순포지션| {d['max_net_units']:.2f} / 그로스 {d['max_gross_units']:.2f} 중 "
-              f"{'그로스' if d['binding'] == 'gross' else '순델타'} 한도가 결정")
+        if d['binding'] == 'fixed':
+            basis = "--per-unit 로 고정"
+        else:
+            basis = (f"과거 최대 |순포지션| {d['max_net_units']:.2f} / 그로스 "
+                     f"{d['max_gross_units']:.2f} 중 "
+                     f"{'그로스' if d['binding'] == 'gross' else '순델타'} 한도에서 자동 역산 "
+                     f"⚠엔진 설정이 바뀌면 이 계수와 위 금액이 모두 재조정됨")
+        print(f"     환산: 포지션 1.0 = {d['per_unit']:,.0f}만원 — {basis}")
+        print(f"     (델타·손익 모두 이 계수 기준 — 같은 기준자본)")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -972,7 +1017,7 @@ def write_html(rows, factory_dir, signal_date, out_path,
 
     # 슬리브 엔진 — 금리 북: 가중치 > 0 인 슬리브(스냅샷에 존재)만 ON
     active_sleeves = set((sleeve_snap or {}).get('sleeves', {}).keys())
-    parts.append("<tr style='background:#1b1e27;'><td colspan='6' style='font-weight:bold;color:#c4b5fd;font-size:12.5px;'>슬리브 엔진 — 금리 북 (2016+ 검증 SR 1.02 · 통합 북 1.42)</td></tr>")
+    parts.append("<tr style='background:#1b1e27;'><td colspan='6' style='font-weight:bold;color:#c4b5fd;font-size:12.5px;'>슬리브 엔진 — 금리 북 (2016+ 검증 SR 0.91 · 2026-07-22 시차감사 반영)</td></tr>")
     for key, name, desc in SLEEVE_STRATS:
         on = key in active_sleeves
         status, s_class = ('ON', 'st_on') if on else ('OFF', 'st_off')
@@ -990,6 +1035,17 @@ def write_html(rows, factory_dir, signal_date, out_path,
     # 2. 오늘의 트레이딩 시그널 (자산별 시그널)
     if sig_rows:
         parts.append("<h2>[자산별 트레이딩 시그널]</h2>")
+        _so = [asset_label(a) for a in ((sleeve_snap or {}).get('signal_only') or [])]
+        if _so:
+            parts.append(
+                "<div class='meta' style='border-left:3px solid #c4b5fd;padding-left:10px;'>"
+                "🎯 <b>주문 대상은 한국·미국 국채선물뿐입니다.</b> "
+                f"<b>{html.escape(' · '.join(_so))}</b> 는 <b>시그널 전용</b> — "
+                "횡단면 z·demean 기준선을 만드는 데만 쓰이고 포지션은 항상 0입니다 "
+                "(집행 시간 제약). 이 행들의 '· 중립'은 판단이 아니라 매매 대상이 "
+                "아니라는 뜻이므로 주문 후보로 읽지 마세요. 유로존(獨·佛·伊)은 "
+                "시그널 유니버스에서도 빠져 있고 아래 '금리 팩터 모니터링' "
+                "차트에만 관찰용으로 남습니다.</div>")
         parts.append("<div class='meta'>포지션 = 기준자본 대비 <b>명목 배수</b>. "
                      "인버스볼 사이징이 반영돼 저변동 자산이 큰 숫자를 받음 — "
                      "명목이 커도 리스크 기여는 변동성에 비례. "
@@ -1010,8 +1066,12 @@ def write_html(rows, factory_dir, signal_date, out_path,
                 f"한도 ±{d['budget']:,.0f}만원 "
                 f"(사용률 <b class='{net_cls}' style='{big}'>{d['usage']:.0%}</b>){g_txt} · "
                 f"환산 <b>포지션 1.0 = {d['per_unit']:,.0f}만원</b> "
-                f"(과거 최대 |순| {d['max_net_units']:.2f} / 그로스 {d['max_gross_units']:.2f} 중 "
-                f"{'그로스' if d['binding'] == 'gross' else '순델타'} 한도가 결정)</div>")
+                + (" (--per-unit 고정)" if d['binding'] == 'fixed' else
+                   f"(과거 최대 |순| {d['max_net_units']:.2f} / 그로스 "
+                   f"{d['max_gross_units']:.2f} 중 "
+                   f"{'그로스' if d['binding'] == 'gross' else '순델타'} 한도에서 자동 역산 — "
+                   f"엔진 설정이 바뀌면 이 계수와 금액이 함께 재조정됨)")
+                + " · 델타와 손익이 같은 기준자본을 씁니다.</div>")
         if pnl_totals:
             segs, total_w = [], 0.0
             for key, lbl in [('rates', '금리'), ('fx', 'FX')]:
@@ -1020,7 +1080,7 @@ def write_html(rows, factory_dir, signal_date, out_path,
                     continue
                 cls = 'long' if t['bp'] > 0 else ('short' if t['bp'] < 0 else 'flat')
                 segs.append(f"{lbl} <b class='{cls}' style='font-size:15px;font-weight:700;'>"
-                            f"{t['bp']:+.1f}bp ({t['w']:+,.0f}만원)</b>")
+                            f"{t['bp']:+.1f}bp ({_won_fmt(t['w'])}만원)</b>")
                 total_w += t['w']
             if segs:
                 fx_t = pnl_totals.get('fx', {})
@@ -1050,6 +1110,10 @@ def write_html(rows, factory_dir, signal_date, out_path,
             dcls = {'LONG': 'long', 'SHORT': 'short', '-': 'flat'}[r['dir']]
             dtxt = {'LONG': '▲ 롱', 'SHORT': '▼ 숏', '-': '· 중립'}[r['dir']]
             src = '슬리브' if r.get('src') == 'sleeve' else f"전략 {r['n']}개"
+            if r.get('signal_only'):
+                # 포지션 0 이지만 '중립 판단'이 아니라 '집행 유니버스 밖' —
+                # 트레이더가 주문 후보로 오해하지 않도록 명시적으로 구분.
+                dcls, dtxt, src = 'flat', '─ 매매 안 함', '시그널 전용'
             if 'ddelta_w' in r:
                 dp_cls = ('long' if r['ddelta_w'] > 0.5 else
                           ('short' if r['ddelta_w'] < -0.5 else 'flat'))
@@ -1083,7 +1147,7 @@ def write_html(rows, factory_dir, signal_date, out_path,
                 pnl_bp_td = (f"<td class='{p_cls}' style='font-variant-numeric:tabular-nums;'>"
                              f"{r['pnl1d_bp']:+.1f}</td>")
                 pnl_w_td  = (f"<td class='{p_cls}' style='font-variant-numeric:tabular-nums;'>"
-                             f"{r['pnl1d_w']:+,.0f}</td>")
+                             f"{_won_fmt(r['pnl1d_w'])}</td>")
             else:
                 pnl_bp_td = "<td class='sh'>–</td>"
                 pnl_w_td  = "<td class='sh'>–</td>"
@@ -1235,8 +1299,12 @@ def main():
     ap.add_argument('--max-corr', type=float, default=1.0,
                     help="공식 시그널 집계의 상관 필터 (1.0=필터 없음, 2026-06-11 "
                          "정직 A/B 검증 구성. 백테스트 기본과 동일)")
-    ap.add_argument('--capital', type=float, default=100.0,
-                    help="금리 북 배정자본 (억원, 기본 100억). 금리 bp → 만원: 1bp × capital_억")
+    ap.add_argument('--per-unit', type=float, default=1252.0,
+                    help="금리 '포지션 1.0 = N만원' 환산 계수 (기본 1252, 2026-07-22 "
+                         "고정). 델타·손익 양쪽에 같은 계수가 쓰인다. 0 을 주면 "
+                         "--delta-budget/--gross-budget 에서 자동 역산하지만, 그 값은 "
+                         "포지션 히스토리에 의존해 엔진 설정이 바뀔 때마다 표시 금액이 "
+                         "통째로 재조정된다 (하루에 713→1,072→1,252 로 이동한 전례)")
     ap.add_argument('--fx-notional', type=float, default=300.0,
                     help="FX 자산별 명목금액 (만달러, 기본 300만달러)")
     ap.add_argument('--fx-usdkrw', type=float, default=1500.0,
@@ -1295,7 +1363,8 @@ def main():
     delta_info = None
     if sleeve_snap:
         delta_info = compute_delta_info(sleeve_snap, args.delta_budget,
-                                        gross_budget_w=args.gross_budget)
+                                        gross_budget_w=args.gross_budget,
+                                        per_unit_override=args.per_unit)
         per_unit = delta_info['per_unit'] if delta_info else None
         sig_rows = sleeve_signal_rows(sleeve_snap, per_unit) + sig_rows
         sig_rows.sort(key=lambda r: (CLASS_ORDER.get(r['klass'], 9), r['asset']))
@@ -1305,7 +1374,7 @@ def main():
         if r['asset'] in last_px.index:
             r['price'] = float(last_px[r['asset']])
     attach_underlying(sig_rows, prices)
-    pnl_totals = attach_pnl_1d(sig_rows, sleeve_snap, capital_억=args.capital,
+    pnl_totals = attach_pnl_1d(sig_rows, sleeve_snap, per_unit,
                                fx_notional_만달러=args.fx_notional,
                                fx_usdkrw=args.fx_usdkrw)
     print_signal_table(sig_rows, n_active_sel, args.max_corr, signal_date,

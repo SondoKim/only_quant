@@ -72,6 +72,14 @@ class SleeveEngine:
                              if 'Comdty' in c and 'NQ' not in c and c not in excluded]
         self.fx_assets = [c for c in cols if 'Curncy' in c and c not in excluded]
 
+        # signal_only_assets: 시그널 유니버스에는 그대로 두고 '매매'에서만 뺀다.
+        # exclude_assets 와의 차이 — exclude 는 자산을 횡단면에서 통째로 지우므로
+        # xs-demean 기준선(글로벌 듀레이션 평균)과 리버전 페이드가 전부 바뀐다.
+        # signal_only 는 z-score·demean·리버전 계산에는 계속 참여시키고 최종
+        # 포지션만 0으로 눌러, 남은 자산이 볼타겟팅으로 리스크를 흡수하게 한다.
+        # (호주처럼 시그널 정보력은 있으나 집행이 부담스러운 시장용.)
+        self.signal_only_assets = set(self.cfg.get('signal_only_assets', []) or [])
+
         # ── Sign map: normalize every series to "long = duration / long-foreign".
         #    Rates futures up = bond price up = long duration  → +1
         #    FX futures (EC1/BP1/AD1/JY1) up = foreign up      → +1
@@ -139,10 +147,20 @@ class SleeveEngine:
         # REALIZED damage instead of predicting inflections — fast price/vol
         # regime gates (21d veto, 63d agreement, vol brake) all LOWERED SR in
         # the 2016-26 A/B; this kept SR (~0.5) while cutting MaxDD -33%→-14%.
+        #
+        # ⚠ 2026-07-22 감사에서 드러난 원설계의 결함 — dd 를 산술 cumsum 의
+        # all-time cummax 대비로 재던 탓에, 섀도우 북이 옛 고점을 못 넘으면
+        # dd 가 영구히 임계 위에 고착돼 스톱이 킬스위치가 됐다 (마지막 신고점
+        # 2022-09-28 → 2023-07 이후 계속 플랫, 2016+ 42%일 플랫). 두 가지를
+        # 바꿨다: ① 자산곡선을 복리(cumprod)로, dd 를 고점 대비 '비율'로 —
+        # 북 규모가 변해도 임계의 의미가 일정하다. ② 고점 기준을 all-time 이
+        # 아니라 dd_window 일 롤링 최대로 — 오래된 고점은 시간이 지나면
+        # 굴러떨어지므로, 북이 횡보만 해도 재진입이 열린다 (0 = 옛 all-time).
         bs = self.cfg.get('book_stop', {}) or {}
         self.book_stop_enabled = bool(bs.get('enabled', False))
-        self.book_stop_dd_half = float(bs.get('dd_half', 4.0))   # %-points
+        self.book_stop_dd_half = float(bs.get('dd_half', 4.0))   # 고점대비 %
         self.book_stop_dd_flat = float(bs.get('dd_flat', 8.0))
+        self.book_stop_dd_window = int(bs.get('dd_window', 0) or 0)
 
         # Reversion sub-book (2026-06-11, prop-desk "don't sit flat" request):
         # fast CROSS-SECTIONAL reversal on rates — fade each market's 10d move
@@ -176,6 +194,9 @@ class SleeveEngine:
         self.port_vol_window = self.cfg.get('port_vol_window', 63)
         self.max_asset_pos = self.cfg.get('max_asset_pos', 3.0)
         self.max_gross_leverage = self.cfg.get('max_gross_leverage', 10.0)
+        # 금리 북 최종 노출 스케일 (2026-07-16 운용 캘리브레이션: 운용 북 대비
+        # 델타 과대 → 0.5). finalize_positions 맨 끝에서 금리 자산에만 곱한다.
+        self.rates_exposure_scale = float(self.cfg.get('rates_exposure_scale', 1.0))
 
         # ── Derived series ───────────────────────────────────────────────
         # Directional returns: economically-meaningful return of a long position.
@@ -506,6 +527,9 @@ class SleeveEngine:
 
         return {'date': pos.index[-1], 'sleeves': sleeves_out, 'target': target,
                 'prev': prev, 'pnl_1d': pnl_1d,
+                # 시그널에는 기여하지만 주문은 내지 않는 자산 — 대시보드가
+                # '중립(포지션 0)'과 '매매 대상 아님'을 구분해 표시하도록.
+                'signal_only': sorted(a for a in assets if a in self.signal_only_assets),
                 # recent per-asset position history (sparklines) + full net /
                 # gross book series (delta- & gross-budget calibration)
                 'history': pos[cols].tail(120),
@@ -513,6 +537,16 @@ class SleeveEngine:
                 'gross_hist': pos[cols].abs().sum(axis=1)}
 
     # ──────────────────────────────────────────────────────────────────────
+    def _mute_signal_only(self, df: pd.DataFrame) -> pd.DataFrame:
+        """Zero the signal-only assets' columns (kept, so downstream code that
+        iterates rates_assets still finds them — position/turnover/PnL = 0)."""
+        cols = [c for c in df.columns if c in self.signal_only_assets]
+        if not cols:
+            return df
+        df = df.copy()
+        df[cols] = 0.0
+        return df
+
     def _realized_vol(self) -> pd.DataFrame:
         """EWMA annualized realized vol per asset (directional returns)."""
         vol = self.dir_returns.ewm(halflife=self.vol_halflife, min_periods=20).std()
@@ -531,6 +565,10 @@ class SleeveEngine:
 
         traded = self.rates_assets + self.fx_assets
         conviction = conviction[traded].fillna(0.0)
+        # 시그널(위 _combine_class)은 전체 유니버스로 산출한 뒤, 매매 제외 자산만
+        # 여기서 0으로 — 이후 인버스볼 사이징·포트폴리오 볼타겟이 남은 자산 기준
+        # 으로 재계산되어 빠진 리스크 예산이 자동 재배분된다.
+        conviction = self._mute_signal_only(conviction)
 
         # ── Inverse-vol sizing: equal risk per asset ─────────────────────
         vol = self._realized_vol()[traded]
@@ -546,7 +584,8 @@ class SleeveEngine:
     def finalize_positions(self, pos: pd.DataFrame,
                            smooth_override: Optional[float] = None) -> pd.DataFrame:
         """Apply the production overlays to raw target positions, in order:
-        ① position_smooth (EWMA, turnover damping) ② rates book stop.
+        ① position_smooth (EWMA, turnover damping) ② rates book stop
+        ③ reversion sub-book blend ④ rates_exposure_scale.
         Single path shared by the backtest, the live feed and the dashboard
         snapshot so they can never diverge.
         """
@@ -561,6 +600,14 @@ class SleeveEngine:
             w = self.reversion_weight
             pos = pos.copy()
             pos[R] = (1.0 - w) * pos[R] + w * mr[R]
+        # ④ 금리 북 최종 노출 스케일 — 운용 북 대비 델타 캘리브레이션.
+        #    스톱/리버전까지 끝난 최종 산출에만 곱하므로 시그널·스톱 동작은
+        #    스케일 이전과 동일하고, 총/net 델타·PnL·계약수만 비례 축소된다.
+        if self.rates_exposure_scale != 1.0 and self.rates_assets:
+            R = [a for a in self.rates_assets if a in pos.columns]
+            if R:
+                pos = pos.copy()
+                pos[R] = pos[R] * self.rates_exposure_scale
         return pos
 
     def _reversion_signal(self) -> pd.DataFrame:
@@ -580,6 +627,9 @@ class SleeveEngine:
         inv_vol = (self.target_asset_vol / self._realized_vol()[R]).clip(
             upper=self.max_asset_pos * 5)
         pos = (fade * inv_vol).clip(-self.max_asset_pos, self.max_asset_pos).fillna(0.0)
+        # 페이드는 전체 금리 횡단면으로 계산(위)하고 매매만 제외 → 나머지 자산의
+        # 상대가치 신호는 그대로 유지된다.
+        pos = self._mute_signal_only(pos)
         pos = self._apply_portfolio_vol_target(pos, R)
         if self.reversion_smooth > 0:
             pos = pos.ewm(alpha=1.0 - self.reversion_smooth, min_periods=1).mean()
@@ -593,6 +643,10 @@ class SleeveEngine:
         lag: ≤dd_half → 1.0, ≤dd_flat → 0.5, beyond → 0.0. Using the SHADOW
         book (not the stopped one) means the stop re-engages on recovery
         instead of staying flat forever.
+
+        Drawdown = 고점 대비 비율(%), 고점은 dd_window 일 롤링 최대 (0 = 전기간).
+        롤링 고점이 재진입 경로다 — 전기간 고점을 쓰면 한 번 깊게 빠진 북이
+        영원히 잠긴다 (2026-07-22 감사 참조).
         """
         if not self.book_stop_enabled or not self.rates_assets:
             return pos
@@ -600,8 +654,10 @@ class SleeveEngine:
         if not R:
             return pos
         shadow = (pos[R].shift(1).fillna(0.0) * self.dir_returns[R].fillna(0.0)).sum(axis=1)
-        eq = shadow.cumsum()
-        dd = (eq.cummax() - eq) * 100.0
+        eq = (1.0 + shadow).cumprod()
+        peak = (eq.cummax() if self.book_stop_dd_window <= 0
+                else eq.rolling(self.book_stop_dd_window, min_periods=1).max())
+        dd = (1.0 - eq / peak) * 100.0
         scale = pd.Series(
             np.select([dd <= self.book_stop_dd_half, dd <= self.book_stop_dd_flat],
                       [1.0, 0.5], 0.0),

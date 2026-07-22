@@ -9,11 +9,53 @@ sleeves:
   # (독일 10년 누적 기여 음수, 佛·伊는 리스크 예산 대비 기여 미미 → 제외 시
   # 볼타겟팅이 한국·일본·호주·미국에 재배분). 가격 데이터는 계속 로드되고
   # 거래(시그널·포지션)에서만 빠짐. 되돌리려면 이 리스트를 비우면 됨.
+  #
+  # 2026-07-22 재검증: 위 유로존 컷은 리버전 서브북을 끄고 스톱 래치를 고친
+  # 뒤에도 유지된다 (2016+ 0.83→0.91, 2012+ 0.48→0.64, 양 반기·T+2 모두 개선).
+  # 반면 같은 날 잠시 추가했던 호주 2종(YM1/XM1) 제외는 되돌렸다 — 그 근거였던
+  # SR 1.20→1.38 은 전적으로 리버전 아티팩트였고, 정직한 북에서는 2016+ 0.91→
+  # 0.92(무의미), H2 0.78→0.63, T+2 0.93→0.88, 2012+ 0.64→0.58 로 오히려 악화.
+  # ⚠ 앞으로 유니버스를 더 깎지 말 것: 12→8 이미 선택편의가 누적돼 있다.
   exclude_assets:
     - DU1 Comdty    # 독일 2Y (Schatz)
     - RX1 Comdty    # 독일 10Y (Bund)
     - OAT1 Comdty   # 프랑스 10Y
     - IK1 Comdty    # 이탈리아 10Y (BTP)
+
+  # 시그널 유니버스에는 남기고 '매매'에서만 제외 (2026-07-22 채택, B안).
+  # 동기: 운용자가 한국 소재 — KTB(09:00-15:45 KST 주간장)와 미국(CME Globex,
+  # 한국 주간에도 개장)은 집행이 깨끗하지만 영국·일본·호주는 매매 시간이 애매.
+  # 즉 성과가 아니라 '집행 가능성'이라는 외생 제약에서 나온 컷이다.
+  #
+  # A/B (scripts/test_signal_only_assets.py) — 매매 韓美4 / 시그널 8 유지:
+  #   2016+ SR 0.91→1.20, 2012+ 0.64→0.83, MaxDD -6.1%→-5.5%, 회전 33x→15x,
+  #   H1·H2·T+2·시간대정직 전부 개선 (시간대정직 1.18 ≈ T+1 1.20 → 아티팩트 아님).
+  # 이유: 현행 8종 북에서 韓美 4종이 손익의 88%를 리스크 예산 47%로 냈고,
+  # 호주·일본·영국이 예산 53%를 먹으며 손익 12%만 기여했다 → 예산 회수.
+  #
+  # ⚠ 시그널 유니버스를 8종으로 '유지'하는 것이 핵심 — 4종으로 좁히면(C안)
+  # 2016+ 1.20→1.11, MaxDD -5.5%→-7.3% 로 나빠진다. value/carry 가 반쪽 헤지가
+  # 되는 손실보다, 넓은 횡단면이 주는 시그널 품질 이득이 크다 (알파 대부분이
+  # 반쪽헤지와 무관한 trend/policy 에서 나오기 때문 — test_directionality.py).
+  # 유로존을 시그널에 '추가'하는 것도 검증했으나 이득 없음 (1.20→1.10) —
+  # 내부상관 0.65 인 한 덩어리가 횡단면의 33%를 차지해 기준선을 왜곡한다.
+  #
+  # ⚠ 실효 독립 베팅 수 2.41 → 1.86. ρ(TU1,TY1)=0.78, ρ(KE1,KAA1)=0.87 이라
+  # 사실상 '미국 듀레이션 + 한국 듀레이션' 2개 베팅이다 (둘 사이 상관은 0.10~0.18
+  # 로 낮아 그나마 작동). 한미 금리가 동시 역행하는 글로벌 쇼크에 상쇄 수단 없음.
+  signal_only_assets:
+    - G 1 Comdty    # 영국 Gilt — 런던 마감, 집행 시간 애매
+    - JB1 Comdty    # 일본 JGB
+    - YM1 Comdty    # 호주 3Y
+    - XM1 Comdty    # 호주 10Y
+
+  # '금리 팩터 모니터링' 차트(sleeve_factor_signals.csv)에 담을 범위.
+  #   signal (기본) — 시그널 유니버스 8종. 이 북의 포지션을 실제로 구동하는 것만.
+  #   all           — 가격 패널 전체 12종 (유로존 포함, 2026-07-22 이전 동작).
+  # 유로존은 어떤 시그널에도 기여하지 않으므로 '매매 후보' 옆에 두면 장식이자
+  # 재량 개입 유발 요인이다. 佛·伊의 실제 정보는 아웃라이트가 아니라 對분트
+  # 스프레드에 있으므로, 유럽 스트레스가 필요하면 전용 지표를 따로 만들 것.
+  factor_monitor_scope: signal
 
   # Sleeve blend weights (per asset class; carry applies to FX only)
   sleeve_weights:
@@ -45,10 +87,21 @@ sleeves:
   # brake) all LOWERED SR in A/B, while this kept SR ≈0.5 and cut rates MaxDD
   # -33%→-14%. Robust across the 2/4...6/12 threshold sweep; 4/8 = the
   # pre-registered prototype values (3/6 scored best but within noise).
+  #
+  # ⚠ 2026-07-22 래치 버그 수정 — dd_window 신설. 기존에는 산술 cumsum 의
+  # '전기간' 고점 대비로 dd 를 재서, 섀도우 북이 옛 고점(2022-09-28)을 못 넘자
+  # dd 가 임계 위에 영구 고착 → 2023-07 이후 계속 플랫, 2016+ 42%일 플랫으로
+  # 스톱이 킬스위치가 됐다. 이제 자산곡선은 복리, dd 는 고점대비 비율, 고점은
+  # dd_window 일 롤링 최대(0=옛 전기간 동작)라 오래된 고점이 굴러떨어지며
+  # 재진입이 열린다. 리버전 OFF 기준 스윕에서 252d 가 임계값과 무관하게
+  # 전기간을 지배(SR 0.76~0.95 vs 0.69~0.82). 임계는 사전등록값 4/8 유지 —
+  # 252d/3·6 이 0.95 로 더 높았으나 같은 표본에서 재튜닝하지 않는다
+  # (메커니즘 버그만 고치고 파라미터는 건드리지 않음).
   book_stop:
     enabled: true
     dd_half: 4.0
     dd_flat: 8.0
+    dd_window: 252    # 고점 산정 롤링창(거래일). 0 = 전기간(구동작, 래치 위험)
 
   # Fast cross-sectional reversal sub-book on rates (2026-06-11, prop-desk
   # "don't sit flat" request — the stopped book was flat 77% of days). Fades
@@ -60,8 +113,20 @@ sleeves:
   # ⚠ COST CLIFF (turnover ~600x/yr): net SR 0.70 @0.5bp, 0.31 @1bp, ≤0
   # @1.5bp — execute passively; cut weight or disable if real costs exceed
   # ~1bp. Earns mainly in JGB/AU/KR; ~flat in US/EU.
+  #
+  # ⛔ 2026-07-22 영구 OFF — 이 서브북의 수익은 알파가 아니라 '비동시 종가'
+  # 아티팩트였다. KTB 15:45 KST / JGB 15:02 JST 마감은 시카고 마감보다 ~14시간
+  # 이르므로 아시아 가격은 미국 움직임을 하루 늦게 반영한다: 일간수익률 상관이
+  # 美당일 vs 美전일 기준으로 KE1 0.18/0.33, JB1 0.15/0.37, KAA1 0.18/0.37
+  # (대조군 미국 TU1 은 0.81/-0.03). xs_neutralize=1.0 인 이 슬리브는 '글로벌
+  # 평균 대비 아직 안 따라온 시장을 산다' = 그 캐치업을 수확하는 기계였고,
+  # 손익의 111%가 아시아+영국(KAA 41%/JB 29%/KE 27%/G 14%), 미국은 -11%.
+  # 결정적으로 하루만 늦춰 집행하면 SR 1.01 → -0.14 로 소멸하며, 미국 종가를
+  # 보고 한국 종가에 체결하는 것은 물리적으로 불가능하다(KTB 야간장 없음).
+  # 위 "SR 0.55→0.89", "JGB/AU/KR 에서 번다"는 기록은 알파의 증거가 아니라
+  # 아티팩트의 증상이었다. 다시 켜지 말 것 — 켜면 모든 A/B 가 오염된다.
   reversion:
-    enabled: true
+    enabled: false
     weight: 0.5
     lookback: 10
     z_window: 120
@@ -99,6 +164,12 @@ sleeves:
   port_vol_window: 63       # trailing window for ex-ante portfolio vol
   max_asset_pos: 3.0        # cap on any single asset position
   max_gross_leverage: 10.0  # cap on summed gross exposure
+  # 금리 북 최종 노출 스케일 (2026-07-16 운용 요청: 실제 운용 북 대비 총/net
+  # 델타가 과대 → 절반으로 축소). 시그널·볼타겟·북스톱·리버전 로직은 그대로
+  # 두고 finalize_positions 맨 끝에서 금리 자산 최종 포지션에만 곱한다 →
+  # 백테스트 로그(pos::/rpnl::)·라이브 스냅샷·대시보드 DV01·계약수가 모두
+  # 일관되게 ×0.5. 1.0 = 스케일 없음(원복).
+  rates_exposure_scale: 0.5
 
   # Transaction costs (bps of turnover); per-ticker overrides allowed
   costs_bps:
