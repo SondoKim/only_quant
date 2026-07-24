@@ -170,9 +170,16 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
     src_rt = 'yields' if engine._has_rates_yields() else 'OFF (no yields)'
     _so = [a for a in engine.rates_assets if a in engine.signal_only_assets]
+    # 볼타겟 스코프를 명시 — separate 면 북별 타겟이라 target_port_vol 하나만
+    # 찍으면 실제 운용값과 다르게 읽힌다 (2026-07-24 금리/FX 분리).
+    if getattr(engine, 'vol_target_mode', 'combined') == 'separate':
+        tv_txt = (f"vol target = 북별 분리 (금리 {engine.target_port_vol_rates:.1%} / "
+                  f"FX {engine.target_port_vol_fx:.1%})")
+    else:
+        tv_txt = f"vol target = 결합 {engine.target_port_vol:.0%}"
     print(f"   Rates: {len(engine.rates_assets)} 시그널 / "
           f"{len(engine.rates_assets) - len(_so)} 매매 | FX: {len(engine.fx_assets)} | "
-          f"target portfolio vol = {engine.target_port_vol:.0%}")
+          f"{tv_txt}")
     if _so:
         print(f"   🎯 시그널 전용 (포지션 0): {', '.join(_so)}")
     print(f"   Carry source — FX: {src_fx} | Rates carry/value: {src_rt}")

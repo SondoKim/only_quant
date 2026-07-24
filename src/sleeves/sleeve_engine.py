@@ -166,6 +166,10 @@ class SleeveEngine:
         self.book_stop_dd_half = float(bs.get('dd_half', 4.0))   # 고점대비 %
         self.book_stop_dd_flat = float(bs.get('dd_flat', 8.0))
         self.book_stop_dd_window = int(bs.get('dd_window', 0) or 0)
+        # 마지막으로 실행된 북스톱의 dd/scale 시계열 (대시보드 해석용).
+        # _apply_book_stop 이 실제로 쓴 값을 그대로 보관하므로 재계산 불일치가
+        # 생길 수 없다. None = 아직 안 돌았거나 스톱 비활성.
+        self._book_stop_state: Optional[Dict[str, pd.Series]] = None
 
         # Reversion sub-book (2026-06-11, prop-desk "don't sit flat" request):
         # fast CROSS-SECTIONAL reversal on rates — fade each market's 10d move
@@ -233,6 +237,21 @@ class SleeveEngine:
         self.target_asset_vol = self.cfg.get('target_asset_vol', 0.10)
         self.target_port_vol = self.cfg.get('target_port_vol', 0.10)
         self.port_vol_window = self.cfg.get('port_vol_window', 63)
+
+        # ── 볼타겟 스코프 (2026-07-24): 'combined' = 금리+FX 를 한 포트폴리오로
+        # 묶어 하나의 target_port_vol 에 맞춘다 (구동작). 'separate' = 두 북이
+        # 각자의 타겟을 독립적으로 맞춘다 — 금리 북 스케일이 FX 변동성에 전혀
+        # 반응하지 않으므로 두 북을 별도 운용/별도 리스크한도로 굴릴 수 있다.
+        #
+        # ⚠ separate 는 총위험을 키운다: 상관 ρ 인 두 북이 각각 v 를 타게팅하면
+        # 합산 변동성 ≈ v·√(2(1+ρ)) (ρ≈0 이면 1.41배). 합산 위험을 유지하려면
+        # target_port_vol_rates/fx 를 낮춰 잡을 것 (분리 운용이면 애초에 합산
+        # 한도를 볼 이유가 없으므로 기본은 각 북 target_port_vol).
+        self.vol_target_mode = str(self.cfg.get('vol_target_mode', 'combined')).lower()
+        self.target_port_vol_rates = float(
+            self.cfg.get('target_port_vol_rates', self.target_port_vol))
+        self.target_port_vol_fx = float(
+            self.cfg.get('target_port_vol_fx', self.target_port_vol))
         self.max_asset_pos = self.cfg.get('max_asset_pos', 3.0)
         self.max_gross_leverage = self.cfg.get('max_gross_leverage', 10.0)
         # 금리 북 최종 노출 스케일 (2026-07-16 운용 캘리브레이션: 운용 북 대비
@@ -711,6 +730,10 @@ class SleeveEngine:
 
         return {'date': pos.index[-1], 'sleeves': sleeves_out, 'target': target,
                 'prev': prev, 'pnl_1d': pnl_1d,
+                # 북스톱 상태 (위 finalize_positions 가 실제로 적용한 값)
+                'book_stop': self.book_stop_status(),
+                # 슬리브 가중 (해석 문구가 컨빅션을 재구성하는 데 필요)
+                'sleeve_weights': dict(self.sleeve_weights),
                 # 시그널에는 기여하지만 주문은 내지 않는 자산 — 대시보드가
                 # '중립(포지션 0)'과 '매매 대상 아님'을 구분해 표시하도록.
                 'signal_only': sorted(a for a in assets if a in self.signal_only_assets),
@@ -768,9 +791,37 @@ class SleeveEngine:
         pos = self._apply_risk_blocks(pos, traded)
 
         # ── Portfolio vol targeting (ex-ante, trailing) ──────────────────
-        pos = self._apply_portfolio_vol_target(pos, traded)
+        # 'separate' 는 금리 북(커브 합성 포함)과 FX 북을 각각 독립 타게팅한다.
+        # 한쪽 북의 변동성 급등이 다른 북의 포지션 크기를 건드리지 않는다 =
+        # 두 북을 서로 다른 팀/한도로 운용할 수 있는 상태.
+        if self.vol_target_mode == 'separate':
+            pos = self._vol_target_by_book(pos)
+        else:
+            pos = self._apply_portfolio_vol_target(pos, traded)
 
         return pos
+
+    def _vol_target_by_book(self, pos: pd.DataFrame) -> pd.DataFrame:
+        """금리 북 / FX 북에 각자의 target_port_vol 을 독립 적용.
+
+        각 북은 자기 자산의 과거 수익률만으로 ex-ante 변동성을 재고, 자기
+        타겟에 맞춰 스케일된다. 교차 항이 전혀 없으므로 한 북을 끄거나 유니버스를
+        바꿔도 다른 북의 포지션은 비트 단위로 동일하다 (분리 운용의 정의).
+        max_gross_leverage 는 이제 '북별' 레일로 동작한다 (실사용 그로스가
+        한도의 수 % 수준이라 실질 무영향; 합산 레일이 필요하면 별도 도입할 것).
+        """
+        out = pos.copy()
+        books = [
+            ([a for a in self.rates_assets + self.curve_assets if a in pos.columns],
+             self.target_port_vol_rates),
+            ([a for a in self.fx_assets if a in pos.columns],
+             self.target_port_vol_fx),
+        ]
+        for cols, tgt in books:
+            if not cols:
+                continue
+            out[cols] = self._apply_portfolio_vol_target(pos[cols], cols, target=tgt)
+        return out
 
     def finalize_positions(self, pos: pd.DataFrame,
                            smooth_override: Optional[float] = None,
@@ -831,7 +882,11 @@ class SleeveEngine:
         # 페이드는 전체 금리 횡단면으로 계산(위)하고 매매만 제외 → 나머지 자산의
         # 상대가치 신호는 그대로 유지된다.
         pos = self._mute_signal_only(pos)
-        pos = self._apply_portfolio_vol_target(pos, R)
+        # 리버전은 금리 서브북이므로 분리 모드에서는 금리 타겟을 쓴다
+        # (combined 모드에서는 None → 기존 target_port_vol, 동작 불변).
+        pos = self._apply_portfolio_vol_target(
+            pos, R, target=(self.target_port_vol_rates
+                            if self.vol_target_mode == 'separate' else None))
         if self.reversion_smooth > 0:
             pos = pos.ewm(alpha=1.0 - self.reversion_smooth, min_periods=1).mean()
         return pos
@@ -866,15 +921,39 @@ class SleeveEngine:
                       [1.0, 0.5], 0.0),
             index=pos.index,
         ).shift(1).fillna(1.0)
+        self._book_stop_state = {'dd': dd, 'scale': scale}
         out = pos.copy()
         out[R] = out[R].mul(scale, axis=0)
         return out
 
-    def _apply_portfolio_vol_target(self, pos: pd.DataFrame, traded: List[str]) -> pd.DataFrame:
+    def book_stop_status(self) -> Optional[Dict[str, Any]]:
+        """마지막 실행 기준 북스톱 상태 (대시보드/해석용, 없으면 None).
+
+        scale = 오늘 금리 포지션에 곱해진 배수 (1.0 정상 / 0.5 절반 / 0.0 플랫),
+        dd = 섀도우 북의 롤링 고점 대비 하락률(%). 둘 다 _apply_book_stop 이
+        실제로 사용한 시리즈의 마지막 값이라 표시와 집행이 어긋나지 않는다.
+        """
+        st = self._book_stop_state
+        if not self.book_stop_enabled or not st:
+            return None
+        return {'scale': float(st['scale'].iloc[-1]),
+                'dd': float(st['dd'].iloc[-1]),
+                'dd_half': self.book_stop_dd_half,
+                'dd_flat': self.book_stop_dd_flat,
+                'dd_window': self.book_stop_dd_window}
+
+    def _apply_portfolio_vol_target(self, pos: pd.DataFrame, traded: List[str],
+                                    target: Optional[float] = None) -> pd.DataFrame:
         """Scale whole book each day so trailing portfolio vol ≈ target.
 
         Ex-ante: today's weights applied to PAST returns (no look-ahead).
+
+        `target` 를 주면 그 값으로, 없으면 self.target_port_vol 로 타게팅한다
+        (북 분리 운용 시 금리/FX 각자의 타겟을 넣기 위한 인자).
+        `pos` 의 컬럼은 `traded` 와 순서까지 정확히 일치해야 한다 — 아래
+        window_rets @ w 가 위치 기반 행렬곱이기 때문.
         """
+        tgt = self.target_port_vol if target is None else float(target)
         rets = self.dir_returns[traded].fillna(0.0)
         win = self.port_vol_window
         scales = pd.Series(1.0, index=pos.index)
@@ -893,7 +972,7 @@ class SleeveEngine:
             port_hist = window_rets @ w                 # portfolio return path
             pv = port_hist.std() * np.sqrt(TRADING_DAYS)
             if pv > 1e-9:
-                scales.iloc[i] = min(self.target_port_vol / pv,
+                scales.iloc[i] = min(tgt / pv,
                                      self.max_gross_leverage / (np.abs(w).sum() + 1e-9))
         scaled = pos.mul(scales, axis=0)
         # final gross leverage cap

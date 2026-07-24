@@ -19,10 +19,12 @@ HTML : 모든 조합을 자산별 접이식 표로 전부 나열 (상태 배지 
 """
 
 import argparse
+import base64
 import json
 import re
 import sys
 import html
+import textwrap
 from pathlib import Path
 
 import pandas as pd
@@ -520,6 +522,252 @@ def sleeve_signal_rows(snap, delta_per_unit=None):
     return rows
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# 금리 북 시그널 자동 해석 (표 아래 렌더)
+# ─────────────────────────────────────────────────────────────────────────────
+# 슬리브별 읽기: (표시명, 평균이 +일 때의 뜻, −일 때의 뜻)
+SLEEVE_READ = {
+    'trend':  ('추세', '6/12개월 가격이 상승 추세', '6/12개월 가격이 하락 추세'),
+    'value':  ('밸류', '2년 평균 대비 싼 편', '2년 평균 대비 비싼 편'),
+    'carry':  ('캐리', '환헤지 후 일드 레벨이 상대적으로 높음',
+               '환헤지 후 일드 레벨이 상대적으로 낮음'),
+    'curve':  ('커브', '커브가 가팔라 롤다운 유리', '커브가 눌려 롤다운 불리'),
+    'policy': ('정책 모멘텀', '단기금리 하락 = 완화 사이클',
+               '단기금리 상승 = 긴축 사이클'),
+}
+# 컨빅션 분해에서 제외 — 별도 서브북이라 sleeve_weights 분모를 공유하지 않는다
+NON_CONVICTION_SLEEVES = {'reversion'}
+
+
+def _fmt_assets(items, short_first=None):
+    """[(ticker, value)] → '미국 2Y -0.77 · 미국 10Y -0.50' 형태.
+
+    short_first=True 면 더 숏인 쪽부터, False 면 더 롱인 쪽부터 정렬한다
+    (None = 입력 순서 유지). 문장의 방향과 나열 순서를 맞추기 위한 인자.
+    """
+    if short_first is not None:
+        items = sorted(items, key=lambda kv: kv[1] if short_first else -kv[1])
+    return ' · '.join(f"{short_name(a)} {v:+.2f}" for a, v in items)
+
+
+def sleeve_narrative(snap, per_unit=None):
+    """오늘의 금리 북 시그널을 사람이 읽는 문장으로 자동 해석.
+
+    스냅샷의 슬리브 z값·목표 포지션·북스톱 상태만으로 생성한다 (하드코딩된
+    시황 문구 없음). 반환: [(머리말, 본문), ...] — 콘솔/HTML 이 같은 내용을
+    렌더하므로 두 경로가 어긋날 수 없다.
+
+    ⚠ 컨빅션은 '방향의 근거'일 뿐 포지션 크기와 비례하지 않는다. 최종 크기는
+    인버스볼 → 볼타겟 → 스무딩(0.8) → 북스톱 → 노출스케일을 거친 결과다.
+    """
+    if not snap:
+        return []
+    sig_only = set(snap.get('signal_only') or [])
+    tgt = {a: p for a, p in (snap.get('target') or {}).items() if a not in sig_only}
+    if not tgt:
+        return []
+    sleeves = snap.get('sleeves') or {}
+    prev = snap.get('prev') or {}
+    out = []
+
+    # ── 공통 집계 ──────────────────────────────────────────────────────
+    TH = 0.02
+    longs = sorted([(a, p) for a, p in tgt.items() if p > TH], key=lambda x: -x[1])
+    shorts = sorted([(a, p) for a, p in tgt.items() if p < -TH], key=lambda x: x[1])
+    flats = [a for a, p in tgt.items() if abs(p) <= TH]
+    net = sum(tgt.values())
+    gross = sum(abs(p) for p in tgt.values())
+    ratio = abs(net) / gross if gross > 1e-9 else 0.0
+    bs = snap.get('book_stop')
+
+    def _stop_line():
+        """북스톱 상태 문장 (스톱 비활성이면 None)."""
+        if not bs:
+            return None
+        dd, sc = bs['dd'], bs['scale']
+        win = bs.get('dd_window') or 0
+        wtxt = f"{win}일 롤링 고점" if win else "전기간 고점"
+        if sc >= 0.999:
+            return ("북스톱",
+                    f"정상 작동 중입니다. 섀도우 북 드로다운 {dd:.1f}% "
+                    f"({wtxt} 대비)로 감축 임계 {bs['dd_half']:.0f}% 아래 — "
+                    f"포지션 100% 집행.")
+        if sc > 0.01:
+            return ("⚠ 북스톱",
+                    f"감축 중입니다. 드로다운 {dd:.1f}% 가 {bs['dd_half']:.0f}% 를 "
+                    f"넘어 금리 포지션이 ×{sc:g} 로 축소됐습니다. 섀도우 북이 "
+                    f"회복하면 자동 복원되니 수동으로 되돌리지 마십시오.")
+        return ("⛔ 북스톱",
+                f"발동했습니다. 드로다운 {dd:.1f}% 가 플랫 임계 "
+                f"{bs['dd_flat']:.0f}% 를 초과해 금리 북이 플랫(×0)입니다. "
+                f"섀도우 북 회복 시 자동 재진입합니다.")
+
+    # ── ⓪ 북이 비어 있으면 여기서 끝 (해석할 포지션이 없음) ─────────────
+    # 이 분기가 없으면 그로스 0 인 북에 대해 "미국 숏(+0.00)이 한국보다 크다"
+    # 같은 무의미한 문장이 만들어진다.
+    if gross < 0.05:
+        why = ("북스톱이 발동해 금리 포지션을 0으로 눌렀습니다."
+               if bs and bs['scale'] < 0.01 else
+               "팩터 신호가 서로 상쇄됐거나 변동성 워밍업 구간입니다 "
+               "(볼타겟 초기 63거래일은 강제 플랫).")
+        out.append(("포지션",
+                    f"금리 북이 사실상 플랫입니다 (그로스 {gross:.2f}) — "
+                    f"오늘 신규 주문 없음. {why}"))
+        st = _stop_line()
+        if st:
+            out.append(st)
+        return out
+
+    # ── ① 지금 북이 어떤 포지션인가 ─────────────────────────────────────
+    side = '롱' if net > 0 else '숏'
+
+    if longs and not shorts:
+        head = f"매매 {len(tgt)}종 전부 듀레이션 롱"
+    elif shorts and not longs:
+        head = f"매매 {len(tgt)}종 전부 듀레이션 숏"
+    else:
+        head = f"롱 {len(longs)}종 · 숏 {len(shorts)}종"
+        if flats:
+            head += f" · 중립 {len(flats)}종"
+    delta_txt = (f" · 순델타 {net * per_unit:+,.0f}만원" if per_unit else "")
+    out.append(("포지션",
+                f"{head}입니다 (순 {net:+.2f} / 그로스 {gross:.2f} — "
+                f"방향성 {ratio:.0%} / 국가간 상대가치 {1 - ratio:.0%}{delta_txt})."))
+
+    # ── ② 팩터 분해 ────────────────────────────────────────────────────
+    # 두 성분을 따로 잰다:
+    #   contrib = 매매자산 평균 (= 북의 '방향성' 성분을 만든 기여도)
+    #   gaps    = 국가 간 평균 격차 (= '상대가치' 성분을 만든 갈림)
+    # 상대가치 위주 북에서는 평균이 상쇄돼 0 에 가까워지므로, 평균만 보고
+    # "추세 +0.02 가 롱을 주도"라고 쓰면 사실을 왜곡한다 → ratio 로 분기.
+    grp = {}
+    for a, p in tgt.items():
+        grp.setdefault(short_name(a).split()[0], []).append((a, p))
+
+    w_map = snap.get('sleeve_weights') or {
+        n: s.get('weight', 0.0) for n, s in sleeves.items()}
+    denom = sum(abs(w) for n, w in w_map.items()
+                if w and n not in NON_CONVICTION_SLEEVES) or 1.0
+    contrib, gaps = {}, []
+    for name, s in sleeves.items():
+        if name in NON_CONVICTION_SLEEVES:
+            continue
+        w = s.get('weight', 0.0)
+        sg = s.get('signals') or {}
+        vals = [sg[a] for a in tgt if a in sg]
+        if not w or not vals:
+            continue
+        contrib[name] = w * (sum(vals) / len(vals)) / denom
+        gm = {g: [sg[a] for a, _ in its if a in sg] for g, its in grp.items()}
+        gm = {g: sum(v) / len(v) for g, v in gm.items() if v}
+        if len(gm) >= 2:
+            gaps.append((max(gm.values()) - min(gm.values()), name, gm))
+
+    def _label(name):
+        return SLEEVE_READ.get(name, (name,))[0]
+
+    def _kind(name):
+        xs = (sleeves.get(name) or {}).get('xs_neutralize', 0.0)
+        return '상대가치' if xs and xs >= 0.99 else '방향성'
+
+    def _phr(name, c):
+        label, pos_t, neg_t = SLEEVE_READ.get(name, (name, '양(+)', '음(−)'))
+        return f"{label} {c:+.2f}({_kind(name)}) {pos_t if c > 0 else neg_t}"
+
+    def _gm_txt(gm, short_first):
+        return ' vs '.join(f"{g} {v:+.2f}" for g, v in sorted(
+            gm.items(), key=lambda kv: kv[1] if short_first else -kv[1]))
+
+    # 국가 평균이 이만큼(z) 벌어져야 '갈렸다'고 말한다 — 격차 0 인데
+    # "갈림의 주 원인은 추세(미국 -0.40 vs 한국 -0.40)" 같은 문장을 막는다.
+    GAP_TH = 0.10
+    DIRECTIONAL = ratio >= 0.5
+    if contrib and DIRECTIONAL:
+        book_sign = 1.0 if side == '롱' else -1.0
+        ranked = sorted(contrib.items(), key=lambda kv: -abs(kv[1]))
+        drv = [(n, c) for n, c in ranked if c * book_sign > 0]
+        opp = [(n, c) for n, c in ranked if c * book_sign <= 0]
+        if drv:
+            out.append(("근거", f"{side}을 주도하는 팩터 — "
+                        + ' / '.join(_phr(n, c) for n, c in drv) + "."))
+        if opp:
+            opp_side = '숏' if side == '롱' else '롱'
+            verdict = ("크기가 작아 방향을 뒤집지 못합니다"
+                       if abs(opp[0][1]) < abs(drv[0][1]) * 0.6 and drv else
+                       "크기가 비슷해 순노출이 그만큼 줄어듭니다")
+            out.append(("반대편", f"{opp_side} 쪽을 가리키는 팩터 — "
+                        + ' / '.join(_phr(n, c) for n, c in opp)
+                        + f". 다만 {verdict}."))
+    elif [g for g in gaps if g[0] >= GAP_TH]:
+        top = sorted((g for g in gaps if g[0] >= GAP_TH), key=lambda x: -x[0])[:2]
+        out.append(("근거",
+                    f"방향성보다 국가간 상대가치가 큰 북입니다 (방향성 {ratio:.0%}) "
+                    f"— 팩터 평균은 서로 상쇄되므로 국가를 가르는 힘으로 읽어야 "
+                    f"합니다. 갈림이 큰 팩터: "
+                    + ' / '.join(f"{_label(n)}({_kind(n)}) {_gm_txt(gm, False)}"
+                                 for _, n, gm in top) + "."))
+    elif contrib:
+        out.append(("근거", "팩터 — " + ' / '.join(
+            _phr(n, c) for n, c in
+            sorted(contrib.items(), key=lambda kv: -abs(kv[1]))) + "."))
+
+    # ── ③ 국가·만기별 차별화 ───────────────────────────────────────────
+    if len(grp) >= 2:
+        sums = {g: sum(v for _, v in its) for g, its in grp.items()}
+        if min(sums.values()) < -1e-9 and max(sums.values()) > 1e-9:
+            # 국가별로 방향이 갈린 경우 — '누가 더 크다'가 아니라 '어느 쪽이 롱/숏'
+            segs = [f"{g}은 {'롱' if sums[g] > 0 else '숏'}"
+                    f"({_fmt_assets(its, short_first=(sums[g] < 0))})"
+                    for g, its in sorted(grp.items(), key=lambda kv: -sums[kv[0]])]
+            txt = ' · '.join(segs) + " — 국가간 상대가치 포지션입니다."
+        else:
+            o = sorted(grp.items(), key=lambda kv: -abs(sums[kv[0]]))
+            (bg, b_items), (sm, s_items) = o[0], o[-1]
+            sf = (side == '숏')
+            txt = (f"{bg} {side}({_fmt_assets(b_items, short_first=sf)})이 "
+                   f"{sm}({_fmt_assets(s_items, short_first=sf)})보다 큽니다.")
+        if gaps and DIRECTIONAL:      # RV 모드에선 위 '근거'와 중복되므로 생략
+            gtop = max(gaps, key=lambda x: x[0])
+            if gtop[0] >= GAP_TH:
+                _, gname, gm = gtop
+                txt += (f" 갈림의 주 원인은 {_label(gname)}입니다 "
+                        f"({_gm_txt(gm, short_first=(side == '숏'))}).")
+        out.append(("국가별", txt))
+
+    # ── ④ 전일 대비 ────────────────────────────────────────────────────
+    deltas = sorted(((a, tgt[a] - prev.get(a, tgt[a])) for a in tgt),
+                    key=lambda kv: -abs(kv[1]))
+    if deltas:
+        a0, d0 = deltas[0]
+        if abs(d0) < 0.03:
+            out.append(("전일 대비",
+                        f"거의 변화 없습니다 (최대 {short_name(a0)} {d0:+.2f}). "
+                        f"position_smooth 0.8 이 오늘 신규 목표의 20%만 반영해 "
+                        f"주문이 잘게 나옵니다."))
+        else:
+            top = [(a, d) for a, d in deltas[:3] if abs(d) >= 0.01]
+            out.append(("전일 대비",
+                        f"변화가 큰 자산: {_fmt_assets(top)} "
+                        f"(스무딩 0.8 적용 후 기준)."))
+
+    # ── ⑤ 북스톱 상태 ──────────────────────────────────────────────────
+    st = _stop_line()
+    if st:
+        out.append(st)
+
+    basis = ("팩터 옆 숫자는 슬리브 z값의 매매 자산 평균에 가중치를 적용한 "
+             "컨빅션 기여도입니다."
+             if DIRECTIONAL else
+             "팩터 옆 숫자는 국가별 슬리브 z값 평균입니다 (이 북은 상대가치 "
+             "비중이 커서 전체 평균으로는 설명되지 않습니다).")
+    out.append(("읽는 법",
+                basis + " 컨빅션은 '방향의 근거'일 뿐 포지션 크기와 비례하지 "
+                "않습니다 — 최종 크기는 인버스볼 → 볼타겟 → 스무딩 → 북스톱 → "
+                "노출스케일을 거칩니다. 밸류·캐리는 시그널 8종(英日豪 포함) 평균 "
+                "대비 상대값이라, 매매하지 않는 4종이 기준선을 만듭니다."))
+    return out
+
+
 # FX 선물 가격 → 통상 호가 컨벤션 환산
 FX_QUOTE = {
     'JY1 Curncy': ('USDJPY', lambda p: 10000.0 / p),
@@ -826,7 +1074,7 @@ def build_signal_table(selector, prices, max_corr, tradeable):
 
 
 def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=None,
-                       pnl_totals=None):
+                       pnl_totals=None, sleeve_snap=None):
     print(f"\n▌ 오늘의 트레이딩 시그널  (기준일 {signal_date} · 금리=슬리브 엔진 · "
           f"FX=전략 공장(상관필터 {max_corr}) — main.py --mode signals 동일)")
     print(f"  공장 선택 전략 {n_active}개")
@@ -847,6 +1095,13 @@ def print_signal_table(sig_rows, n_active, max_corr, signal_date, delta_info=Non
         und  = r.get('underlying', '-')
         print(f"  {asset_label(r['asset']):<26} {und:>14} {px:>9} {arrow:<8} {r['conf']:>6.2f} "
               f"{r['pos']:>+7.2f} {ddw} {dw} {pbp} {pw} {src:>6}")
+    # 금리 북 시그널 자동 해석 (HTML 과 동일 내용 — sleeve_narrative 단일 소스)
+    narr = sleeve_narrative(sleeve_snap, per_unit=(delta_info or {}).get('per_unit'))
+    if narr:
+        print("\n  🧭 금리 북 시그널 해석  (오늘 슬리브 z값에서 자동 생성)")
+        for headline, body in narr:
+            print(textwrap.fill(f"{headline} — {body}", width=100,
+                                initial_indent='     ', subsequent_indent='       '))
     if pnl_totals:
         seg = []
         for key, lbl in [('rates', '금리'), ('fx', 'FX')]:
@@ -1161,6 +1416,37 @@ def write_html(rows, factory_dir, signal_date, out_path,
                          f"<td>{spark}</td></tr>")
         parts.append("</table>")
 
+        # 2-1. 금리 북 시그널 자동 해석 (표 바로 아래)
+        narr = sleeve_narrative(sleeve_snap,
+                                per_unit=(delta_info or {}).get('per_unit'))
+        if narr:
+            parts.append(
+                "<div style='margin:14px 0 8px;padding:14px 16px;background:#12151d;"
+                "border:1px solid #232838;border-left:3px solid #8ab4f8;"
+                "border-radius:6px;max-width:1560px;'>"
+                "<div style='font-weight:bold;color:#8ab4f8;font-size:13.5px;"
+                "margin-bottom:10px;'>🧭 금리 북 시그널 해석 "
+                "<span style='color:#6b7280;font-weight:normal;font-size:12px;'>"
+                "— 오늘 슬리브 z값에서 자동 생성 (수기 코멘트 아님)</span></div>")
+            for headline, body in narr:
+                muted = headline in ('읽는 법',)
+                warn = headline.startswith(('⚠', '⛔'))
+                hc = '#f0a868' if warn else ('#6b7280' if muted else '#c4b5fd')
+                bc = '#9aa0aa' if muted else '#d5d8de'
+                parts.append(
+                    f"<div style='margin:6px 0;font-size:{12 if muted else 13}px;"
+                    f"line-height:1.65;'>"
+                    f"<b style='color:{hc};'>{html.escape(headline)}</b> "
+                    f"<span style='color:{bc};'>{html.escape(body)}</span></div>")
+            parts.append("</div>")
+            # 기계 판독용 사본 — total_dashboard(Streamlit)가 '금리 자산 시그널'
+            # 표 아래에 같은 해석을 렌더할 때 읽는다. 표와 똑같은 HTML 파일에서
+            # 나오므로 둘이 desync 될 수 없다. HTML 주석 + base64 라 화면에도
+            # 안 보이고 pd.read_html 파싱도 건드리지 않는다.
+            payload = base64.b64encode(
+                json.dumps(narr, ensure_ascii=False).encode('utf-8')).decode()
+            parts.append(f"<!--SLEEVE_NARRATIVE_B64:{payload}-->")
+
     # 2a. YTD 성과 (plotly: FX / RATES / COMBINED — combined_report 와 동일 정규화)
     if perf_html:
         parts.append("<h2>[YTD 성과 — FX · RATES · COMBINED]</h2>")
@@ -1374,7 +1660,8 @@ def main():
                                fx_notional_만달러=args.fx_notional,
                                fx_usdkrw=args.fx_usdkrw)
     print_signal_table(sig_rows, n_active_sel, args.max_corr, signal_date,
-                       delta_info=delta_info, pnl_totals=pnl_totals)
+                       delta_info=delta_info, pnl_totals=pnl_totals,
+                       sleeve_snap=sleeve_snap)
     if sleeve_snap:
         print_sleeve_console(sleeve_snap)
 

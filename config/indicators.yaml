@@ -234,8 +234,34 @@ sleeves:
   # Risk model
   vol_halflife: 33          # EWMA halflife (days) for realized vol
   target_asset_vol: 0.10    # per-asset risk target (inverse-vol sizing)
-  target_port_vol: 0.10     # portfolio annualized vol target
+  target_port_vol: 0.10     # portfolio annualized vol target (combined 모드용)
   port_vol_window: 63       # trailing window for ex-ante portfolio vol
+
+  # ── 볼타겟 스코프 (2026-07-24 운용 요청: 금리/FX 북 완전 분리) ──────────
+  # combined (구동작) — 금리 4종 + FX 5종을 한 포트폴리오로 묶어 target_port_vol
+  #   하나에 맞춘다. 이러면 FX 북 변동성이 튈 때 금리 포지션이 같이 줄어든다.
+  # separate (현행) — 각 북이 자기 타겟을 독립 타게팅. 한 북의 유니버스·변동성이
+  #   바뀌어도 다른 북의 포지션은 비트 단위로 불변 = 별도 팀/별도 한도 운용 가능.
+  #
+  # A/B (scripts/test_vol_target_split.py, 2016+ / 2012+, net of costs,
+  # yield-implied, 금리는 rates_exposure_scale 0.5 적용 후):
+  #   A 결합 10%      금리SR 1.21/0.84, 금리vol 2.6%, 금리DD -5.5%, 합vol 7.6%
+  #   B 분리 각 10%   금리SR 1.12/0.67, 금리vol 3.3%, 금리DD -5.9%, 합vol 11.0%
+  #   C 분리 각 7.1%  금리SR 1.15/0.77, 금리vol 2.6%, 금리DD -4.7%, 합vol 7.9%  ← 채택
+  #
+  # ⚠ 분리의 대가를 정직하게 기록한다: 같은 위험(C)에서도 금리 SR 1.21→1.15,
+  # 2012+ 0.84→0.77 로 소폭 하락한다. 원인은 성과 저하가 아니라 구조 변화 —
+  # 결합 모드에서 금리 북의 스케일은 FX 가 지배하는 합산 변동성을 따라가느라
+  # 사실상 완만했는데, 분리하면 금리 자체 변동성에 반응해 스케일이 더 자주
+  # 움직인다 (회전 15x→17x). 즉 이 손실은 '분리 운용'이라는 요구사항의 가격이며
+  # 성능 최적화로 되돌릴 수 있는 종류가 아니다. 되돌리려면 mode 를 combined 로.
+  #
+  # 타겟 7.1% = 10%/√2 — 상관 ≈0 인 두 북을 각각 7.1% 로 잡으면 합산이 약 10%
+  # (실측 7.9%, 스무딩·북스톱이 실현변동성을 타겟 아래로 눌러서). 합산 총위험을
+  # 현행 수준으로 보존하는 값이라 per_unit 1252 델타 캘리브레이션도 그대로 유효.
+  vol_target_mode: separate
+  target_port_vol_rates: 0.071
+  target_port_vol_fx: 0.071
   max_asset_pos: 3.0        # cap on any single asset position
   max_gross_leverage: 10.0  # cap on summed gross exposure
   # 금리 북 최종 노출 스케일 (2026-07-16 운용 요청: 실제 운용 북 대비 총/net
