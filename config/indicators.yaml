@@ -89,6 +89,14 @@ sleeves:
     policy: 1.0
   # Per-sleeve cross-sectional neutralization (1=market-neutral RV, 0=directional).
   # Trend keeps its directional CTA premium; Value/Carry are relative-value.
+  #
+  # ⛔ 2026-07-23 trend/policy 부분 중립화(0.25/0.5/1.0 단독·결합) A/B 기각
+  # (scripts/test_xs_neutralize.py, FX 는 xs_neutralize_fx 로 고정하고 금리만
+  # 변경): 2016+ 1.20→1.13~0.72, 2012+ 0.84→0.80~0.41 로 용량-반응이 단조
+  # 악화 — 어떤 셀도 어떤 열(H1/H2/T+2/시간대정직)에서도 개선 없음. 국가 간
+  # 상대 금리 모멘텀은 이 북(시그널8/매매 韓美4 반쪽헤지 구조)에서는 부재.
+  # trend=0/policy=0 이 확정 우위 — [[directionality-ab]] 와 같은 결론의 재확인:
+  # 이 북의 알파는 방향성 CTA 프리미엄이다. 재론하려면 새 표본으로.
   xs_neutralize:
     trend: 0.0
     value: 1.0
@@ -149,6 +157,54 @@ sleeves:
     lookback: 10
     z_window: 120
     smooth: 0.5
+
+  # ── Curve trades (2026-07-23): DV01(≈vol)-중립 스티프너 합성 자산 ──────
+  # 동기: 현행 북은 ρ(TU,TY)=0.78, ρ(KE,KAA)=0.87 로 실효 베팅이 '미국 듀레이션
+  # + 한국 듀레이션' 2개뿐. 같은 4개 계약으로 커브 기울기(정책 vs 텀프리미엄)
+  # 라는 독립 팩터를 추가한다. 합성 수익률 = H·r_short − r_long (H = 전일
+  # σ_long/σ_short, causal). 시그널·볼타겟·북스톱은 합성 공간, 최종 출력은
+  # 실계약 레그(short +H / long −1)로 환산 → 하위 소비자는 실자산만 본다.
+  # 동일 국가·동시 마감 페어만 허용 — 비동시 종가 아티팩트 구조적으로 없음.
+  # 슬리브: trend/value(합성 가격), carry(−z(slope): 가파름→플래트너 롤다운),
+  # policy(완화→불 스티프닝). 가중은 본북 전례대로 사전등록 균등(재튜닝 금지).
+  #
+  # ⛔ 2026-07-23 A/B 기각 (scripts/test_curve_blocks.py). 금리 북 SR:
+  #   2016+ 1.20 → 0.70, 2012+ 0.84 → 0.54 (H1 폭락 1.37→0.17, 회전 15x→54x).
+  # 커브 북 단독(합성 공간, 두다리 비용): SR@0.5bp −0.29/−0.34, 1bp −0.42/−0.51
+  # — 비용 문제가 아니라 gross 자체가 음수. 슬리브 분해(진단용, 재튜닝 금지):
+  #   carry(−z slope) 가 명백히 음수(−0.43/−0.35 gross) = 이 표본에서 커브
+  #   리치니스 롤다운 프리미엄 부재; trend/policy 는 US 만 소폭 +(0.3~0.5
+  #   gross)이나 net 에선 소멸, KR 커브는 거의 전 구간 음수 (KE·KAA 상관 0.87
+  #   → 스프레드 분산이 작아 비용 대비 신호가 얇다). 'US 커브만 trend+policy'
+  #   같은 부분 채택은 같은 표본 재튜닝이므로 금지 — 켜려면 새 표본/새 데이터
+  #   (예: 실제 커브 yield 스프레드 시그널)로 재검증할 것.
+  curve_trades:
+    enabled: false        # ⛔ 2026-07-23 A/B 기각 — 켜기 전 위 주석 필독
+    risk_weight: 1.0      # 커브 컨빅션 전체 스케일 (아웃라이트 대비)
+    pairs:
+      - {name: US2s10s, short_leg: TU1 Comdty, long_leg: TY1 Comdty}
+      - {name: KR3s10s, short_leg: KE1 Comdty, long_leg: KAA1 Comdty}
+
+  # ── Block risk budgeting (2026-07-23) ─────────────────────────────────
+  # 인버스볼 equal-risk-per-asset 은 상관 0.8+ 국가 블록에 예산을 이중 배분
+  # 한다. 블록 내 평균 롤링 상관으로 블록 합산 변동성을 추정, 각 블록이
+  # '한 개 베팅' 리스크가 되도록 멤버를 1/√(m(1+(m−1)ρ̄)) 로 축소 — 이후
+  # 포트폴리오 볼타겟이 레벨을 복원하므로 순효과는 블록 간 예산 재배분.
+  # 미등록 자산·커브 합성은 싱글톤(영향 없음).
+  #
+  # ⛔ 2026-07-23 A/B 기각 (scripts/test_curve_blocks.py). 금리 북 SR:
+  #   2016+ 1.20 → 1.01 (H2 1.03→0.70), 2012+ 0.84 → 0.69, MaxDD 도 악화
+  #   (−5.5%→−7.5%). 이론상 '베팅 균등'이 맞아 보여도, 이 북에선 상관 높은
+  #   국가 듀레이션 중복이 곧 수익원이라 예산을 걷어내면 (FX 쪽으로 상대
+  #   예산이 흘러) 금리 알파만 희석된다. 실효 베팅 수 문제의 해법은 예산
+  #   재배분이 아니라 '수익성 있는 새 베팅 추가'여야 한다는 교훈.
+  risk_blocks:
+    enabled: false        # ⛔ 2026-07-23 A/B 기각 — 켜기 전 위 주석 필독
+    corr_window: 252
+    blocks:
+      US_dur: [TU1 Comdty, TY1 Comdty]
+      KR_dur: [KE1 Comdty, KAA1 Comdty]
+      AU_dur: [YM1 Comdty, XM1 Comdty]   # signal_only 라 현재는 무효, 안전용
 
   # (가) Regime gate: turn the TREND sleeve down in ranging/choppy regimes
   # (Hurst ≤ threshold) to avoid whipsaw (the 2023-25 rates problem).
