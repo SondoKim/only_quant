@@ -270,13 +270,22 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
     # -----------------------------------------------------------------
     # Save
     # -----------------------------------------------------------------
+    # 진단용 그림은 루트가 아니라 reports/backtest_plots/ 아래로 모은다. 파일명에
+    # 파라미터·Sharpe 가 박혀 매 실행마다 새로 쌓이므로, 이번 실행분을 쓰기 전에
+    # 폴더의 옛 trading_pnl*.png 를 먼저 비워 최신 실행 결과만 남긴다.
+    # (읽는 코드는 없다 — 순수 진단 산출물.)
+    plot_dir = Path(__file__).parent.parent / 'reports' / 'backtest_plots'
+    plot_dir.mkdir(parents=True, exist_ok=True)
+    for old in plot_dir.glob('trading_pnl*.png'):
+        old.unlink()
+
     _end_date = end_date or df['Date'].iloc[-1].strftime('%Y-%m-%d')
     suffix_start = f"_{start_date}" if start_date else ""
     suffix_end   = f"_to{_end_date}"
     suffix_corr = f"_corr{max_correlation}" if max_correlation is not None else ""
     suffix_mode = f"_{mode}" if mode else ""
     suffix_sharpe = f"_rates{sharpe_rates:.2f}_fx{sharpe_fx:.2f}"
-    output_path = f"trading_pnl{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
+    output_path = plot_dir / f"trading_pnl{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}{suffix_sharpe}.png"
 
     plt.savefig(output_path, dpi=300, bbox_inches='tight')
     plt.close()
@@ -312,7 +321,7 @@ def plot_pnl(max_correlation=None, mode=None, start_date=None, end_date=None):
         plt.xlabel('Date')
         fig_idx.tight_layout()
 
-        index_output = f"trading_pnl_index{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}_idx{sharpe_idx:.2f}.png"
+        index_output = plot_dir / f"trading_pnl_index{suffix_start}{suffix_end}{suffix_corr}{suffix_mode}_idx{sharpe_idx:.2f}.png"
         plt.savefig(index_output, dpi=300, bbox_inches='tight')
         plt.close()
 

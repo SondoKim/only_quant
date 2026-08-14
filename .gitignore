@@ -1,0 +1,9 @@
+# 매일/매 실행마다 재생성되는 산출물 — git 에 쌓지 않는다 (2026-07-24).
+# 생성: scripts/strategy_dashboard.py --html, scripts/plot_trading_results.py
+# 소비: total_dashboard 가 항상 최신 1개만 파싱 (과거분 불필요).
+reports/dashboards/
+reports/backtest_plots/
+
+# 혹시 구 위치(루트)에 다시 생기더라도 추적하지 않는다.
+strategy_dashboard_*.html
+trading_pnl*.png
