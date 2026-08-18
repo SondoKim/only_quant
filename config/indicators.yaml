@@ -87,6 +87,16 @@ sleeves:
     # position smoothing); curve-slope carry HURT (0.14→0.08) — keep 0.
     curve: 0.0
     policy: 1.0
+    # ⛔ 2026-08-14 매크로 데이터 슬리브 홀드아웃 A/B 기각
+    # (scripts/test_macro_factors.py — 개발 2012-2021 판정 / 홀드아웃 2022+ 확인).
+    # inflation (BEI/CPI 모멘텀) · path (1Y OIS − 정책금리 리프라이싱) 모두
+    # 상관 게이트는 통과 (max|ρ| 0.13 / 0.38 — 진짜 새 정보원)했으나 성과 게이트
+    # 탈락: 개발표본 SR 0.67→0.48 / 0.63, 홀드아웃 1.07→0.78 / 0.56 으로 양
+    # 구간 동반 악화. 데이터·슬리브·프로토콜은 엔진에 남김 (signal_macro 패널,
+    # macro_pub_lag 25거래일 발표랙 포함) — 다른 시그널 구성으로 재도전할 때
+    # 같은 홀드아웃 규율로 검증할 것. 파라미터(63d/126d 창) 재튜닝 금지.
+    inflation: 0.0
+    path: 0.0
   # Per-sleeve cross-sectional neutralization (1=market-neutral RV, 0=directional).
   # Trend keeps its directional CTA premium; Value/Carry are relative-value.
   #
@@ -208,8 +218,18 @@ sleeves:
 
   # (가) Regime gate: turn the TREND sleeve down in ranging/choppy regimes
   # (Hurst ≤ threshold) to avoid whipsaw (the 2023-25 rates problem).
+  #
+  # ⛔ 2026-08-14 제거 (scripts/test_cleanup_ab.py). 리버전 OFF·스톱 수정 이후
+  # 재검증 결과 게이트는 죽은 복잡성: OFF 시 2016+ SR 1.12→1.16, 2012+
+  # 0.75→0.79 로 양 표본 · 전 열(H1/H2/T+2/시간대정직) 개선 또는 동치.
+  # 정확히 이 게이트가 막아야 했던 2023-24 챱 구간 손실도 못 막았다 (연도별
+  # 2023 -1.7%, 2024 -0.8% — ON 상태에서). Hurst 120d 추정 노이즈가 트렌드를
+  # 무작위로 껐다 켰다 한 것에 가깝다. 켜려면 새 표본으로 재검증할 것.
+  # (같은 A/B 에서 value/carry 제거도 검증 — 단독 SR 은 -0.06/-0.52 로 음수지만
+  #  결합 기여 +0.06~0.15 가 양 표본 · 전 열에서 재현되어 '분산 헤지'로 유지.
+  #  carry 부호 반전은 +0.5 수준(G/H 행)이나 같은 표본 부호 채굴이라 금지.)
   regime_gate:
-    enabled: true
+    enabled: false
     method: rs              # 'rs' (R/S) or 'dfa'
     window: 120
     threshold: 0.5

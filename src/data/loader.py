@@ -243,6 +243,8 @@ class DataLoader:
             tickers.append(t)
         for pair in (sy.get('curve_slope_map', {}) or {}).values():
             tickers.extend(pair)
+        for t in (sy.get('extra_yields', []) or []):
+            tickers.append(t)
         return sorted(set(tickers))
 
     def signal_only_tickers(self) -> set:
@@ -310,6 +312,67 @@ class DataLoader:
             logger.info(f"📂 Fallback yields: {latest}")
             return pd.read_parquet(latest)
         logger.warning("⚠️ No yield data available — sleeve Carry/Value will use price proxies.")
+        return pd.DataFrame()
+
+    def _extract_macro_tickers(self) -> List[str]:
+        """Extract signal-only macro tickers from assets.yaml → signal_macro."""
+        sm = self.config.get('signal_macro', {}) or {}
+        tickers = []
+        for v in (sm.get('inflation_proxy_map', {}) or {}).values():
+            t = v.get('ticker') if isinstance(v, dict) else v
+            if t:
+                tickers.append(t)
+        for pair in (sm.get('policy_gap_map', {}) or {}).values():
+            tickers.extend(pair or [])
+        tickers.extend(sm.get('extra_macro', []) or [])
+        return sorted(set(tickers))
+
+    def load_signal_macro(
+        self,
+        start_date: str = "2010-01-01",
+        end_date: str = None,
+        use_cache: bool = True,
+    ) -> pd.DataFrame:
+        """Load signal-only macro series (breakevens, OIS, policy rates, CPI YoY).
+
+        Same contract as load_signal_yields: separate cache (macro_*.parquet),
+        empty DataFrame when neither Bloomberg nor a cache is available — the
+        SleeveEngine's inflation/path sleeves are then silently inactive.
+        Monthly/quarterly series (CPI) keep their period-end stamps here; the
+        publication-lag shift happens in the engine (macro_pub_lag)."""
+        macro_tickers = self._extract_macro_tickers()
+        if not macro_tickers:
+            return pd.DataFrame()
+
+        if end_date is None:
+            end_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+        cache_file = self.cache_dir / f"macro_{start_date}_{end_date}.parquet"
+
+        if use_cache and cache_file.exists():
+            logger.info(f"📂 Loading cached macro from {cache_file}")
+            return pd.read_parquet(cache_file)
+
+        if XBBG_AVAILABLE:
+            try:
+                df = blp.bdh(tickers=macro_tickers, flds=['px_last'],
+                             start_date=start_date, end_date=end_date, Per='D', Fill='NA')
+                if df is not None and not df.empty:
+                    if isinstance(df.columns, pd.MultiIndex):
+                        df.columns = [c[0] for c in df.columns]
+                    df.index = pd.to_datetime(df.index)
+                    df = df.ffill()
+                    df.to_parquet(cache_file)
+                    logger.info(f"✅ Macro data loaded: {df.shape}")
+                    return df
+            except Exception as e:
+                logger.error(f"❌ Macro load failed: {e}")
+
+        mcaches = list(self.cache_dir.glob("macro_*.parquet"))
+        if mcaches:
+            latest = max(mcaches, key=lambda x: x.stat().st_mtime)
+            logger.info(f"📂 Fallback macro: {latest}")
+            return pd.read_parquet(latest)
+        logger.warning("⚠️ No macro data available — inflation/path sleeves will be inactive.")
         return pd.DataFrame()
 
     def get_cross_asset_pairs(self) -> Dict[str, List[tuple]]:

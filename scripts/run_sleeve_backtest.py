@@ -101,6 +101,12 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
         'curve':  engine.curve_signal(ra),
         'policy': engine.policy_signal(ra),
     }
+    # 매크로 슬리브(inflation/path)는 '가중 > 0 = 검증 통과·채택' 상태일 때만
+    # 기록한다 — 미검증 신호를 차트에 띄우면 재량 개입 압력만 만든다는 기존
+    # 원칙(유로존 제외와 같은 논리) 그대로.
+    for fac in ('inflation', 'path'):
+        if float((engine.sleeve_weights or {}).get(fac, 0.0)) != 0.0:
+            factors[fac] = getattr(engine, f'{fac}_signal')(ra)
     blocks = []
     for fac, df in factors.items():
         if df is None or df.empty:
@@ -154,6 +160,8 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     # Signal-only yields (Carry/Value/Curve/Policy). Fixed 2010+ cache so the
     # window never triggers per-run Bloomberg fetches.
     yields = loader.load_signal_yields(start_date="2010-01-01", use_cache=True)
+    # Signal-only macro (inflation/path 슬리브 — 가중 0 이면 무영향).
+    macro = loader.load_signal_macro(start_date="2010-01-01", use_cache=True)
 
     cfg = load_sleeve_config()
     if cfg_override:
@@ -166,7 +174,7 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
         cfg['target_port_vol'] = target_vol
     costs = {**DEFAULT_COSTS_BPS, **(cfg.get('costs_bps', {}) or {})}
 
-    engine = SleeveEngine(prices, config=cfg, yields=yields)
+    engine = SleeveEngine(prices, config=cfg, yields=yields, macro=macro)
     src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
     src_rt = 'yields' if engine._has_rates_yields() else 'OFF (no yields)'
     _so = [a for a in engine.rates_assets if a in engine.signal_only_assets]

@@ -680,8 +680,9 @@ class GlobalMacroTradingSystem:
             prices = self.data_loader.load_data(start_date='2010-01-01', use_cache=True)
             prices = DataPreprocessor(prices).clean().get_data()
             yields = self.data_loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
+            macro = self.data_loader.load_signal_macro(start_date='2010-01-01', use_cache=True)
 
-            engine = SleeveEngine(prices, config=sleeves_cfg, yields=yields)
+            engine = SleeveEngine(prices, config=sleeves_cfg, yields=yields, macro=macro)
             pos = engine.finalize_positions(engine.compute_target_positions())
             last = pos.iloc[-1]
             as_of = pos.index[-1].date()

@@ -51,6 +51,7 @@ class SleeveEngine:
         config: Optional[Dict[str, Any]] = None,
         assets_config_path: Optional[str] = None,
         yields: Optional[pd.DataFrame] = None,
+        macro: Optional[pd.DataFrame] = None,
     ):
         self.prices = prices.sort_index()
         self.cfg = config or {}
@@ -60,6 +61,14 @@ class SleeveEngine:
         self.yields = None
         if yields is not None and not yields.empty:
             self.yields = yields.reindex(self.prices.index).ffill()
+
+        # Signal-only macro panel (2026-08-14): breakevens/CPI YoY + OIS/정책금리.
+        # inflation/path 슬리브 전용 — 없으면 두 슬리브가 조용히 비활성 (yields
+        # 와 동일한 계약). 월간 CPI 는 월말 스탬프 그대로 들어오고 발표랙 시프트
+        # (macro_pub_lag)는 시그널 계산 시점에 적용한다.
+        self.macro = None
+        if macro is not None and not macro.empty:
+            self.macro = macro.reindex(self.prices.index).ffill()
 
         # ── Universes ────────────────────────────────────────────────────
         # exclude_assets: 거래 유니버스에서만 제외 (가격 컬럼은 유지 — FX 캐리
@@ -101,6 +110,10 @@ class SleeveEngine:
         # policy_rate_map:     futures → country 2Y/3Y (policy-proxy) yield
         (self.tradeable_yield_map, self.fx_short_yield,
          self.curve_slope_map, self.policy_rate_map) = self._load_yield_maps(assets_config_path)
+        # inflation_proxy_map: futures → {ticker, kind: breakeven|cpi_yoy}
+        # policy_gap_map:      futures → [1Y OIS ticker, policy-rate ticker]
+        (self.inflation_proxy_map,
+         self.policy_gap_map) = self._load_macro_maps(assets_config_path)
 
         # ── Parameters (with defaults) ───────────────────────────────────
         # Slower horizons (6-12m) are the robust TSMOM standard; the fast 63d
@@ -122,9 +135,19 @@ class SleeveEngine:
             # Rates-only directional sleeves (need curve_slope_map / policy_rate_map
             # yields; silently inactive without them). Default 0 = off until A/B'd.
             'curve': 0.0, 'policy': 0.0,
+            # Macro-data sleeves (2026-08-14; need the signal_macro panel).
+            # Default 0 = off until the holdout A/B (test_macro_factors.py) passes.
+            'inflation': 0.0, 'path': 0.0,
         })
         # Policy momentum lookback (2Y yield change, trading days)
         self.policy_period = int(self.cfg.get('policy_period', 126))
+        # Macro sleeves (사전등록 파라미터 — 재튜닝 금지):
+        # 발표랙(거래일): 월간/분기 CPI 는 기간말 스탬프라 실제 발표일(익월 초~중순)
+        # 이후에야 알 수 있다 — 25 거래일(~5주) 시프트로 보수적 인과성 확보.
+        self.macro_pub_lag = int(self.cfg.get('macro_pub_lag', 25))
+        self.inflation_be_window = int(self.cfg.get('inflation_be_window', 63))
+        self.inflation_cpi_window = int(self.cfg.get('inflation_cpi_window', 126))
+        self.path_window = int(self.cfg.get('path_window', 63))
         # Per-sleeve cross-sectional neutralization (1.0 = fully market-neutral RV,
         # 0.0 = keep directional/time-series component). Trend's edge IS the
         # directional CTA premium, so it stays directional by default; Value and
@@ -304,6 +327,27 @@ class SleeveEngine:
                 sy.get('curve_slope_map', {}) or {},
                 sy.get('policy_rate_map', {}) or {})
 
+    def _load_macro_maps(self, assets_config_path: Optional[str]):
+        """Load signal-macro maps from assets.yaml → (inflation_proxy_map, policy_gap_map)."""
+        path = assets_config_path or str(
+            Path(__file__).parent.parent.parent / 'config' / 'assets.yaml'
+        )
+        try:
+            with open(path, 'r', encoding='utf-8') as f:
+                acfg = yaml.safe_load(f) or {}
+        except Exception:
+            return {}, {}
+        sm = acfg.get('signal_macro', {}) or {}
+        return (sm.get('inflation_proxy_map', {}) or {},
+                sm.get('policy_gap_map', {}) or {})
+
+    def _m(self, ticker: Optional[str]) -> Optional[pd.Series]:
+        """Fetch a macro series by ticker, or None if unavailable."""
+        if self.macro is None or ticker is None or ticker not in self.macro.columns:
+            return None
+        s = self.macro[ticker]
+        return s if s.notna().any() else None
+
     def _y(self, ticker: Optional[str]) -> Optional[pd.Series]:
         """Fetch a yield series by ticker, or None if unavailable."""
         if self.yields is None or ticker is None or ticker not in self.yields.columns:
@@ -441,6 +485,63 @@ class SleeveEngine:
             y = self._y(self.policy_rate_map.get(a))
             if y is not None:
                 cols[a] = -(y - y.shift(self.policy_period))
+        if not cols:
+            return pd.DataFrame(index=self.prices.index, columns=assets)
+        z = _zscore(pd.DataFrame(cols), self.trend_z_window)
+        return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
+
+    def inflation_signal(self, assets: List[str]) -> pd.DataFrame:
+        """Inflation-expectations momentum (rates, time-series/directional).
+
+        Rising expected inflation → SHORT duration. Proxy per country from
+        inflation_proxy_map: 'breakeven' = daily 10Y BEI, 63d change;
+        'cpi_yoy' = monthly/quarterly CPI YoY, 126d change, shifted by
+        macro_pub_lag trading days for announcement causality. Z-scored vs
+        own history. Empty without the signal_macro panel (silently inactive).
+        """
+        cols = {}
+        for a in assets:
+            spec = self.inflation_proxy_map.get(a)
+            if not spec:
+                continue
+            if isinstance(spec, dict):
+                t, kind = spec.get('ticker'), spec.get('kind', 'breakeven')
+            else:
+                t, kind = spec, 'breakeven'
+            s = self._m(t)
+            if s is None:
+                continue
+            if kind != 'breakeven':
+                s = s.shift(self.macro_pub_lag)
+                w = self.inflation_cpi_window
+            else:
+                w = self.inflation_be_window
+            cols[a] = -(s - s.shift(w))
+        if not cols:
+            return pd.DataFrame(index=self.prices.index, columns=assets)
+        z = _zscore(pd.DataFrame(cols), self.trend_z_window)
+        return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
+
+    def path_signal(self, assets: List[str]) -> pd.DataFrame:
+        """Policy-path repricing momentum (rates, time-series/directional).
+
+        gap = 1Y OIS − policy rate = the next-12m policy path the market has
+        priced. Falling gap over path_window days = the market is NEWLY
+        pricing easing → LONG duration (and vice versa). Distinct from the
+        policy sleeve (realized 2Y momentum): this reads expectations, not
+        realized yields — adoption requires the corr gate vs trend/policy.
+        Empty without the signal_macro panel.
+        """
+        cols = {}
+        for a in assets:
+            pair = self.policy_gap_map.get(a)
+            if not pair or len(pair) != 2:
+                continue
+            ois, pol = self._m(pair[0]), self._m(pair[1])
+            if ois is None or pol is None:
+                continue
+            gap = ois - pol
+            cols[a] = -(gap - gap.shift(self.path_window))
         if not cols:
             return pd.DataFrame(index=self.prices.index, columns=assets)
         z = _zscore(pd.DataFrame(cols), self.trend_z_window)
@@ -657,6 +758,15 @@ class SleeveEngine:
                 ps = self.policy_signal(assets).reindex(columns=assets)
                 if ps.notna().any().any():
                     sleeves['policy'] = ps
+            # Macro-data sleeves (silently absent without the macro panel)
+            if w.get('inflation', 0.0) != 0.0:
+                infl = self.inflation_signal(assets).reindex(columns=assets)
+                if infl.notna().any().any():
+                    sleeves['inflation'] = infl
+            if w.get('path', 0.0) != 0.0:
+                pth = self.path_signal(assets).reindex(columns=assets)
+                if pth.notna().any().any():
+                    sleeves['path'] = pth
 
         xs = self.xs_neutralize
         if asset_class == 'fx' and self.xs_neutralize_fx is not None:

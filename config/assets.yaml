@@ -179,6 +179,73 @@ signal_yields:
     JY1 Curncy:  GJGB2 Index       # JPY ← Japan 2Y
     KRW Curncy:  GVSK3YR Index     # KRW ← Korea 3Y (shortest liquid)
 
+  # Extra tenor yields for dashboard display only (total_dashboard 의 '금리
+  # 커브/스프레드' 세션 5s30s 커브 스프레드) — 어떤 sleeve 신호에도 쓰이지 않는다.
+  # 한국은 유동성 있는 30Y 지표물이 없어 20Y(GVSK20YR)로 대체.
+  extra_yields:
+    - USGG5YR Index    # US 5Y
+    - USGG30YR Index   # US 30Y
+    - GDBR5 Index      # Germany 5Y
+    - GDBR30 Index     # Germany 30Y
+    - GUKG5 Index      # UK 5Y
+    - GUKG30 Index     # UK 30Y
+    - GJGB5 Index      # Japan 5Y
+    - GJGB30 Index     # Japan 30Y
+    - GTAUD5YR Corp    # Australia 5Y
+    - GTAUD30YR Corp   # Australia 30Y
+    - GVSK5YR Index    # Korea 5Y
+    - GVSK20YR Index   # Korea 20Y (30Y 대체)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Signal-only MACRO data (NOT traded) — 2026-08-14 데이터 보강 1차.
+# SleeveEngine 의 inflation/path 슬리브 전용. 기본 가중 0(OFF) — 홀드아웃 검증
+# (scripts/test_macro_factors.py) 통과 전에는 시그널·매매에 영향 없음.
+# 모든 티커는 2026-08-14 터미널 실조회로 존재·기간 확인 완료 (2010+, JYGGBE10 만
+# 2013-10+, AUCPIYOY 는 분기·2025-09 까지만 갱신 — AU 는 signal_only 라 무해).
+# ─────────────────────────────────────────────────────────────────────────────
+signal_macro:
+  # 인플레이션 기대/실현 프록시 → inflation 슬리브 (상승 = 숏 듀레이션).
+  # kind: breakeven = 일간 BEI, 63d 변화. cpi_yoy = 월간/분기 YoY, 126d 변화
+  # + 발표랙 시프트(macro_pub_lag, 기본 25 거래일 — 월말 스탬프 대비 보수적).
+  # 주의: 이 슬리브는 방향성(xs 0)이라 signal_only 자산(英日豪)의 프록시는
+  # 포지션에 영향이 없다 — 차트 맥락·향후 xs 실험용으로만 유지.
+  inflation_proxy_map:
+    TU1 Comdty:  {ticker: USGGBE10 Index, kind: breakeven}   # US 10Y BEI
+    TY1 Comdty:  {ticker: USGGBE10 Index, kind: breakeven}
+    G 1 Comdty:  {ticker: UKGGBE10 Index, kind: breakeven}   # UK 10Y BEI
+    JB1 Comdty:  {ticker: JYGGBE10 Index, kind: breakeven}   # JP 10Y BEI (2013-10+)
+    KE1 Comdty:  {ticker: KOCPIYOY Index, kind: cpi_yoy}     # KR CPI YoY (월간)
+    KAA1 Comdty: {ticker: KOCPIYOY Index, kind: cpi_yoy}
+    YM1 Comdty:  {ticker: AUCPIYOY Index, kind: cpi_yoy}     # AU CPI YoY (분기)
+    XM1 Comdty:  {ticker: AUCPIYOY Index, kind: cpi_yoy}
+
+  # 정책 경로 리프라이싱 → path 슬리브. gap = 1Y OIS − 정책금리 = 시장이
+  # 프라이싱한 향후 1년 정책 경로. Δ63d(gap) 하락 = 완화를 '새로' 프라이싱
+  # → 롱 듀레이션. 기존 policy 슬리브(2Y 6m 모멘텀)의 정보량 높은 후보 —
+  # 채택 전 trend/policy 와의 상관 게이트(<0.5) 필수.
+  policy_gap_map:
+    TU1 Comdty:  [USSO1 Curncy, FDTR Index]        # USD OIS 1Y / Fed 목표(상단)
+    TY1 Comdty:  [USSO1 Curncy, FDTR Index]
+    KE1 Comdty:  [KWSWO1 Curncy, KORP7D Index]     # KRW OIS 1Y / BOK 7일 RP
+    KAA1 Comdty: [KWSWO1 Curncy, KORP7D Index]
+    G 1 Comdty:  [BPSO1 Curncy, UKBRBASE Index]    # GBP OIS 1Y / BOE 기준금리
+    JB1 Comdty:  [JYSO1 Curncy, BOJDTR Index]      # JPY OIS 1Y / BOJ 목표
+    YM1 Comdty:  [ADSO1 Curncy, RBATCTR Index]     # AUD OIS 1Y / RBA 캐시타깃
+    XM1 Comdty:  [ADSO1 Curncy, RBATCTR Index]
+
+  # 시그널 미사용, 캐시만 (향후 실험·대시보드 맥락용): 채권 변동성 체제(MOVE),
+  # 미국 5Y BEI·CPI YoY (인플레 프록시 교차검증용).
+  # ⛔ MOVE 활용은 2026-08-14 실험 기각 (scripts/test_move_overlay.py):
+  #   ① 리스크 오버레이(중앙값 대비 감축, 선형/제곱) — 개발표본 무효(0.67→0.68),
+  #      홀드아웃 악화(1.07→0.98/0.87). 실현볼 EWMA·볼타겟·북스톱이 이미 같은
+  #      정보로 감축 중 (MOVE↔실현볼 상관 0.61).
+  #   ② 알파(z252 레벨 → 美 듀레이션) — IC ≈0 (1~63d +0.005~+0.037),
+  #      standalone 개발 -0.02 / 홀드아웃 -0.58. 빠른 볼 게이트류 전패 기록과 일관.
+  extra_macro:
+    - MOVE Index
+    - USGGBE05 Index
+    - CPI YOY Index
+
 # Carry trade pairs: [FX asset, US rate, Foreign rate]
 carry_pairs:
   - fx: EC1 Curncy

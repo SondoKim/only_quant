@@ -484,7 +484,8 @@ def build_sleeve_snapshot(loader):
             loader.load_data(start_date='2010-01-01', use_cache=True)
         ).clean().get_data()
         yields = loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
-        engine = SleeveEngine(px, config=cfg, yields=yields)
+        macro = loader.load_signal_macro(start_date='2010-01-01', use_cache=True)
+        engine = SleeveEngine(px, config=cfg, yields=yields, macro=macro)
         return engine.sleeve_snapshot('rates')
     except Exception as e:
         print(f"⚠️ 슬리브 스냅샷 생성 실패 (금리 북 섹션 생략): {e}")
@@ -1678,13 +1679,22 @@ def main():
 
     if args.html:
         from datetime import date
-        out = Path(f"strategy_dashboard_{date.today().isoformat()}.html")
+        # 산출물은 루트가 아니라 reports/dashboards/ 아래에 모은다. cwd 에 흔들리지
+        # 않게 스크립트 위치(only_quant) 기준 절대경로로 고정. total_dashboard 의
+        # _find_dashboard_html 이 이 폴더를 본다 (구 위치도 폴백으로 지원).
+        dash_dir = Path(__file__).parent.parent / 'reports' / 'dashboards'
+        dash_dir.mkdir(parents=True, exist_ok=True)
+        out = dash_dir / f"strategy_dashboard_{date.today().isoformat()}.html"
         perf_html = build_ytd_perf_html(start=args.perf_start)
         write_html(rows, factory_dir, signal_date, out,
                    sig_rows=sig_rows, n_active_sel=n_active_sel, max_corr=args.max_corr,
                    official_dir=official_dir, sleeve_snap=sleeve_snap,
                    delta_info=delta_info, perf_html=perf_html,
                    fx_hist=load_fx_pos_history(), pnl_totals=pnl_totals)
+        # 최신 1개만 유지 — 매일 쌓이지 않게 방금 쓴 파일 외 과거분 삭제.
+        for old in dash_dir.glob('strategy_dashboard_*.html'):
+            if old != out:
+                old.unlink()
 
     factory.close()
 
