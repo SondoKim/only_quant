@@ -10,6 +10,9 @@
 
 단계 1~2 는 대시보드 [YTD 성과] plotly 가 읽는 로그를 어제 종가까지 갱신한다.
 시간이 없을 땐 --skip-fx-bt 로 1 을 건너뛸 수 있다 (YTD 차트의 FX 라인만 구버전).
+--monitor-only 는 0+2 만 돈다 — 대시보드 '모니터링 실행' 버튼이 '금리 팩터'·
+'금리 커브/스프레드'용 캐시(yields/prices parquet + sleeve_factor_signals.csv)만
+갱신할 때 쓴다.
 단계 2 는 대시보드 '금리 팩터 모니터링' 의 소스(sleeve_factor_signals.csv)라 항상 돈다
 (~16초). 예전엔 1~2 를 모두 건너뛰는 --fast 가 있었으나, --skip-fx-bt 대비 16초밖에
 아끼지 못하면서 금리 팩터 차트를 조용히 구버전으로 만들어 제거했다.
@@ -89,6 +92,11 @@ def main() -> None:
     ap.add_argument('--skip-fx-bt', action='store_true',
                     help="FX 북 백테스트(1단계)만 건너뜀 — 금리 백테스트(2단계)는 돌려 "
                          "금리 신호 차트는 전일까지 갱신 (YTD의 FX 라인만 구버전)")
+    ap.add_argument('--monitor-only', action='store_true',
+                    help="캐시 갱신(0)과 금리 북 백테스트(2)만 실행 — 대시보드 "
+                         "'모니터링 실행' 버튼용. '금리 팩터'·'금리 커브/스프레드'가 읽는 "
+                         "yields/prices 캐시와 sleeve_factor_signals.csv 만 갱신하고 "
+                         "FX 백테스트·시그널·HTML 대시보드(1·3·4)는 건너뛴다")
     ap.add_argument('--bt-start',      default='2016-01-01',
                     help="백테스트 시작일 (기본 2016-01-01)")
     ap.add_argument('--max-corr',      type=float, default=1.0,
@@ -131,7 +139,11 @@ def main() -> None:
     print()
 
     # ─── 1. FX 북 백테스트 (YTD 차트의 FX 라인) ─────────────
-    if args.skip_fx_bt:
+    if args.monitor_only:
+        banner("1  FX 북 백테스트 — --monitor-only 로 건너뜀")
+        rc_fx = 0
+        print()
+    elif args.skip_fx_bt:
         banner("1  FX 북 백테스트 — --skip-fx-bt 로 건너뜀 (YTD 차트 FX 라인은 마지막 실행분)")
         rc_fx = 0
         print()
@@ -156,25 +168,34 @@ def main() -> None:
     print()
 
     # ─── 3. 콘솔 시그널 + Hurst 국면 ─────────────────────────
-    banner("3  시그널  (main.py --mode signals)")
-    rc1 = _run([
-        'main.py', '--mode', 'signals',
-        '--max-corr', str(args.max_corr),
-    ])
-    print()
+    if args.monitor_only:
+        banner("3  시그널 — --monitor-only 로 건너뜀")
+        rc1 = 0
+        print()
+    else:
+        banner("3  시그널  (main.py --mode signals)")
+        rc1 = _run([
+            'main.py', '--mode', 'signals',
+            '--max-corr', str(args.max_corr),
+        ])
+        print()
 
     # ─── 4. HTML 대시보드 저장 ───────────────────────────────
-    banner("4  대시보드  (strategy_dashboard.py --html)")
-    rc2 = _run([
-        'scripts/strategy_dashboard.py', '--html',
-        '--max-corr',     str(args.max_corr),
-    ] + (['--per-unit', str(args.per_unit)] if args.per_unit else []) + [
-        '--fx-notional',  str(args.fx_notional),
-        '--fx-usdkrw',    str(args.fx_usdkrw),
-        '--delta-budget', str(args.delta_budget),
-        '--gross-budget', str(args.gross_budget),
-        '--perf-start',   args.perf_start,
-    ])
+    if args.monitor_only:
+        banner("4  대시보드 — --monitor-only 로 건너뜀")
+        rc2 = 0
+    else:
+        banner("4  대시보드  (strategy_dashboard.py --html)")
+        rc2 = _run([
+            'scripts/strategy_dashboard.py', '--html',
+            '--max-corr',     str(args.max_corr),
+        ] + (['--per-unit', str(args.per_unit)] if args.per_unit else []) + [
+            '--fx-notional',  str(args.fx_notional),
+            '--fx-usdkrw',    str(args.fx_usdkrw),
+            '--delta-budget', str(args.delta_budget),
+            '--gross-budget', str(args.gross_budget),
+            '--perf-start',   args.perf_start,
+        ])
 
     # ─── 완료 요약 ───────────────────────────────────────────
     def st(rc: int) -> str:
@@ -183,13 +204,19 @@ def main() -> None:
     print()
     print("=" * 64)
     print(f"  0 캐시 갱신    : {cache_status}")
-    if args.skip_fx_bt:
+    if args.monitor_only:
+        print(f"  1 FX 북 로그   : 건너뜀 (--monitor-only)")
+    elif args.skip_fx_bt:
         print(f"  1 FX 북 로그   : 건너뜀 (--skip-fx-bt)")
     else:
         print(f"  1 FX 북 로그   : {st(rc_fx)}")
     print(f"  2 금리 북 로그 : {st(rc_rt)}")
-    print(f"  3 시그널       : {st(rc1)}")
-    print(f"  4 대시보드     : {st(rc2)}")
+    if args.monitor_only:
+        print(f"  3 시그널       : 건너뜀 (--monitor-only)")
+        print(f"  4 대시보드     : 건너뜀 (--monitor-only)")
+    else:
+        print(f"  3 시그널       : {st(rc1)}")
+        print(f"  4 대시보드     : {st(rc2)}")
     print("=" * 64)
 
     sys.exit(max(rc_fx, rc_rt, rc1, rc2))
