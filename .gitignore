@@ -7,3 +7,7 @@ reports/backtest_plots/
 # 혹시 구 위치(루트)에 다시 생기더라도 추적하지 않는다.
 strategy_dashboard_*.html
 trading_pnl*.png
+
+# 파이썬 바이트코드 캐시 (2026-08-28 추적 해제).
+__pycache__/
+*.pyc
