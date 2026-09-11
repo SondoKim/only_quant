@@ -141,6 +141,66 @@ class SleeveEngine:
         })
         # Policy momentum lookback (2Y yield change, trading days)
         self.policy_period = int(self.cfg.get('policy_period', 126))
+
+        # ── 스위칭 실험 토글 (2026-09-03, scripts/test_switching.py) ─────────
+        # 배경: 방향은 trend+policy(상관 0.84) 하나가 결정하는데, 둘 다 'h일
+        # 변화량을 252d 롤링 평균 차감 z-score' 로 정규화한다. h=126/252 면 창
+        # 안의 독립 관측이 1~2개뿐이라 1년 같은 방향이면 롤링 평균이 현재값을
+        # 따라잡아 신호가 0 으로 퇴색한다 (2026-07~08 KR policy = 0.00). 아래
+        # 토글은 전부 기본값 = 기존 동작(비트 동일)이며 A/B 통과 전 켜지 말 것.
+        #
+        # policy_periods: 정책 모멘텀 다중 호라이즌 (trend_horizons 와 동형 —
+        #   호라이즌별 정규화 후 평균). 미설정 = [policy_period].
+        pp = self.cfg.get('policy_periods')
+        self.policy_periods = [int(x) for x in pp] if pp else [self.policy_period]
+        # momentum_norm: trend/policy 의 h일 변화량 정규화 방식.
+        #   'zscore' (기존) — (x − 롤링평균) / 롤링표준편차, 창 trend_z_window.
+        #   'vol'          — 평균 차감 없이 x / (σ_daily·√h), σ_daily 는
+        #                    vol_halflife EWMA (Moskowitz-Ooi-Pedersen 표준 TSMOM).
+        #                    추세가 지속되면 신호도 유지되고, 실제 h일 변화가
+        #                    부호를 바꿔야 신호가 뒤집힌다.
+        self.momentum_norm = str(self.cfg.get('momentum_norm', 'zscore')).lower()
+        # trend_method: 'return_z' (기존, 다중 호라이즌 수익률) | 'ewmac'
+        #   (Baz et al. 2015 — 3속도 EWMA 크로스오버 8/24·16/48·32/96, alpha=1/n;
+        #   가격 σ(ewmac_vol_window) 와 신호 σ(ewmac_norm_window) 로 2단 정규화,
+        #   평균 차감 없음). ewmac_response=True 면 반응함수 z·exp(−z²/4)/0.89
+        #   를 적용해 극단(|z|>√2)에서 자동 감축 — 표준정규 입력 기준 RMS 0.668
+        #   이라 ×1.5 로 RMS≈1 로 되돌려 다른 슬리브와 스케일을 맞춘다.
+        self.trend_method = str(self.cfg.get('trend_method', 'return_z')).lower()
+        self.ewmac_spans = [tuple(int(v) for v in p) for p in
+                            (self.cfg.get('ewmac_spans') or [[8, 24], [16, 48], [32, 96]])]
+        self.ewmac_vol_window = int(self.cfg.get('ewmac_vol_window', 63))
+        self.ewmac_norm_window = int(self.cfg.get('ewmac_norm_window', 252))
+        self.ewmac_response = bool(self.cfg.get('ewmac_response', False))
+        # conviction_response: 슬리브 결합 '후' 컨빅션에 반응함수 x·exp(−x²/4)/0.89
+        #   적용 — |x|>√2 과열 구간에서 포지션을 자동 감축(뒤집지는 않음).
+        #   포트폴리오 볼타겟이 전체 스케일을 복원하므로 순효과는 '과열 자산의
+        #   상대 감축'. 사용자의 "1년 내내 한 방향" 우려에 대한 비-속도 대안.
+        self.conviction_response = bool(self.cfg.get('conviction_response', False))
+
+        # ── 박스권 레짐 게이트 + 챱(횡보) 북 (2026-09-03 사용자 제안,
+        #    scripts/test_range_regime.py) ─────────────────────────────────
+        # 감지기: stale = W일 신고가/신저가 없이 지난 일수 (Donchian 채널이
+        #   '움직이지 않은' 기간). stale ≥ stale_days → 횡보(g=1), 아니면 추세(g=0).
+        #   scope 'asset' = 자산별 레짐, 'book' = 매매 자산 평균. EWMA(smooth).
+        # 챱 북: 'channel' = 박스 중앙 대비 위치 페이드 −(px−mid)/half, 롤링 σ 로
+        #   z 정규화 (상단 매도/하단 매수). 'value_ts' = 방향성 밸류(xs 미중립).
+        # 결합: mode 'blend' = (1−w·g)·main + w·g·chop (횡보 시 추세 북 축소),
+        #   'add' = main + w·g·chop (추세 북 유지, 챱 북만 가산). w = chop_weight.
+        # always_on: g≡1 (진단용 — 챱 북 단독/게이트 없는 상시 혼합).
+        # 전례: Hurst 레짐 게이트 = 죽은 복잡성(2026-08-14 제거), 리버전 서브북 =
+        # 비동시 종가 아티팩트(2026-07-22) — 채택 전 T+2·시간대정직 필수.
+        rr = self.cfg.get('range_regime', {}) or {}
+        self.range_enabled = bool(rr.get('enabled', False))
+        self.range_window = int(rr.get('window', 63))
+        self.range_stale_days = int(rr.get('stale_days', 21))
+        self.range_chop_weight = float(rr.get('chop_weight', 0.5))
+        self.range_chop_book = str(rr.get('chop_book', 'channel')).lower()
+        self.range_scope = str(rr.get('scope', 'asset')).lower()
+        self.range_mode = str(rr.get('mode', 'blend')).lower()
+        self.range_smooth = int(rr.get('smooth', 5))
+        self.range_always_on = bool(rr.get('always_on', False))
+        self._range_state: Optional[Dict[str, pd.DataFrame]] = None
         # Macro sleeves (사전등록 파라미터 — 재튜닝 금지):
         # 발표랙(거래일): 월간/분기 CPI 는 기간말 스탬프라 실제 발표일(익월 초~중순)
         # 이후에야 알 수 있다 — 25 거래일(~5주) 시프트로 보수적 인과성 확보.
@@ -368,13 +428,49 @@ class SleeveEngine:
     # ──────────────────────────────────────────────────────────────────────
     # Sleeve signals (continuous, ~z-score scaled, directional space)
     # ──────────────────────────────────────────────────────────────────────
+    def _mom_norm(self, raw: pd.DataFrame, h: int, daily: pd.DataFrame) -> pd.DataFrame:
+        """h일 변화량 `raw` 의 정규화 (momentum_norm 참조).
+
+        'zscore' = 기존 _zscore(raw, trend_z_window) 그대로 (비트 동일).
+        'vol'    = raw / (σ_daily·√h), σ_daily = `daily`(같은 시리즈의 일간
+                   변화)의 vol_halflife EWMA 표준편차 — 평균 차감 없음.
+        """
+        if self.momentum_norm == 'vol':
+            sd = daily.ewm(halflife=self.vol_halflife, min_periods=20).std()
+            return raw / (sd * np.sqrt(h)).replace(0.0, np.nan)
+        return _zscore(raw, self.trend_z_window)
+
+    def _ewmac_signal(self, px: pd.DataFrame) -> pd.DataFrame:
+        """Baz et al. (2015) 3-speed EWMA crossover trend (평균 차감 없음).
+
+        x_k = EWMA_S(P) − EWMA_L(P)   (alpha = 1/n, n = S/L)
+        y_k = x_k / σ_P(ewmac_vol_window)       가격 변동성 정규화
+        z_k = y_k / σ_y(ewmac_norm_window)      신호 변동성 정규화
+        u_k = z_k·exp(−z_k²/4)/0.89 ×1.5         (ewmac_response 시) → 평균.
+        """
+        vol_p = px.rolling(self.ewmac_vol_window, min_periods=20).std()
+        parts = []
+        for s, l in self.ewmac_spans:
+            x = (px.ewm(alpha=1.0 / s, min_periods=5).mean()
+                 - px.ewm(alpha=1.0 / l, min_periods=5).mean())
+            y = x / vol_p.replace(0.0, np.nan)
+            z = y / y.rolling(self.ewmac_norm_window, min_periods=60).std().replace(0.0, np.nan)
+            if self.ewmac_response:
+                z = z * np.exp(-z.pow(2) / 4.0) / 0.89 * 1.5
+            parts.append(z)
+        sig = pd.concat(parts).groupby(level=0).mean()
+        return sig.clip(-self.signal_clip, self.signal_clip)
+
     def trend_signal(self, assets: List[str]) -> pd.DataFrame:
         """Multi-horizon, vol-normalized time-series momentum."""
         px = self.dir_px[assets]
+        if self.trend_method == 'ewmac':
+            return self._ewmac_signal(px)
+        daily = self.dir_returns[assets]
         parts = []
         for h in self.trend_horizons:
             ret_h = px.pct_change(h)
-            parts.append(_zscore(ret_h, self.trend_z_window))
+            parts.append(self._mom_norm(ret_h, h, daily))
         sig = pd.concat(parts).groupby(level=0).mean()
         return sig.clip(-self.signal_clip, self.signal_clip)
 
@@ -484,10 +580,15 @@ class SleeveEngine:
         for a in assets:
             y = self._y(self.policy_rate_map.get(a))
             if y is not None:
-                cols[a] = -(y - y.shift(self.policy_period))
+                cols[a] = y
         if not cols:
             return pd.DataFrame(index=self.prices.index, columns=assets)
-        z = _zscore(pd.DataFrame(cols), self.trend_z_window)
+        ydf = pd.DataFrame(cols)
+        daily = -ydf.diff()
+        parts = []
+        for h in self.policy_periods:
+            parts.append(self._mom_norm(-(ydf - ydf.shift(h)), h, daily))
+        z = pd.concat(parts).groupby(level=0).mean()
         return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
 
     def inflation_signal(self, assets: List[str]) -> pd.DataFrame:
@@ -797,9 +898,78 @@ class SleeveEngine:
 
         if contrib > 0:
             combined = combined / contrib
+        if self.conviction_response:
+            combined = combined * np.exp(-combined.pow(2) / 4.0) / 0.89
+        if asset_class == 'rates' and self.range_enabled:
+            combined = self._apply_range_regime(combined, assets)
         if self.signal_smooth_span > 1:
             combined = combined.ewm(span=self.signal_smooth_span, min_periods=1).mean()
         return combined
+
+    # ──────────────────────────────────────────────────────────────────────
+    # 박스권 레짐 게이트 + 챱 북
+    # ──────────────────────────────────────────────────────────────────────
+    def range_stale_days_series(self, assets: List[str]) -> pd.DataFrame:
+        """자산별 stale = range_window 일 신고가/신저가 없이 지난 거래일 수.
+
+        신고가/신저가 판정은 당일을 포함한 롤링 max/min 과의 일치 (causal).
+        워밍업 구간은 NaN.
+        """
+        px = self.dir_px[assets]
+        W = self.range_window
+        hi = px.rolling(W, min_periods=W).max()
+        lo = px.rolling(W, min_periods=W).min()
+        event = (px >= hi) | (px <= lo)
+        idx = np.arange(len(px), dtype=float)
+        stale = pd.DataFrame(index=px.index, columns=assets, dtype=float)
+        for a in assets:
+            last = pd.Series(np.where(event[a].values, idx, np.nan),
+                             index=px.index).ffill()
+            stale[a] = idx - last.values
+        return stale
+
+    def range_regime_indicator(self, assets: List[str]) -> pd.DataFrame:
+        """g ∈ [0,1] — 1 = 횡보 확정(stale ≥ stale_days), 0 = 추세. scope/smooth 적용."""
+        stale = self.range_stale_days_series(assets)
+        if self.range_always_on:
+            g = pd.DataFrame(1.0, index=stale.index, columns=assets)
+        else:
+            g = (stale >= self.range_stale_days).astype(float)
+            g[stale.isna()] = 0.0
+            if self.range_scope == 'book':
+                traded = [a for a in assets if a not in self.signal_only_assets] or assets
+                gb = g[traded].mean(axis=1)
+                g = pd.DataFrame({a: gb for a in assets})
+            if self.range_smooth > 1:
+                g = g.ewm(span=self.range_smooth, min_periods=1).mean()
+        self._range_state = {'stale': stale, 'g': g}
+        return g
+
+    def chop_signal(self, assets: List[str]) -> pd.DataFrame:
+        """챱(횡보) 북 시그널 (z 단위, ±signal_clip).
+
+        'channel'  : 박스 위치 페이드 −(px − mid)/half ∈ [−1,1] (mid/half 는
+                     range_window Donchian 채널), 롤링 σ(trend_z_window) 로 정규화.
+        'value_ts' : 방향성 밸류 = value_signal 그대로 (xs 중립화 없음).
+        """
+        if self.range_chop_book == 'value_ts':
+            return self.value_signal(assets, 'rates')
+        px = self.dir_px[assets]
+        hi = px.rolling(self.range_window, min_periods=20).max()
+        lo = px.rolling(self.range_window, min_periods=20).min()
+        mid = (hi + lo) / 2.0
+        half = ((hi - lo) / 2.0).replace(0.0, np.nan)
+        fade = (-(px - mid) / half).clip(-1.0, 1.0)
+        z = fade / fade.rolling(self.trend_z_window, min_periods=60).std().replace(0.0, np.nan)
+        return z.clip(-self.signal_clip, self.signal_clip)
+
+    def _apply_range_regime(self, combined: pd.DataFrame, assets: List[str]) -> pd.DataFrame:
+        g = self.range_regime_indicator(assets)
+        chop = self.chop_signal(assets).reindex(columns=assets).fillna(0.0)
+        w = self.range_chop_weight * g
+        if self.range_mode == 'add':
+            return combined + w * chop
+        return (1.0 - w) * combined + w * chop
 
     def sleeve_snapshot(self, asset_class: str = 'rates') -> Dict[str, Any]:
         """Latest-date view of the sleeve book for dashboards.
