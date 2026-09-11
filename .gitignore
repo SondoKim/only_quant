@@ -11,3 +11,7 @@ trading_pnl*.png
 # 파이썬 바이트코드 캐시 (2026-08-28 추적 해제).
 __pycache__/
 *.pyc
+
+# 매 실행마다 재생성되는 소비자용 산출물 (2026-09-11): 팩터 후보 요약 JSON · 실행 스탬프/뮤텍스.
+data/factor_summary.json
+data/run_stamps/

@@ -142,6 +142,12 @@ def main() -> None:
     ])
     print()
 
+    # ─── 1b. 금리 팩터 후보 요약 JSON (factor_summary.py, 2026-09-11) ──
+    # 두 모드 모두 실행: 대시보드(total_dashboard 금리 팩터 · PM)는 data/factor_summary.json 만 읽고 표시한다.
+    banner("1b 금리 팩터 후보 요약  (factor_summary.py → data/factor_summary.json)")
+    rc_fs = _run(['scripts/factor_summary.py']) if rc_rt == 0 else rc_rt
+    print()
+
     # ─── 2. 콘솔 시그널 + HTML 대시보드 ──────────────────────
     if args.monitor_only:
         banner("2  시그널/대시보드 — --monitor-only 로 건너뜀")
@@ -164,17 +170,18 @@ def main() -> None:
     print("=" * 64)
     print(f"  0 캐시 갱신      : {cache_status}")
     print(f"  1 금리 북 로그   : {st(rc_rt)}")
+    print(f"  1b 팩터 요약 JSON: {st(rc_fs)}")
     if args.monitor_only:
         print(f"  2 시그널/대시보드: 건너뜀 (--monitor-only)")
     else:
         print(f"  2 시그널/대시보드: {st(rc_db)}")
     print("=" * 64)
 
-    rc = max(rc_rt, rc_db)
+    rc = max(rc_rt, rc_fs, rc_db)
     try:
         if rc == 0:
             rs.write('daily_run', mode=_mode, started=_started,
-                     outputs=['sleeve_backtest_log.csv', 'sleeve_factor_signals.csv', 'data/cache/prices_*.parquet',
+                     outputs=['sleeve_backtest_log.csv', 'sleeve_factor_signals.csv', 'data/factor_summary.json', 'data/cache/prices_*.parquet',
                               'data/cache/macro_*.parquet'] + ([] if args.monitor_only else ['reports/*.html']),
                      note=f'cache {cache_status}')
             print(f"  스탬프: daily_run mode={_mode} asof={rs.prev_business_day()}")
