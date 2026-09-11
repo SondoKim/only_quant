@@ -3,22 +3,23 @@
   python scripts/daily_run.py [options]
 
 단계 0: 캐시 갱신  (어제자 캐시 없으면 구형 삭제 -> Bloomberg 재풀 유도)
-단계 1: run_backtest.py --skip-discovery  (FX 북 로그 -> trading_log.csv)
-단계 2: run_sleeve_backtest.py  (금리 북 로그 -> sleeve_backtest_log.csv)
-단계 3: main.py --mode signals  (콘솔 시그널 + Hurst 국면)
-단계 4: strategy_dashboard.py --html  (HTML 대시보드 저장)
+단계 1: run_sleeve_backtest.py  (금리 북 로그 -> sleeve_backtest_log.csv,
+        금리 팩터 -> sleeve_factor_signals.csv)
+단계 2: strategy_dashboard.py --html  (콘솔 시그널 + HTML 대시보드 저장)
 
-단계 1~2 는 대시보드 [YTD 성과] plotly 가 읽는 로그를 어제 종가까지 갱신한다.
-시간이 없을 땐 --skip-fx-bt 로 1 을 건너뛸 수 있다 (YTD 차트의 FX 라인만 구버전).
---monitor-only 는 0+2 만 돈다 — 대시보드 '모니터링 실행' 버튼이 '금리 팩터'·
+2026-09-11 FX 전략 공장 폐기: 옛 1단계(run_backtest.py, FX 북 로그 ~5분)와
+3단계(main.py --mode signals)를 제거했다 — 시그널 콘솔 출력은 대시보드 단계가
+같은 코드 경로로 찍는다. 전체 실행이 ~15초로 줄었다.
+
+--monitor-only 는 0+1 만 돈다 — 대시보드 '모니터링 실행' 버튼이 '금리 팩터'·
 '금리 커브/스프레드'용 캐시(yields/prices parquet + sleeve_factor_signals.csv)만
-갱신할 때 쓴다.
-단계 2 는 대시보드 '금리 팩터 모니터링' 의 소스(sleeve_factor_signals.csv)라 항상 돈다
-(~16초). 예전엔 1~2 를 모두 건너뛰는 --fast 가 있었으나, --skip-fx-bt 대비 16초밖에
-아끼지 못하면서 금리 팩터 차트를 조용히 구버전으로 만들어 제거했다.
+갱신할 때 쓴다. --skip-fx-bt 는 호환용 무동작 플래그 (옛 호출자가 넘겨도 오류 없음).
 """
 
 import argparse
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent))   # run_stamp import 용
 import os
 import subprocess
 import sys
@@ -37,8 +38,6 @@ def _refresh_cache() -> str:
     """
     일과 시그널용 캐시(고정 start_date 2010-01-01 / 2020-01-01 짜리)만 대상으로
     어제자 캐시가 없으면 구형 파일을 삭제해 Bloomberg 재풀을 유도한다.
-
-    발굴 엔진의 롤링 윈도우 캐시(prices_2012-..._2015-....parquet 등)는 건드리지 않는다.
 
     같은 날 두 번 실행하면 캐시가 이미 있으므로 Bloomberg 재호출 없음.
 
@@ -74,8 +73,7 @@ def _refresh_cache() -> str:
 
 def _run(cmd: list[str]) -> int:
     # 자식 프로세스가 부모 콘솔 인코딩(Windows cp949)을 물려받으면 이모지 print 에서
-    # UnicodeEncodeError 로 죽어 백테스트 로그가 갱신되지 않는다 (YTD 차트가 하루 뒤처짐).
-    # UTF-8 I/O 를 강제해 콘솔 인코딩과 무관하게 모든 단계가 끝까지 돌도록 한다.
+    # UnicodeEncodeError 로 죽어 로그가 갱신되지 않는다. UTF-8 I/O 를 강제한다.
     env = dict(os.environ, PYTHONUTF8='1', PYTHONIOENCODING='utf-8')
     result = subprocess.run([sys.executable] + cmd, cwd=ROOT, env=env)
     return result.returncode
@@ -87,30 +85,18 @@ def _run(cmd: list[str]) -> int:
 
 def main() -> None:
     ap = argparse.ArgumentParser(
-        description="일과용 통합 명령어: 캐시 갱신 + 백테스트 로그 + 시그널 + HTML 대시보드",
+        description="일과용 통합 명령어: 캐시 갱신 + 금리 북 백테스트 로그 + 시그널/HTML 대시보드",
     )
-    ap.add_argument('--skip-fx-bt', action='store_true',
-                    help="FX 북 백테스트(1단계)만 건너뜀 — 금리 백테스트(2단계)는 돌려 "
-                         "금리 신호 차트는 전일까지 갱신 (YTD의 FX 라인만 구버전)")
     ap.add_argument('--monitor-only', action='store_true',
-                    help="캐시 갱신(0)과 금리 북 백테스트(2)만 실행 — 대시보드 "
-                         "'모니터링 실행' 버튼용. '금리 팩터'·'금리 커브/스프레드'가 읽는 "
-                         "yields/prices 캐시와 sleeve_factor_signals.csv 만 갱신하고 "
-                         "FX 백테스트·시그널·HTML 대시보드(1·3·4)는 건너뛴다")
+                    help="캐시 갱신(0)과 금리 북 백테스트(1)만 실행 — 대시보드 "
+                         "'모니터링 실행' 버튼용. HTML 대시보드(2)는 건너뛴다")
+    ap.add_argument('--skip-fx-bt', action='store_true',
+                    help="(호환용, 무동작) FX 전략 공장은 2026-09-11 폐기됨")
     ap.add_argument('--bt-start',      default='2016-01-01',
                     help="백테스트 시작일 (기본 2016-01-01)")
-    ap.add_argument('--max-corr',      type=float, default=1.0,
-                    help="FX 전략 상관 필터 (기본 1.0 = 꺼짐)")
     ap.add_argument('--per-unit',      type=float, default=1252.0,
                     help="금리 '포지션 1.0 = N만원' 환산 계수 (기본 1252, 2026-07-22 "
-                         "고정). 델타·손익 공통 기준자본. 0 = 한도에서 자동 역산"
-                         "(히스토리 의존 → 표시 금액이 흔들림). 이전의 "
-                         "--capital(500억) 은 손익 열에만 쓰여 델타와 1만배 어긋나 "
-                         "있었다 — 제거됨")
-    ap.add_argument('--fx-notional',   type=float, default=300.0,
-                    help="FX 자산별 명목금액 (만달러, 기본 300만달러)")
-    ap.add_argument('--fx-usdkrw',     type=float, default=1500.0,
-                    help="FX 만원 환산 기준환율 (KRW/USD, 기본 1500)")
+                         "고정). 델타·손익 공통 기준자본. 0 = 한도에서 자동 역산")
     ap.add_argument('--delta-budget',  type=float, default=5000.0,
                     help="순델타 한도 (만원, 기본 5,000)")
     ap.add_argument('--gross-budget',  type=float, default=8000.0,
@@ -120,6 +106,15 @@ def main() -> None:
     ap.add_argument('--no-cache-refresh', action='store_true',
                     help="캐시 갱신 건너뜀 (Bloomberg 없는 환경에서 수동 억제)")
     args = ap.parse_args()
+
+    # 공용 실행 스탬프·뮤텍스 (scripts/run_stamp.py, 2026-09-11): 여러 소비자(total_dashboard·
+    # portfolio_management·아침 배치)가 같은 산출물을 쓰므로 이 스크립트 자체가 직렬화하고,
+    # 끝나면 스탬프('daily_run', mode full/monitor-only, asof 직전 영업일)를 남긴다.
+    import run_stamp as rs
+    _mode = 'monitor-only' if args.monitor_only else 'full'
+    _started = datetime.now().isoformat(timespec='seconds')
+    if not rs.acquire('only_quant_daily', timeout=900, on_wait=lambda: print('  [대기] 다른 daily_run 실행 중 — 뮤텍스 대기')):
+        print('  [주의] 뮤텍스 획득 실패(15분) — 락 없이 진행')
 
     def banner(title: str) -> None:
         print("=" * 64)
@@ -138,60 +133,24 @@ def main() -> None:
         print(f"  결과: {cache_status}")
     print()
 
-    # ─── 1. FX 북 백테스트 (YTD 차트의 FX 라인) ─────────────
-    if args.monitor_only:
-        banner("1  FX 북 백테스트 — --monitor-only 로 건너뜀")
-        rc_fx = 0
-        print()
-    elif args.skip_fx_bt:
-        banner("1  FX 북 백테스트 — --skip-fx-bt 로 건너뜀 (YTD 차트 FX 라인은 마지막 실행분)")
-        rc_fx = 0
-        print()
-    else:
-        banner("1  FX 북 백테스트  (run_backtest.py --skip-discovery)")
-        rc_fx = _run([
-            'scripts/run_backtest.py',
-            '--start-date', args.bt_start,
-            '--skip-discovery',
-            '--max-corr', str(args.max_corr),
-        ])
-        print()
-
-    # ─── 2. 금리 북 백테스트 (YTD RATES 라인 + 금리 신호 차트) ──
-    # 항상 실행한다. 실측 ~16초로 저렴한 반면, 건너뛰면 대시보드 '금리 팩터 모니터링'이
-    # 조용히 구버전 시그널을 보여준다 → 과거의 --fast 플래그를 제거한 이유.
-    banner("2  금리 북 백테스트  (run_sleeve_backtest.py)")
+    # ─── 1. 금리 북 백테스트 (YTD 라인 + 금리 팩터 시계열) ──
+    # 항상 실행: 건너뛰면 대시보드 '금리 팩터 모니터링'이 조용히 구버전을 보여준다.
+    banner("1  금리 북 백테스트  (run_sleeve_backtest.py)")
     rc_rt = _run([
         'scripts/run_sleeve_backtest.py',
         '--start-date', args.bt_start,
     ])
     print()
 
-    # ─── 3. 콘솔 시그널 + Hurst 국면 ─────────────────────────
+    # ─── 2. 콘솔 시그널 + HTML 대시보드 ──────────────────────
     if args.monitor_only:
-        banner("3  시그널 — --monitor-only 로 건너뜀")
-        rc1 = 0
-        print()
+        banner("2  시그널/대시보드 — --monitor-only 로 건너뜀")
+        rc_db = 0
     else:
-        banner("3  시그널  (main.py --mode signals)")
-        rc1 = _run([
-            'main.py', '--mode', 'signals',
-            '--max-corr', str(args.max_corr),
-        ])
-        print()
-
-    # ─── 4. HTML 대시보드 저장 ───────────────────────────────
-    if args.monitor_only:
-        banner("4  대시보드 — --monitor-only 로 건너뜀")
-        rc2 = 0
-    else:
-        banner("4  대시보드  (strategy_dashboard.py --html)")
-        rc2 = _run([
+        banner("2  시그널 + 대시보드  (strategy_dashboard.py --html)")
+        rc_db = _run([
             'scripts/strategy_dashboard.py', '--html',
-            '--max-corr',     str(args.max_corr),
         ] + (['--per-unit', str(args.per_unit)] if args.per_unit else []) + [
-            '--fx-notional',  str(args.fx_notional),
-            '--fx-usdkrw',    str(args.fx_usdkrw),
             '--delta-budget', str(args.delta_budget),
             '--gross-budget', str(args.gross_budget),
             '--perf-start',   args.perf_start,
@@ -203,23 +162,25 @@ def main() -> None:
 
     print()
     print("=" * 64)
-    print(f"  0 캐시 갱신    : {cache_status}")
+    print(f"  0 캐시 갱신      : {cache_status}")
+    print(f"  1 금리 북 로그   : {st(rc_rt)}")
     if args.monitor_only:
-        print(f"  1 FX 북 로그   : 건너뜀 (--monitor-only)")
-    elif args.skip_fx_bt:
-        print(f"  1 FX 북 로그   : 건너뜀 (--skip-fx-bt)")
+        print(f"  2 시그널/대시보드: 건너뜀 (--monitor-only)")
     else:
-        print(f"  1 FX 북 로그   : {st(rc_fx)}")
-    print(f"  2 금리 북 로그 : {st(rc_rt)}")
-    if args.monitor_only:
-        print(f"  3 시그널       : 건너뜀 (--monitor-only)")
-        print(f"  4 대시보드     : 건너뜀 (--monitor-only)")
-    else:
-        print(f"  3 시그널       : {st(rc1)}")
-        print(f"  4 대시보드     : {st(rc2)}")
+        print(f"  2 시그널/대시보드: {st(rc_db)}")
     print("=" * 64)
 
-    sys.exit(max(rc_fx, rc_rt, rc1, rc2))
+    rc = max(rc_rt, rc_db)
+    try:
+        if rc == 0:
+            rs.write('daily_run', mode=_mode, started=_started,
+                     outputs=['sleeve_backtest_log.csv', 'sleeve_factor_signals.csv', 'data/cache/prices_*.parquet',
+                              'data/cache/macro_*.parquet'] + ([] if args.monitor_only else ['reports/*.html']),
+                     note=f'cache {cache_status}')
+            print(f"  스탬프: daily_run mode={_mode} asof={rs.prev_business_day()}")
+    finally:
+        rs.release('only_quant_daily')
+    sys.exit(rc)
 
 
 if __name__ == '__main__':
