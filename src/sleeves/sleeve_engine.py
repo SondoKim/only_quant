@@ -112,8 +112,9 @@ class SleeveEngine:
          self.curve_slope_map, self.policy_rate_map) = self._load_yield_maps(assets_config_path)
         # inflation_proxy_map: futures → {ticker, kind: breakeven|cpi_yoy}
         # policy_gap_map:      futures → [1Y OIS ticker, policy-rate ticker]
-        (self.inflation_proxy_map,
-         self.policy_gap_map) = self._load_macro_maps(assets_config_path)
+        # carry_short_rate_map: futures → 자국 정책금리 (hedged_xs 캐리의 펀딩/헤지 금리)
+        (self.inflation_proxy_map, self.policy_gap_map,
+         self.carry_short_rate_map) = self._load_macro_maps(assets_config_path)
 
         # ── Parameters (with defaults) ───────────────────────────────────
         # Slower horizons (6-12m) are the robust TSMOM standard; the fast 63d
@@ -129,6 +130,16 @@ class SleeveEngine:
         # era). Within statistical noise full-sample. Rates carry is always
         # yield-based (and only active when yields are present).
         self.fx_carry_source = self.cfg.get('fx_carry_source', 'yield')
+        # Rates carry 산식 (2026-10-02 감사):
+        #   'legacy'    — z_ts(local − (local 2Y − US 2Y)) 를 자산별 시계열 z 후 xs-demean.
+        #                 ⚠ KE 는 테너금리=펀딩금리(GVSK3YR)라 값이 US 2Y 와 비트 동일,
+        #                 자산별 z 가 레벨 비교를 지워 '국가간 캐리'가 아니라 '각국 금리가
+        #                 자기 1년 평균보다 얼마나 높나'를 잰다.
+        #   'hedged_xs' — 환헤지 USD 투자자의 초과 캐리 = local − local 단기(정책)금리
+        #                 (CIP: 헤지가 펀딩을 US 단기로 바꾸므로 US 항은 상쇄) 를 실현볼로
+        #                 나눈 '캐리 샤프'를 국가간 레벨로 비교 — 횡단면 demean 후 롤링
+        #                 횡단면 분산으로 스케일. 단기금리는 signal_macro.carry_short_rate_map.
+        self.carry_method = str(self.cfg.get('carry_method', 'legacy')).lower()
 
         self.sleeve_weights = self.cfg.get('sleeve_weights', {
             'trend': 1.0, 'value': 0.5, 'carry': 1.0,
@@ -388,7 +399,7 @@ class SleeveEngine:
                 sy.get('policy_rate_map', {}) or {})
 
     def _load_macro_maps(self, assets_config_path: Optional[str]):
-        """Load signal-macro maps from assets.yaml → (inflation_proxy_map, policy_gap_map)."""
+        """Load signal-macro maps → (inflation_proxy_map, policy_gap_map, carry_short_rate_map)."""
         path = assets_config_path or str(
             Path(__file__).parent.parent.parent / 'config' / 'assets.yaml'
         )
@@ -396,10 +407,11 @@ class SleeveEngine:
             with open(path, 'r', encoding='utf-8') as f:
                 acfg = yaml.safe_load(f) or {}
         except Exception:
-            return {}, {}
+            return {}, {}, {}
         sm = acfg.get('signal_macro', {}) or {}
         return (sm.get('inflation_proxy_map', {}) or {},
-                sm.get('policy_gap_map', {}) or {})
+                sm.get('policy_gap_map', {}) or {},
+                sm.get('carry_short_rate_map', {}) or {})
 
     def _m(self, ticker: Optional[str]) -> Optional[pd.Series]:
         """Fetch a macro series by ticker, or None if unavailable."""
@@ -527,7 +539,10 @@ class SleeveEngine:
             z = _zscore(pd.DataFrame(diffs), self.carry_window)
             return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
 
-        # rates carry — USD-hedged yield level, only when yields available.
+        if asset_class == 'rates' and self.carry_method == 'hedged_xs':
+            return self._carry_hedged_xs(assets)
+
+        # rates carry (legacy) — USD-hedged yield level, only when yields available.
         # hedged = local_yield − (local funding(2Y/3Y) − US 2Y)  [CIP 근사]
         if asset_class == 'rates' and self._has_rates_yields():
             us_fund = self._y(self.fx_short_yield.get('US'))   # USD 펀딩 앵커 (US 2Y)
@@ -545,6 +560,33 @@ class SleeveEngine:
                 z = _zscore(pd.DataFrame(ydf), self.carry_window)
                 return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
         return pd.DataFrame(index=self.prices.index, columns=assets)
+
+    def _carry_hedged_xs(self, assets: List[str]) -> pd.DataFrame:
+        """국가간 환헤지 캐리 (carry_method='hedged_xs').
+
+        raw_i = (y_i − s_i)/100 ÷ σ_i  — 연 초과캐리(USD 헤지 후) ÷ 연 실현볼.
+        s_i = 자국 정책금리(carry_short_rate_map). 이미 횡단면 비교 단위라 자산별
+        시계열 z 를 하지 않는다: 매일 횡단면 평균을 빼고, 횡단면 RMS 의 롤링
+        평균(carry_window, 인과)으로 나눠 z 스케일로 맞춘다. 3개국 미만이면 비활성.
+        """
+        empty = pd.DataFrame(index=self.prices.index, columns=assets)
+        vol = self._realized_vol()
+        raw = {}
+        for a in assets:
+            ys = self._y(self.tradeable_yield_map.get(a))
+            sr = self._m(self.carry_short_rate_map.get(a))
+            if ys is None or sr is None or a not in vol.columns:
+                continue
+            raw[a] = (ys - sr) / 100.0 / vol[a].replace(0.0, np.nan)
+        if len(raw) < 3:
+            logger.warning("hedged_xs carry: 단기금리/일드가 있는 자산 %d개 < 3 — 캐리 비활성", len(raw))
+            return empty
+        df = pd.DataFrame(raw)
+        dm = df.sub(df.mean(axis=1), axis=0)
+        rms = np.sqrt((dm ** 2).mean(axis=1))
+        scale = rms.rolling(self.carry_window, min_periods=60).mean()
+        z = dm.div(scale.replace(0.0, np.nan), axis=0)
+        return z.reindex(columns=assets).clip(-self.signal_clip, self.signal_clip)
 
     def curve_signal(self, assets: List[str]) -> pd.DataFrame:
         """Own-curve slope carry (rates, time-series/directional).
@@ -1020,6 +1062,8 @@ class SleeveEngine:
                 # recent per-asset position history (sparklines) + full net /
                 # gross book series (delta- & gross-budget calibration)
                 'history': pos[cols].tail(120),
+                # 전체 포지션 이력 (대시보드 DV01 이력·한도 점검용)
+                'positions': pos[cols],
                 'net_hist': pos[cols].sum(axis=1),
                 'gross_hist': pos[cols].abs().sum(axis=1)}
 

@@ -243,6 +243,20 @@ sleeves:
   # Within statistical noise full-sample — see sleeve_engine findings.
   fx_carry_source: yield
 
+  # ── 2026-10-02 실매매 로직 감사 (scripts/test_roll_carry_ab.py) ──────────
+  # roll_adjust: 금리 연속선물을 FUT_CUR_GEN_TICKER 롤일 기준 ratio back-adjust.
+  #   무보정 XX1 은 롤일마다 가짜 수익률(KE1 잔차 7.8σ, TY1 평균 −22bp)이 트렌드·
+  #   실현볼·볼타겟·북스톱에 들어갔다. 최신 가격은 실제 근월물 그대로.
+  # pnl_basis: futures = 롤 보정 선물 수익률(실계좌 손익, 캐리·베이시스 포함).
+  #   구 yield_implied(금리변동×β)는 롤 점프 우회로였는데 캐리/베이시스가 빠져
+  #   2016+ SR 을 0.92 → 0.63 만큼 부풀렸다 (주로 KE 2021-22 베이시스, 숏 북 캐리).
+  # carry_method: hedged_xs = (테너금리 − 자국 정책금리)/실현볼 의 국가간 레벨 비교.
+  #   legacy 는 KE 캐리가 US 2Y 와 비트 동일(자국 정보 0). 사전등록 게이트 통과:
+  #   2016+ 0.63→0.72 · 개발 0.46→0.51 · 홀드아웃 0.87→1.03 · T+2 0.73.
+  roll_adjust: true
+  pnl_basis: futures
+  carry_method: hedged_xs
+
   # Signal construction. Fast (63d) trend whipsaws on rates; 6-12m horizons
   # are the robust TSMOM standard.
   trend_horizons: [126, 252]

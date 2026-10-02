@@ -233,6 +233,19 @@ signal_macro:
     YM1 Comdty:  [ADSO1 Curncy, RBATCTR Index]     # AUD OIS 1Y / RBA 캐시타깃
     XM1 Comdty:  [ADSO1 Curncy, RBATCTR Index]
 
+  # 금리 캐리(carry_method: hedged_xs) 의 자국 단기금리 — 환헤지 USD 투자자의 초과
+  # 캐리 = 테너금리 − 자국 단기금리 (CIP 로 US 항 상쇄). 2026-10-02 감사: 기존 산식은
+  # KE 에서 테너금리=펀딩금리(GVSK3YR)라 캐리가 US 2Y 와 비트 동일했다.
+  carry_short_rate_map:
+    TU1 Comdty:  FDTR Index        # Fed 목표(상단)
+    TY1 Comdty:  FDTR Index
+    KE1 Comdty:  KORP7D Index      # BOK 7일 RP
+    KAA1 Comdty: KORP7D Index
+    G 1 Comdty:  UKBRBASE Index    # BOE
+    JB1 Comdty:  BOJDTR Index      # BOJ
+    YM1 Comdty:  RBATCTR Index     # RBA
+    XM1 Comdty:  RBATCTR Index
+
   # 시그널 미사용, 캐시만 (향후 실험·대시보드 맥락용): 채권 변동성 체제(MOVE),
   # 미국 5Y BEI·CPI YoY (인플레 프록시 교차검증용).
   # ⛔ MOVE 활용은 2026-08-14 실험 기각 (scripts/test_move_overlay.py):

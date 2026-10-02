@@ -28,6 +28,12 @@ from pathlib import Path
 
 ROOT       = Path(__file__).resolve().parent.parent
 CACHE_DIR  = ROOT / 'data' / 'cache'
+sys.path.insert(0, str(ROOT))
+from src.data.loader import default_end_date, SESSION_CUTOFF_HOUR  # noqa: E402
+
+# 일과 시그널 캐시 종류 — 하나라도 어제자가 없으면 전부 재풀 (서로 다른 날짜의
+# 가격·일드·매크로·롤 정보가 섞이면 롤 보정·신선도 점검이 어긋난다).
+CACHE_KINDS = ('prices', 'yields', 'macro', 'rolls')
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -37,8 +43,10 @@ CACHE_DIR  = ROOT / 'data' / 'cache'
 def _refresh_cache() -> str:
     """
     일과 시그널용 캐시(고정 start_date 2010-01-01 / 2020-01-01 짜리)만 대상으로
-    어제자 캐시가 없으면 구형 파일을 삭제해 Bloomberg 재풀을 유도한다.
+    기준일(end_date) 캐시가 없으면 구형 파일을 삭제해 Bloomberg 재풀을 유도한다.
 
+    기준일 = loader.default_end_date() — KST SESSION_CUTOFF_HOUR 시 전이면 그저께
+    (미국 세션 미마감 장중가가 하루치 캐시로 고정되는 것을 막는다).
     같은 날 두 번 실행하면 캐시가 이미 있으므로 Bloomberg 재호출 없음.
 
     반환값: 'refreshed(N)' | 'already_current' | 'skipped(no cache dir)'
@@ -46,29 +54,64 @@ def _refresh_cache() -> str:
     if not CACHE_DIR.exists():
         return 'skipped(no cache dir)'
 
-    yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    end = default_end_date()
 
     # 일과 시그널 전용 고정 start_date 패턴
     SIGNAL_STARTS = ('2010-01-01', '2020-01-01')
 
-    def is_signal_cache(name: str) -> bool:
-        return any(name.startswith(f'prices_{s}_') or name.startswith(f'yields_{s}_')
-                   for s in SIGNAL_STARTS)
+    def kind_of(name: str):
+        for k in CACHE_KINDS:
+            if any(name.startswith(f'{k}_{s}_') for s in SIGNAL_STARTS):
+                return k
+        return None
 
-    # 오늘의 캐시(어제 end_date)가 이미 있으면 아무것도 안 함
-    fresh = [f for f in CACHE_DIR.glob('*.parquet')
-             if is_signal_cache(f.name) and yesterday in f.name]
-    if len(fresh) >= 2:  # prices + yields 각 1개 이상
+    # 오늘의 캐시(기준일 end_date)가 종류별로 다 있으면 아무것도 안 함
+    fresh = {kind_of(f.name) for f in CACHE_DIR.glob('*.parquet')
+             if kind_of(f.name) and end in f.name}
+    if fresh >= set(CACHE_KINDS):
         return 'already_current'
 
-    # 구형 시그널 캐시만 삭제
+    # 구형 시그널 캐시(+메타)만 삭제
     removed = 0
     for f in CACHE_DIR.glob('*.parquet'):
-        if is_signal_cache(f.name) and yesterday not in f.name:
+        if kind_of(f.name) and end not in f.name:
             f.unlink()
+            meta = f.with_suffix('.meta.json')
+            if meta.exists():
+                meta.unlink()
             removed += 1
 
     return f'refreshed ({removed} stale signal caches removed, Bloomberg pull next)'
+
+
+def _freshness() -> dict:
+    """방금 갱신된 캐시로 신선도 점검 (loader.freshness_report). 실패해도 일과는 계속."""
+    try:
+        import logging
+        logging.disable(logging.WARNING)
+        from src.data.loader import DataLoader
+        from src.sleeves.sleeve_engine import SleeveEngine
+        from scripts.run_sleeve_backtest import load_sleeve_config, freshness_watch
+        ld = DataLoader()
+        cfg = load_sleeve_config()
+        px = ld.engine_prices(cfg)
+        eng = SleeveEngine(px, config=cfg,
+                           yields=ld.load_signal_yields(start_date='2010-01-01'),
+                           macro=ld.load_signal_macro(start_date='2010-01-01'))
+        fr = ld.freshness_report(watch=freshness_watch(eng))
+        # 불변식 점검 (scripts/invariants.py) — 신선도 외 FAIL 도 같은 경고 목록에 싣는다
+        from scripts.invariants import run_invariants
+        pos = eng.finalize_positions(eng.compute_target_positions())
+        inv = run_invariants(eng, ld, pos, watch=freshness_watch(eng))
+        fr['invariants'] = inv
+        fr['issues'] = fr['issues'] + [f'[불변식 {it}] {m}' for it, st, m in inv
+                                       if st == 'FAIL' and it != 'fresh']
+        return fr
+    except Exception as e:
+        return {'data_asof': None, 'expected': None, 'issues': [f'신선도/불변식 점검 실패: {e}']}
+    finally:
+        import logging
+        logging.disable(logging.NOTSET)
 
 
 def _run(cmd: list[str]) -> int:
@@ -94,13 +137,14 @@ def main() -> None:
                     help="(호환용, 무동작) FX 전략 공장은 2026-09-11 폐기됨")
     ap.add_argument('--bt-start',      default='2016-01-01',
                     help="백테스트 시작일 (기본 2016-01-01)")
-    ap.add_argument('--per-unit',      type=float, default=1252.0,
-                    help="금리 '포지션 1.0 = N만원' 환산 계수 (기본 1252, 2026-07-22 "
-                         "고정). 델타·손익 공통 기준자본. 0 = 한도에서 자동 역산")
+    ap.add_argument('--capital',       type=float, default=500.0,
+                    help="금리 북 배정자본 (억원, 기본 500 = PM FACTOR_RATES). DV01·손익 환산 기준")
+    ap.add_argument('--per-unit',      type=float, default=None,
+                    help="(폐기, 무시 — 2026-10-02 DV01 환산으로 교체)")
     ap.add_argument('--delta-budget',  type=float, default=5000.0,
-                    help="순델타 한도 (만원, 기본 5,000)")
+                    help="순DV01 한도 (만원/bp, 기본 5,000)")
     ap.add_argument('--gross-budget',  type=float, default=8000.0,
-                    help="그로스 한도 (만원, 기본 8,000)")
+                    help="그로스 DV01 한도 (만원/bp, 기본 8,000)")
     ap.add_argument('--perf-start',    default='2026-01-01',
                     help="YTD 성과 시작일 (기본 2026-01-01)")
     ap.add_argument('--no-cache-refresh', action='store_true',
@@ -128,8 +172,10 @@ def main() -> None:
         cache_status = 'skipped(manual)'
     else:
         cache_status = _refresh_cache()
-        yesterday = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
-        print(f"  end_date 기준: {yesterday}")
+        end = default_end_date()
+        print(f"  end_date 기준: {end}"
+              + (f"  (KST {SESSION_CUTOFF_HOUR}시 전 실행 → 미국 세션 미마감, 그저께까지)"
+                 if datetime.now().hour < SESSION_CUTOFF_HOUR else ""))
         print(f"  결과: {cache_status}")
     print()
 
@@ -148,6 +194,18 @@ def main() -> None:
     rc_fs = _run(['scripts/factor_summary.py']) if rc_rt == 0 else rc_rt
     print()
 
+    # ─── 1c. 데이터 신선도 점검 (2026-10-02) ──────────────────
+    banner("1c 데이터 신선도 · 불변식 점검  (scripts/invariants.py)")
+    fresh = _freshness()
+    print(f"  데이터 기준일 {fresh.get('data_asof')} (기대 세션 {fresh.get('expected')})")
+    if fresh.get('invariants'):
+        from scripts.invariants import print_invariants
+        print_invariants(fresh['invariants'], indent='  ')
+    else:
+        for m in fresh.get('issues', []):
+            print(f"  ⚠⚠ {m}")
+    print()
+
     # ─── 2. 콘솔 시그널 + HTML 대시보드 ──────────────────────
     if args.monitor_only:
         banner("2  시그널/대시보드 — --monitor-only 로 건너뜀")
@@ -156,7 +214,8 @@ def main() -> None:
         banner("2  시그널 + 대시보드  (strategy_dashboard.py --html)")
         rc_db = _run([
             'scripts/strategy_dashboard.py', '--html',
-        ] + (['--per-unit', str(args.per_unit)] if args.per_unit else []) + [
+        ] + [
+            '--capital', str(args.capital),
             '--delta-budget', str(args.delta_budget),
             '--gross-budget', str(args.gross_budget),
             '--perf-start',   args.perf_start,
@@ -175,15 +234,20 @@ def main() -> None:
         print(f"  2 시그널/대시보드: 건너뜀 (--monitor-only)")
     else:
         print(f"  2 시그널/대시보드: {st(rc_db)}")
+    n_iss = len(fresh.get('issues', []))
+    print(f"  신선도·불변식     : {'정상' if not n_iss else f'⚠ FAIL {n_iss}건 — 위 1c 확인'}"
+          f" (기준일 {fresh.get('data_asof')})")
     print("=" * 64)
 
     rc = max(rc_rt, rc_fs, rc_db)
     try:
         if rc == 0:
-            rs.write('daily_run', mode=_mode, started=_started,
+            # asof = 실제 데이터 마지막 날짜 (달력상 직전 영업일이 아니라) — Bloomberg
+            # 실패로 옛 캐시를 썼으면 소비자(PM 러너 is_fresh)가 '오래됨'으로 보고 재실행한다.
+            rs.write('daily_run', mode=_mode, started=_started, asof=fresh.get('data_asof'),
                      outputs=['sleeve_backtest_log.csv', 'sleeve_factor_signals.csv', 'data/factor_summary.json', 'data/cache/prices_*.parquet',
                               'data/cache/macro_*.parquet'] + ([] if args.monitor_only else ['reports/*.html']),
-                     note=f'cache {cache_status}')
+                     note=f'cache {cache_status}; freshness issues {len(fresh.get("issues", []))}')
             print(f"  스탬프: daily_run mode={_mode} asof={rs.prev_business_day()}")
     finally:
         rs.release('only_quant_daily')

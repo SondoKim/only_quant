@@ -26,16 +26,16 @@ except Exception:
 def _summary() -> int:
     import yaml
     from src.data.loader import DataLoader
-    from src.data.preprocessor import DataPreprocessor
     from src.sleeves.sleeve_engine import SleeveEngine
 
     cfg_path = Path(__file__).parent / 'config' / 'indicators.yaml'
     with open(cfg_path, 'r', encoding='utf-8') as f:
         cfg = (yaml.safe_load(f) or {}).get('sleeves', {}) or {}
     loader = DataLoader()
-    px = DataPreprocessor(loader.load_data(start_date='2010-01-01', use_cache=True)).clean().get_data()
+    px = loader.engine_prices(cfg, start_date='2010-01-01')
     yields = loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
-    e = SleeveEngine(px, config=cfg, yields=yields)
+    macro = loader.load_signal_macro(start_date='2010-01-01', use_cache=True)
+    e = SleeveEngine(px, config=cfg, yields=yields, macro=macro)
     pos = e.finalize_positions(e.compute_target_positions())
     traded = [a for a in e.rates_assets if a not in e.signal_only_assets]
     print("=" * 64)
@@ -66,16 +66,16 @@ def main() -> None:
     p = argparse.ArgumentParser(description='Global Macro Rates Book — SleeveEngine CLI')
     p.add_argument('--mode', choices=['signals', 'summary'], default='signals')
     p.add_argument('--asset', default=None, help='특정 자산만 (티커 일부, 예: TU1)')
-    p.add_argument('--per-unit', type=float, default=1252.0,
-                   help="금리 '포지션 1.0 = N만원' 환산 계수 (기본 1252)")
-    p.add_argument('--delta-budget', type=float, default=5000.0, help='순델타 한도 (만원)')
-    p.add_argument('--gross-budget', type=float, default=8000.0, help='그로스 한도 (만원)')
+    p.add_argument('--capital', type=float, default=500.0,
+                   help="금리 북 배정자본 (억원, 기본 500 = PM FACTOR_RATES) — DV01·손익 환산 기준")
+    p.add_argument('--delta-budget', type=float, default=5000.0, help='순DV01 한도 (만원/bp)')
+    p.add_argument('--gross-budget', type=float, default=8000.0, help='그로스 DV01 한도 (만원/bp)')
     args = p.parse_args()
 
     if args.mode == 'summary':
         sys.exit(_summary())
     from scripts.strategy_dashboard import run
-    sys.exit(run(asset=args.asset, per_unit=args.per_unit,
+    sys.exit(run(asset=args.asset, capital=args.capital,
                  delta_budget=args.delta_budget, gross_budget=args.gross_budget,
                  html_out=False))
 

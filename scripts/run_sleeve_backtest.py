@@ -39,6 +39,16 @@ def load_sleeve_config() -> dict:
     return {}
 
 
+def freshness_watch(engine) -> list:
+    """신선도 감시 티커: 시그널 유니버스 금리선물 + 그 일드 + USDKRW(계약 환산)."""
+    w = list(engine.rates_assets) + ['KRW Curncy']
+    for a in engine.rates_assets:
+        for m in (engine.tradeable_yield_map, engine.policy_rate_map):
+            if m.get(a):
+                w.append(m[a])
+    return sorted(set(w))
+
+
 def cost_bps_for(asset: str, costs: dict) -> float:
     if asset in costs:
         return costs[asset]
@@ -144,8 +154,15 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
         save_outputs=True):
     print("📊 Loading price data...")
     loader = DataLoader()
-    prices = DataPreprocessor(loader.load_data(start_date=data_start,
-                                               use_cache=True)).clean().get_data()
+    cfg = load_sleeve_config()
+    if cfg_override:
+        for k, v in cfg_override.items():
+            if isinstance(v, dict) and isinstance(cfg.get(k), dict):
+                cfg[k] = {**cfg[k], **v}
+            else:
+                cfg[k] = v
+    # 엔진 입력 가격의 단일 경로 (캐시 → ffill → cfg.roll_adjust 면 롤 보정)
+    prices = loader.engine_prices(cfg, start_date=data_start)
     if exclude_assets:
         # 유니버스 축소 실험/운용: 엔진 유니버스는 prices 컬럼에서 결정되므로
         # 여기서 제외하면 시그널·xs-demean·볼타겟팅 모두 축소 유니버스로 재계산됨.
@@ -163,18 +180,16 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     # Signal-only macro (inflation/path 슬리브 — 가중 0 이면 무영향).
     macro = loader.load_signal_macro(start_date="2010-01-01", use_cache=True)
 
-    cfg = load_sleeve_config()
-    if cfg_override:
-        for k, v in cfg_override.items():
-            if isinstance(v, dict) and isinstance(cfg.get(k), dict):
-                cfg[k] = {**cfg[k], **v}
-            else:
-                cfg[k] = v
     if target_vol is not None:
         cfg['target_port_vol'] = target_vol
     costs = {**DEFAULT_COSTS_BPS, **(cfg.get('costs_bps', {}) or {})}
 
     engine = SleeveEngine(prices, config=cfg, yields=yields, macro=macro)
+    # 데이터 신선도 — 오래된/누락 데이터로 시그널을 내고 있으면 크게 경고
+    fr = loader.freshness_report(watch=freshness_watch(engine))
+    print(f"   데이터 기준일 {fr['data_asof']} (기대 세션 {fr['expected']})")
+    for msg in fr['issues']:
+        print(f"   ⚠⚠ {msg}")
     src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
     src_rt = 'yields' if engine._has_rates_yields() else 'OFF (no yields)'
     _so = [a for a in engine.rates_assets if a in engine.signal_only_assets]
@@ -209,15 +224,21 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     traded = list(positions.columns)
     dir_returns = engine.dir_returns[traded].reindex(positions.index).fillna(0.0)
 
-    # 금리 자산 손익은 연속선물({ticker}1) 수익률 대신 '캐시금리 변동(bp) × 회귀 베타'로
-    # 환산한 이론 수익률로 계산한다 → 연속선물 롤 점프(아티팩트) 제거.
-    # 포지션 사이징은 그대로 실제 선물수익률 기반이고, 손익 귀속만 금리 기준으로 바꾼다.
+    # 손익 기준 (cfg.pnl_basis):
+    #   'futures'       — 롤 보정된 선물 수익률 그대로 = 실제 계좌 손익 (캐리·롤다운·
+    #                     베이시스 포함). roll_adjust 가 켜져 있을 때만 의미가 있다.
+    #   'yield_implied' — '캐시금리 변동(bp) × 회귀 베타' 이론 수익률 (구방식). 무보정
+    #                     연속선물의 롤 점프를 피하려던 우회로 — 캐리가 빠진다.
     # beta = d(directional return)/d(yield bp), 최근 LB일 회귀(룩어헤드 방지로 1일 시프트).
     rates_cols = engine.rates_assets
     pnl_returns = dir_returns.copy()
+    pnl_basis = str(cfg.get('pnl_basis', 'yield_implied')).lower()
+    if pnl_basis == 'futures' and not cfg.get('roll_adjust', False):
+        print("   ⚠ pnl_basis=futures 인데 roll_adjust 가 꺼져 있음 → 롤 점프가 손익에 들어감")
+    print(f"   손익 기준: {pnl_basis}  | 롤 보정: {'ON' if cfg.get('roll_adjust') else 'OFF'}")
     LB = 250
     yblk = engine.yields
-    for a in rates_cols:
+    for a in (rates_cols if pnl_basis != 'futures' else []):
         if a not in pnl_returns.columns:
             continue
         yt = engine.tradeable_yield_map.get(a)

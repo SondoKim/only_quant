@@ -15,6 +15,7 @@
   · T+2 SR 이 T+1 대비 크게 무너지면 → 실행 타이밍에 기댄 가짜 알파 의심
   · 손익이 아시아/영국에 쏠리고 미국이 마이너스면 → 캐치업 수확 의심
   · 스톱 플랫 비율이 높고 최근 몇 년 내내 0 이면 → 래치 (dd_window 확인)
+  · ⑥ 불변식 FAIL 이 하나라도 있으면 → 성과와 무관하게 계산 결함 (종료코드 1)
 
 Usage: python scripts/audit_lookahead.py [--start-date 2016-01-01]
 """
@@ -45,7 +46,8 @@ def _net_pnl(engine, pos, lag_map):
     costs = {**DEFAULT_COSTS_BPS, **(engine.cfg.get('costs_bps', {}) or {})}
     dirr = engine.dir_returns[R].reindex(pos.index).fillna(0.0)
     rets = dirr.copy()
-    for a in R:
+    # 손익 기준은 운용 백테스트와 같게 (cfg.pnl_basis — futures 면 롤 보정 선물 수익률 그대로)
+    for a in (R if str(engine.cfg.get('pnl_basis', 'yield_implied')).lower() != 'futures' else []):
         yt = engine.tradeable_yield_map.get(a)
         if yt is None or engine.yields is None or yt not in engine.yields.columns:
             continue
@@ -65,13 +67,13 @@ def main():
     args = p.parse_args()
 
     ld = DataLoader()
-    px = DataPreprocessor(ld.load_data(start_date='2010-01-01',
-                                       use_cache=True)).clean().get_data()
-    yl = ld.load_signal_yields(start_date='2010-01-01', use_cache=True)
-    px = px[px.index >= pd.to_datetime(args.start_date)]
     cfg = load_sleeve_config()
+    px = ld.engine_prices(cfg, start_date='2010-01-01')
+    yl = ld.load_signal_yields(start_date='2010-01-01', use_cache=True)
+    mc = ld.load_signal_macro(start_date='2010-01-01', use_cache=True)
+    px = px[px.index >= pd.to_datetime(args.start_date)]
 
-    eng = SleeveEngine(px, config=cfg, yields=yl)
+    eng = SleeveEngine(px, config=cfg, yields=yl, macro=mc)
     R = eng.rates_assets
     pos = eng.finalize_positions(eng.compute_target_positions())
     early = [a for a in R if a in EARLY_CLOSE]
@@ -146,6 +148,14 @@ def main():
         s = (n + turn.mul(crate, axis=1) - turn.mul(crate, axis=1) * mult).sum(axis=1)
         print(f"   비용 {lbl:<6} SR {perf_stats(s.dropna())['sharpe']:5.2f}")
 
+    # ⑥ 불변식 — SR 이 아니라 계산 자체가 말이 되는가 (scripts/invariants.py, 2026-10-02)
+    from scripts.invariants import run_invariants, print_invariants
+    from scripts.run_sleeve_backtest import freshness_watch
+    print("
+⑥ 불변식 점검 (롤 보정 · 팩터 퇴화 · DV01 상식 · 데이터 신선도 · 포지션)")
+    n_fail = print_invariants(run_invariants(eng, ld, pos, watch=freshness_watch(eng)))
+    return 1 if n_fail else 0
+
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
