@@ -44,35 +44,35 @@ except Exception:
     pass
 
 from src.data.loader import DataLoader
-from src.data.preprocessor import DataPreprocessor
 
 ROOT = Path(__file__).parent.parent
 
-# 금리 북 배정자본 (억원) — 포지션 1.0 = 이 금액의 선물 명목. portfolio_management
-# pm_config.UNIT_KRW['FACTOR_RATES'] · sections/only_quant.RATES_CAPITAL_억 과 같은 값으로
-# 유지할 것 (PM 의 '현행 계약수'·DV01 이 이 기준). PM 배분 배수 적용 전 기준이다.
-RATES_CAPITAL_억 = 500.0
-DV01_BETA_LOOKBACK = 250
+# 금리 북 배정자본(억원)·DV01 한도(만원/bp)의 단일 출처 = config/indicators.yaml sleeves.
+# (capital_억 · dv01_limit). PM pm_config.UNIT_KRW['FACTOR_RATES'] 도 같은 값을 읽는다.
+# 포지션 1.0 = 배정자본 만큼의 선물 명목, PM 배분 배수 적용 전 기준.
+SIGNAL_JSON = ROOT / 'data' / 'rates_signal_table.json'
 
 
-def dv01_betas(engine, assets, lookback=DV01_BETA_LOOKBACK):
-    """{자산: |β|} — 선물 일간수익률(롤 보정)을 해당 테너 금리 일간변동(bp)에 회귀한
-    |기울기| = 명목 1 당 1bp 손익. PM(_rates_dv01_betas)과 같은 산식(최근 lookback 일).
-    DV01(만원/bp) = 포지션 × |β| × 배정자본(억) × 1e4."""
-    out = {}
-    if engine.yields is None:
-        return out
-    for a in assets:
-        yt = engine.tradeable_yield_map.get(a)
-        if yt is None or yt not in engine.yields.columns or a not in engine.dir_returns:
-            continue
-        df = pd.concat([engine.dir_returns[a], engine.yields[yt].diff() * 100.0],
-                       axis=1).dropna().tail(lookback)
-        df.columns = ['r', 'dy']
-        if len(df) < 30 or df['dy'].var() == 0:
-            continue
-        out[a] = abs(df['r'].cov(df['dy']) / df['dy'].var())
-    return out
+def _book_cfg() -> dict:
+    import yaml as _yaml
+    try:
+        with open(ROOT / 'config' / 'indicators.yaml', 'r', encoding='utf-8') as f:
+            return (_yaml.safe_load(f) or {}).get('sleeves', {}) or {}
+    except Exception:
+        return {}
+
+
+_BOOK = _book_cfg()
+RATES_CAPITAL_억 = float(_BOOK.get('capital_억', 500.0))
+NET_DV01_LIMIT = float((_BOOK.get('dv01_limit') or {}).get('net', 5000.0))
+GROSS_DV01_LIMIT = float((_BOOK.get('dv01_limit') or {}).get('gross', 8000.0))
+
+
+def dv01_betas(engine, assets):
+    """{자산: |β|} — 엔진의 롤링 β(최근 250일, 롤 보정 선물 수익률 vs 테너 금리 bp)의 최신값.
+    엔진 DV01 한도와 같은 값이다. DV01(만원/bp) = 포지션 × |β| × 배정자본(억) × 1e4."""
+    b = engine.dv01_betas([a for a in assets if a not in engine.signal_only_assets])
+    return {a: float(b[a].dropna().iloc[-1]) for a in b.columns if b[a].notna().any()}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -142,10 +142,9 @@ SLEEVE_INFO = {
     'trend':  ('추세 (TSMOM)',     '6/12개월 가격 추세 z-score · 방향성'),
     'value':  ('밸류 (평균회귀)',  '2년 평균 대비 가격 괴리 — 과열 숏 / 과매도 롱 · 시장중립'),
     'carry':  ('캐리 (환헤지)',    '(테너금리 − 자국 정책금리) ÷ 변동성, 국가간 레벨 비교 — 캐리 높은 시장 롱 / 낮은 시장 숏 · 시장중립'),
-    'curve':  ('커브 캐리',        '10Y−2Y 기울기 z — 스팁 롱 / 역전 숏 · 방향성 (미채택, 가중 0)'),
     'policy': ('정책 모멘텀',      '2Y 금리 6개월 변화 — 인하 사이클 롱 / 인상 사이클 숏 · 방향성'),
 }
-SLEEVE_ORDER = ['trend', 'value', 'carry', 'curve', 'policy']
+SLEEVE_ORDER = ['trend', 'value', 'carry', 'policy']
 
 # 한눈 표용 슬리브 전략명 (팩터별 전략 이름 + 설명)
 SLEEVE_STRATS = [
@@ -155,8 +154,6 @@ SLEEVE_STRATS = [
      '2년 평균 대비 가격 괴리 평균회귀 — 과열 숏 / 과매도 롱 (시장중립)'),
     ('carry',  '글로벌 금리 캐리 전략 (Sleeve)',
      '환헤지 초과캐리(테너금리 − 자국 정책금리) ÷ 변동성 국가간 비교 — 고캐리 롱 / 저캐리 숏 (시장중립)'),
-    ('curve',  '커브 캐리 전략 (Sleeve)',
-     '자국 10Y−2Y 기울기 z — 스팁 롱 / 역전 숏 (A/B 결과 미채택)'),
     ('policy', '통화정책 사이클 전략 (Sleeve)',
      '2Y 금리 6개월 변화로 중앙은행 인하/인상 사이클 추종'),
 ]
@@ -181,13 +178,14 @@ def build_sleeve_snapshots(loader):
         cfg_path = ROOT / 'config' / 'indicators.yaml'
         with open(cfg_path, 'r', encoding='utf-8') as f:
             cfg = (_yaml.safe_load(f) or {}).get('sleeves', {}) or {}
-        # 엔진 입력 가격 단일 경로 (백테스트와 동일 — cfg.roll_adjust 면 롤 보정)
-        px = loader.engine_prices(cfg, start_date='2010-01-01')
-        yields = loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
-        macro = loader.load_signal_macro(start_date='2010-01-01', use_cache=True)
+        # 엔진 입력 단일 경로 (백테스트·감사와 동일 — 롤 보정·제외 자산 처리 포함)
+        px, yields, macro = loader.engine_inputs(cfg)
         engine = SleeveEngine(px, config=cfg, yields=yields, macro=macro)
         rates_snap = engine.sleeve_snapshot('rates')
         rates_snap['dv01_beta'] = dv01_betas(engine, list(rates_snap['target']))
+        # 시점별 β (엔진 DV01 한도와 같은 값) — DV01 이력·이력 최대를 그날 β 로 환산
+        rates_snap['dv01_beta_hist'] = engine.dv01_betas(
+            [a for a in rates_snap['target'] if a not in engine.signal_only_assets])
         from scripts.run_sleeve_backtest import freshness_watch
         rates_snap['freshness'] = loader.freshness_report(watch=freshness_watch(engine))
         rates_snap['roll_adjust'] = bool(cfg.get('roll_adjust', False))
@@ -239,12 +237,11 @@ SLEEVE_READ = {
     'value':  ('밸류', '2년 평균 대비 싼 편', '2년 평균 대비 비싼 편'),
     'carry':  ('캐리', '변동성 대비 환헤지 캐리가 상대적으로 높음',
                '변동성 대비 환헤지 캐리가 상대적으로 낮음'),
-    'curve':  ('커브', '커브가 가팔라 롤다운 유리', '커브가 눌려 롤다운 불리'),
     'policy': ('정책 모멘텀', '단기금리 하락 = 완화 사이클',
                '단기금리 상승 = 긴축 사이클'),
 }
-# 컨빅션 분해에서 제외 — 별도 서브북이라 sleeve_weights 분모를 공유하지 않는다
-NON_CONVICTION_SLEEVES = {'reversion'}
+# 컨빅션 분해에서 제외할 서브북 (리버전 서브북은 2026-10-13 엔진에서 삭제 — 현재 없음)
+NON_CONVICTION_SLEEVES = set()
 
 
 def _fmt_assets(items, short_first=None):
@@ -298,8 +295,9 @@ def sleeve_narrative(snap, net_dv01=None):
         if sc >= 0.999:
             return ("북스톱",
                     f"정상 작동 중입니다. 섀도우 북 드로다운 {dd:.1f}% "
-                    f"({wtxt} 대비)로 감축 임계 {bs['dd_half']:.0f}% 아래 — "
-                    f"포지션 100% 집행.")
+                    f"({wtxt} 대비)로 감축 임계 {bs['dd_half']:g}% 아래 — "
+                    f"포지션 100% 집행. (섀도우는 노출 스케일 전 북 기준이라 실자본으로는 "
+                    f"약 절반 수준의 낙폭에서 작동)")
         if sc > 0.01:
             return ("⚠ 북스톱",
                     f"감축 중입니다. 드로다운 {dd:.1f}% 가 {bs['dd_half']:.0f}% 를 "
@@ -597,7 +595,12 @@ def compute_delta_info(snap, budget_w, gross_budget_w=None, capital_억=RATES_CA
     net_hist_w = gross_hist_w = None
     if hist is not None and len(hist):
         cols = [a for a in k if a in hist.columns]
-        dvh = hist[cols].mul(pd.Series({a: k[a] for a in cols}), axis=1)
+        bh = snap.get('dv01_beta_hist')
+        if bh is not None and all(a in bh.columns for a in cols):
+            # 그날 β 로 환산 (엔진 한도와 같은 기준) — 현재 β 로 과거를 환산하면 한도를 넘어 보인다
+            dvh = hist[cols] * bh[cols].reindex(hist.index).ffill() * unit
+        else:
+            dvh = hist[cols].mul(pd.Series({a: k[a] for a in cols}), axis=1)
         net_hist_w, gross_hist_w = dvh.sum(axis=1), dvh.abs().sum(axis=1)
         missing = [a for a in tgt if a not in k and abs(tgt[a]) > 1e-9]
     else:
@@ -610,7 +613,8 @@ def compute_delta_info(snap, budget_w, gross_budget_w=None, capital_억=RATES_CA
             'net_hist_w': net_hist_w, 'gross_hist_w': gross_hist_w,
             'max_net_w': float(net_hist_w.abs().max()) if net_hist_w is not None else None,
             'max_gross_w': float(gross_hist_w.max()) if gross_hist_w is not None else None,
-            'missing_beta': missing}
+            'missing_beta': missing,
+            'limit_factor': snap.get('dv01_factor')}
 
 
 def _dv01_basis_txt(d):
@@ -618,20 +622,26 @@ def _dv01_basis_txt(d):
     ks = ' · '.join(f"{short_name(a)} {v:,.1f}" for a, v in d['k'].items())
     txt = (f"DV01 = 포지션 × |β| × 배정자본 {d['capital']:,.0f}억 (PM 배분 배수 적용 전) — "
            f"포지션 1.0 당 만원/bp: {ks}")
+    f = d.get('limit_factor')
+    if f is not None:
+        txt += (f" · 엔진 DV01 한도 적용: 오늘 ×{f:.2f} 로 축소됨" if f < 0.999 else
+                " · 엔진 DV01 한도 적용 중 (오늘은 한도 안 — 축소 없음)")
     if d.get('max_net_w') is not None:
-        txt += (f" · 2010+ 최대 |순DV01| {d['max_net_w']:,.0f} / 최대 그로스 "
-                f"{d['max_gross_w']:,.0f}만원/bp (현재 β 기준)")
+        txt += (f" · 이력 최대 |순DV01| {d['max_net_w']:,.0f} / 최대 그로스 "
+                f"{d['max_gross_w']:,.0f}만원/bp (그날 β 기준)")
     if d.get('missing_beta'):
         txt += f" · ⚠β 없음: {', '.join(d['missing_beta'])}"
     return txt
 
 
-def freshness_lines(snap):
-    """데이터 신선도/롤 보정 경고 문장 리스트 (없으면 [])."""
+def freshness_lines(snap, include_warn=True):
+    """데이터 점검 문장 리스트: FAIL 은 '⛔ ', WARN(휴장 가능 등)은 'ℹ ' 접두 (없으면 [])."""
     fr = (snap or {}).get('freshness') or {}
-    out = list(fr.get('issues') or [])
+    out = [f"⛔ {m}" for m in (fr.get('issues') or [])]
     if snap and not snap.get('roll_adjust', False):
-        out.append("롤 보정 OFF — 연속선물 롤 점프가 시그널·스톱에 포함됨 (config roll_adjust)")
+        out.append("⛔ 롤 보정 OFF — 연속선물 롤 점프가 시그널·스톱에 포함됨 (config roll_adjust)")
+    if include_warn:
+        out += [f"ℹ {m}" for m in (fr.get('warnings') or [])]
     return out
 
 
@@ -726,9 +736,12 @@ def print_signal_table(sig_rows, signal_date, delta_info=None, pnl_totals=None,
     # 금리 북 시그널 자동 해석 (HTML 과 동일 내용 — sleeve_narrative 단일 소스)
     fl = freshness_lines(sleeve_snap)
     if fl:
-        print("\n  ⚠⚠⚠ 데이터 점검 — 시그널을 쓰기 전에 확인 ⚠⚠⚠")
+        if any(m.startswith('⛔') for m in fl):
+            print("\n  ⚠⚠⚠ 데이터 점검 — 시그널을 쓰기 전에 확인 ⚠⚠⚠")
+        else:
+            print("\n  ℹ 데이터 안내 (휴장 가능 — 주문 판단에는 영향 없음)")
         for m in fl:
-            print(f"     ⚠ {m}")
+            print(f"     {m}")
     narr = sleeve_narrative(sleeve_snap, net_dv01=(delta_info or {}).get('net_w'))
     if narr:
         print("\n  🧭 금리 북 시그널 해석  (오늘 슬리브 z값에서 자동 생성)")
@@ -833,9 +846,13 @@ def write_html(signal_date, out_path, sig_rows, sleeve_snap, fx_snap=None,
     parts.append("<h1>금리 북 대시보드 (슬리브 엔진)</h1>")
     fl = freshness_lines(sleeve_snap)
     if fl:
-        parts.append("<div style='margin:10px 0 16px;padding:12px 16px;background:#3a1414;"
-                     "border:1px solid #f87171;border-radius:6px;color:#fecaca;font-size:13.5px;'>"
-                     "<b>⚠ 데이터 점검 — 이 시그널로 주문하기 전에 확인</b><ul style='margin:6px 0 0 18px;'>"
+        has_fail = any(m.startswith('⛔') for m in fl)
+        bg, bd, fg, ttl = (('#3a1414', '#f87171', '#fecaca', '⚠ 데이터 점검 — 이 시그널로 주문하기 전에 확인')
+                           if has_fail else
+                           ('#1c1f27', '#555c6b', '#cbd2da', 'ℹ 데이터 안내 (휴장 가능 — 주문 판단에는 영향 없음)'))
+        parts.append(f"<div style='margin:10px 0 16px;padding:12px 16px;background:{bg};"
+                     f"border:1px solid {bd};border-radius:6px;color:{fg};font-size:13.5px;'>"
+                     f"<b>{ttl}</b><ul style='margin:6px 0 0 18px;'>"
                      + "".join(f"<li>{html.escape(m)}</li>" for m in fl) + "</ul></div>")
 
     # 1. 퀀트 전략 리스트 — 기존 운용 전략(고정) + 폐기된 FX 공장(기록) + 슬리브 금리 북
@@ -1032,7 +1049,7 @@ def write_html(signal_date, out_path, sig_rows, sleeve_snap, fx_snap=None,
         if net_hist_w is not None and len(net_hist_w) > 2:
             net_w_series = net_hist_w.tail(250).tolist()
             guides = [delta_info['budget'], -delta_info['budget']]
-            parts.append("<details open><summary>금리 북 순DV01 추이 (최근 250일, 만원/bp, 현재 β 기준)"
+            parts.append("<details open><summary>금리 북 순DV01 추이 (최근 250일, 만원/bp, 그날 β 기준)"
                          f"<span class='net'>점선 = 한도 ±{delta_info['budget']:,.0f}만원/bp · "
                          f"현재 {delta_info['net_w']:+,.0f}만원/bp</span></summary>"
                          f"<div style='padding:12px 14px;'>{_spark_svg(net_w_series, w=860, h=90, guides=guides)}</div>"
@@ -1101,9 +1118,61 @@ def write_html(signal_date, out_path, sig_rows, sleeve_snap, fx_snap=None,
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-def run(asset=None, capital=RATES_CAPITAL_억, delta_budget=5000.0, gross_budget=8000.0,
+def write_signal_json(signal_date, sig_rows, sleeve_snap, delta_info, pnl_totals, capital):
+    """PM Rates_Factor 탭용 시그널 표 JSON (data/rates_signal_table.json).
+
+    'table' 은 HTML [자산별 트레이딩 시그널] 표와 같은 열 이름·셀 문자열 — PM 이 HTML 을
+    파싱하던 코드를 그대로 쓸 수 있다. daily_run 이 두 모드 모두에서 이 함수를 거치므로
+    PM 이 한 달 묵은 HTML 을 읽던 문제(2026-10-13 감사)가 구조적으로 사라진다.
+    """
+    def arrow(v, th=0.02):
+        return '▲' if v > th else ('▼' if v < -th else '·')
+
+    table = []
+    for r in sig_rows:
+        px = f" {_px_fmt(r['price'])}" if r.get('price') is not None else ''
+        row = {'자산': f"{asset_label(r['asset'])}{px}",
+               '기초 금리/환율': r.get('underlying', '–'),
+               '방향': {'LONG': '▲ 롱', 'SHORT': '▼ 숏', '-': '· 중립'}[r['dir']],
+               '확신도': f"{r['conf']:.2f}",
+               '전일 포지션': (f"{arrow(r['pos_prev'])} {r['pos_prev']:+.2f}" if 'pos_prev' in r else '–'),
+               '오늘 포지션': f"{arrow(r['pos'])} {r['pos']:+.2f}",
+               '전일 DV01 증감(만원/bp)': (f"{r['ddelta_w']:+,.0f}" if 'ddelta_w' in r else '–'),
+               'DV01(만원/bp)': (f"{r['delta_w']:+,.0f}" if 'delta_w' in r else '–'),
+               '전일 손익(bp)': (f"{r['pnl1d_bp']:+.1f}" if 'pnl1d_bp' in r else '–'),
+               '전일 손익(만원)': (_won_fmt(r['pnl1d_w']) if 'pnl1d_w' in r else '–'),
+               '출처': '슬리브'}
+        table.append(row)
+    d = delta_info or {}
+    payload = {
+        'generated': pd.Timestamp.now().isoformat(timespec='seconds'),
+        'signal_date': signal_date,
+        'capital_억': capital,
+        'table': table,
+        'positions': {r['asset']: r['pos'] for r in sig_rows},
+        'narrative': sleeve_narrative(sleeve_snap, net_dv01=d.get('net_w')),
+        'dv01': {'net_w': d.get('net_w'), 'gross_w': d.get('gross_w'),
+                 'budget': d.get('budget'), 'gross_budget': d.get('gross_budget'),
+                 'per_asset': d.get('dv')},
+        'pnl_1d': pnl_totals,
+        'book_stop': sleeve_snap.get('book_stop'),
+        'dv01_factor': sleeve_snap.get('dv01_factor'),
+        'freshness': sleeve_snap.get('freshness'),
+    }
+    SIGNAL_JSON.parent.mkdir(parents=True, exist_ok=True)
+    tmp = SIGNAL_JSON.with_suffix('.tmp')
+    tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=1, default=str), encoding='utf-8')
+    tmp.replace(SIGNAL_JSON)
+    print(f"🧾 PM 시그널 JSON 저장: {SIGNAL_JSON}")
+
+
+def run(asset=None, capital=None, delta_budget=None, gross_budget=None,
         perf_start='2026-01-01', html_out=False, per_unit=None) -> int:
-    """콘솔 시그널 (+ HTML). main.py --mode signals 가 이 함수를 그대로 호출한다."""
+    """콘솔 시그널 (+ HTML) + PM 용 JSON. main.py --mode signals 가 이 함수를 그대로 호출한다.
+    capital/delta_budget/gross_budget 기본값 = config (capital_억 · dv01_limit)."""
+    capital = RATES_CAPITAL_억 if capital is None else float(capital)
+    delta_budget = NET_DV01_LIMIT if delta_budget is None else float(delta_budget)
+    gross_budget = GROSS_DV01_LIMIT if gross_budget is None else float(gross_budget)
     if per_unit is not None:
         print("ℹ per_unit 은 2026-10-02 폐기 (명목을 DV01 로 잘못 읽던 계수) — 무시하고 "
               f"배정자본 {capital:,.0f}억 기준 DV01 로 환산합니다.")
@@ -1148,6 +1217,9 @@ def run(asset=None, capital=RATES_CAPITAL_억, delta_budget=5000.0, gross_budget
         print_sleeve_console(sleeve_snap)
     print_fx_monitor(fx_snap)
 
+    if sleeve_snap and not asset:
+        write_signal_json(signal_date, sig_rows, sleeve_snap, delta_info, pnl_totals, capital)
+
     if html_out:
         # 산출물은 reports/dashboards/ 아래 (cwd 무관 절대경로). total_dashboard 의
         # _find_dashboard_html 이 이 폴더를 본다. 최신 1개만 유지.
@@ -1166,15 +1238,15 @@ def run(asset=None, capital=RATES_CAPITAL_억, delta_budget=5000.0, gross_budget
 def main():
     ap = argparse.ArgumentParser(description="금리 북 대시보드 (슬리브 엔진)")
     ap.add_argument('--asset', default=None, help="특정 자산만 필터 (티커 일부, 예: TU1)")
-    ap.add_argument('--capital', type=float, default=RATES_CAPITAL_억,
-                    help="금리 북 배정자본 (억원, 기본 500 = PM FACTOR_RATES). 포지션 1.0 = "
+    ap.add_argument('--capital', type=float, default=None,
+                    help="금리 북 배정자본 (억원, 기본 = config capital_억). 포지션 1.0 = "
                          "이 금액의 선물 명목. DV01·손익 환산 기준")
     ap.add_argument('--per-unit', type=float, default=None,
                     help="(폐기, 무시) 옛 '포지션 1.0 = N만원' 계수")
-    ap.add_argument('--delta-budget', type=float, default=5000.0,
-                    help="금리 북 순DV01 한도 (만원/bp, 기본 5000)")
-    ap.add_argument('--gross-budget', type=float, default=8000.0,
-                    help="금리 북 그로스 DV01 한도 (만원/bp, 기본 8000)")
+    ap.add_argument('--delta-budget', type=float, default=None,
+                    help="금리 북 순DV01 한도 (만원/bp, 기본 = config dv01_limit.net)")
+    ap.add_argument('--gross-budget', type=float, default=None,
+                    help="금리 북 그로스 DV01 한도 (만원/bp, 기본 = config dv01_limit.gross)")
     ap.add_argument('--perf-start', default='2026-01-01',
                     help="HTML YTD 성과 차트 시작일 (기본 2026-01-01)")
     ap.add_argument('--html', action='store_true', help="HTML 대시보드도 저장")

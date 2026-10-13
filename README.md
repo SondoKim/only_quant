@@ -1,47 +1,50 @@
 # Global Macro Rates Book (SleeveEngine)
 
 블룸버그 데이터로 돌아가는 글로벌 금리 팩터 북. 2026-09-11 FX 전략 공장(조합 탐색·
-월별 재선정 방식)을 폐기하고 금리 북 슬리브 엔진만 남겼다 — 과최적화된 전략 조합의
-관성을 매매하는 구조라 시장·퀀트 논리가 약하다고 판단. 복구 지점: git tag
-`pre-fx-factory-retire`.
+월별 재선정 방식)을 폐기하고 금리 북 슬리브 엔진만 남겼다 — 복구 지점: git tag
+`pre-fx-factory-retire`. 2026-10-13 엔진에서 기각된 실험 기능을 걷어냈다 — 복구 지점:
+git tag `pre-engine-cleanup-2026-10`.
 
 ## 구조
 
 ```
-Bloomberg(xbbg) → data/cache parquet (prices 2010+, yields, macro)
+Bloomberg(xbbg) → data/cache parquet (pricesraw/prices 2010+, yields, macro, rolls)
+      ↓  DataLoader.engine_inputs(cfg)  — 엔진 입력 단일 경로 (롤 보정·0가격 제거·제외 자산 처리)
+src/sleeves/sleeve_engine.py   Trend / Value / Carry(환헤지 국가간) / Policy 연속 시그널
+      → 횡단면 중립화(value·carry) → 인버스볼 → 북별 볼타겟 → 스무딩 → 북스톱 → 노출 스케일 → DV01 한도
+src/sleeves/accounting.py      손익 회계 단일 출처 (futures 기준, 비용, 시차 lag_map)
       ↓
-src/sleeves/sleeve_engine.py   Trend / Value / Carry / Policy 연속 시그널
-      → 횡단면 중립화(value·carry) → 인버스볼 → 포트 볼타겟(7.1%) → 스무딩 → 북스톱
-      ↓
-scripts/run_sleeve_backtest.py  sleeve_backtest_log.csv · sleeve_factor_signals.csv
-scripts/strategy_dashboard.py   콘솔 주문 후보 + reports/dashboards/*.html
+scripts/run_sleeve_backtest.py  sleeve_backtest_log.csv · sleeve_factor_signals.csv (PM FACTOR_RATES 원천)
+scripts/strategy_dashboard.py   콘솔 주문 후보 + reports/dashboards/*.html + data/rates_signal_table.json (PM)
+scripts/live_record.py          그날 공표 목표를 data/live_record.csv 에 추가 (과거 행 불변)
+scripts/reconcile_live.py       공표 vs 백테스트 재작성 · 라이브 페이퍼 손익 · PM 환산 · 집행 대사
+scripts/invariants.py           불변식 + 절단(미래참조) 테스트 — daily_run 1c · audit ⑥⑦
 ```
 
 - 시그널 유니버스 8종(美2·英1·日1·豪2·韓2), 매매는 한국·미국 4종 (`signal_only_assets`).
+- 배정자본(`capital_억`)·DV01 한도(`dv01_limit`)의 단일 출처 = `config/indicators.yaml` → PM 도 읽는다.
 - FX 는 매매하지 않고 슬리브 엔진 FX 팩터를 모니터링 섹션에만 표시한다.
 - 설정: `config/indicators.yaml` → `sleeves:`, 티커·일드 맵: `config/assets.yaml`.
 
 ## 일과
 
 ```bash
-python scripts/daily_run.py            # 0 캐시 갱신 → 1 금리 백테스트 → 2 시그널/HTML
-python scripts/daily_run.py --monitor-only
+python scripts/daily_run.py            # 1 백테스트 → 1b 팩터요약 → 1c 점검 → 2 시그널/HTML/JSON → 3 라이브기록 → 3b 대사
 python main.py --mode signals          # 콘솔 주문 후보 (대시보드와 같은 코드 경로)
 python main.py --mode summary          # 엔진 설정 요약
+python scripts/audit_lookahead.py      # 시차·래치·비용·불변식·절단 테스트 (시그널·설정 변경 후 필수)
 ```
 
-`total_dashboard`(Streamlit, 별도 저장소)가 HTML 대시보드와 두 CSV 를 파싱한다 —
-`scripts/strategy_dashboard.py` 상단의 계약을 지킬 것.
+`total_dashboard`(Streamlit) 가 HTML 의 전략 리스트를, `portfolio_management` 가 시그널 JSON
+(없으면 HTML)과 두 CSV 를 읽는다 — `scripts/strategy_dashboard.py` 상단의 계약을 지킬 것.
 
-## 검증 스크립트 (scripts/)
+## 연구 규율
 
-`audit_lookahead.py`(시차·래치 감사, 시그널 변경 후 필수), `test_switching.py`,
-`test_range_regime.py`, `test_sleeve_composition.py`, `test_cleanup_ab.py`,
-`test_macro_factors.py`, `test_newinfo_factors.py`, `test_move_overlay.py`,
-`test_open_execution.py`, `test_vol_target_split.py`, `test_xs_neutralize.py`,
-`test_directionality.py`, `test_signal_only_assets.py`, `test_universe_reduction.py`,
-`test_curve_blocks.py`. 판정 규율: 개발 2012-21 / 홀드아웃 2022+, T+2·시간대정직 열,
-아슬아슬한 통과 채택 금지.
+새 연구는 `scripts/research/` 에, 반드시 운용 경로(`engine_inputs` · `SleeveEngine` ·
+`accounting`)를 써서 만든다. 후보와 판정 기준은 실행 전에 docstring 에 고정(사전등록), 개발
+2012-21 / 홀드아웃 2022+, T+2·시간대정직 열, 아슬아슬한 통과 채택 금지. 종료된 실험은
+`scripts/archive/` (README 참조). 같은 표본에서 수십 개 변형을 시험해 왔으므로 보고 SR 은
+낙관적으로 읽을 것.
 
 ## 설치
 

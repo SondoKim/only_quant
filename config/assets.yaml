@@ -141,6 +141,14 @@ signal_yields:
     KE1 Comdty:  GVSK3YR Index     # Korea 3Y
     KAA1 Comdty: GVSK10YR Index    # Korea 10Y
 
+  # 금리 호가 선물(ASX: 가격 = 100 − 금리) → 테너(년). 이들의 '가격 수익률' 변동성은 테너와
+  # 무관하게 듀레이션 ~1 처럼 움직여 채권 위험을 최대 8배 과소평가한다 → hedged_xs 캐리의 위험
+  # 분모를 par 수정듀레이션 × 금리 변동성으로 대체 (2026-10-13 감사; 교정 전엔 XM 캐리가 횡단면을
+  # 지배해 韓美 캐리에 우연한 방향성 틸트가 섞였다). DV01 β 계산에서도 제외된다.
+  yield_quoted_futures:
+    YM1 Comdty: 3
+    XM1 Comdty: 10
+
   # Long-end futures → [short yield, own long yield] for carry/rolldown slope
   # (alpha4 rates_carry). FR/IT use the German 2Y as the euro funding anchor.
   curve_slope_map:

@@ -1,321 +1,111 @@
 # ───────────────────────────────────────────────────────────────────────────
-# Sleeve engine (src/sleeves) — continuous, risk-targeted macro book.
-# Independent of the strategy-factory; tuned here, backtested via
-# scripts/run_sleeve_backtest.py.
+# 금리 팩터 북 (SleeveEngine, src/sleeves/sleeve_engine.py) 운용 설정 — 단일 출처.
+# 백테스트 scripts/run_sleeve_backtest.py · 대시보드 strategy_dashboard.py · 감사
+# audit_lookahead.py · PM(portfolio_management) 배정자본이 모두 이 파일을 읽는다.
+#
+# 2026-10-13 정리: 기각·영구 OFF 실험(리버전 서브북, 레짐 게이트, 커브 트레이드, 블록 예산,
+# 매크로·커브 슬리브, 스위칭 토글)의 설정과 엔진 코드를 제거했다. 근거·수치는 메모리와
+# git tag `pre-engine-cleanup-2026-10` 에 있다. ⚠ 같은 표본에서 수십 개 변형을 시험해 왔으므로
+# 여기 숫자를 '더 좋은 값'으로 바꾸는 재튜닝은 하지 말 것 (사전등록 + 홀드아웃 규율).
 # ───────────────────────────────────────────────────────────────────────────
 sleeves:
-  # 거래 유니버스 제외 (C안, 2026-07-14 A/B — test_universe_reduction.py):
-  # 유로존 4종 제외로 rates SR 0.88→1.20, MaxDD -8.8%→-5.0%, 전/후반 모두 개선
-  # (독일 10년 누적 기여 음수, 佛·伊는 리스크 예산 대비 기여 미미 → 제외 시
-  # 볼타겟팅이 한국·일본·호주·미국에 재배분). 가격 데이터는 계속 로드되고
-  # 거래(시그널·포지션)에서만 빠짐. 되돌리려면 이 리스트를 비우면 됨.
-  #
-  # 2026-07-22 재검증: 위 유로존 컷은 리버전 서브북을 끄고 스톱 래치를 고친
-  # 뒤에도 유지된다 (2016+ 0.83→0.91, 2012+ 0.48→0.64, 양 반기·T+2 모두 개선).
-  # 반면 같은 날 잠시 추가했던 호주 2종(YM1/XM1) 제외는 되돌렸다 — 그 근거였던
-  # SR 1.20→1.38 은 전적으로 리버전 아티팩트였고, 정직한 북에서는 2016+ 0.91→
-  # 0.92(무의미), H2 0.78→0.63, T+2 0.93→0.88, 2012+ 0.64→0.58 로 오히려 악화.
-  # ⚠ 앞으로 유니버스를 더 깎지 말 것: 12→8 이미 선택편의가 누적돼 있다.
+  # ── 북 규모·한도 (단일 출처) ───────────────────────────────────────────
+  # 배정자본: 포지션 1.0 = 이 금액(억원)의 선물 명목. PM pm_config.UNIT_KRW['FACTOR_RATES']
+  # 도 이 값을 읽는다 (PM 배분 배수는 그 위에 곱해진다).
+  capital_억: 500
+  # DV01 한도 (만원/bp, 배정자본 기준 = PM 배분 배수 적용 전). 엔진이 finalize 마지막에 강제:
+  # 순 |Σ DV01| > net 또는 Σ|DV01| > gross 인 날은 금리 포지션 전체를 비례 축소. DV01 = 포지션 ×
+  # |β_t|(250일 롤링, 그날까지) × 배정자본. 2026-10-13 도입 — 2012+ 축소 9.1% 일, SR 0.570→0.587,
+  # MaxDD −5.9%→−5.4% (제약이라 성과와 무관하게 채택). 대시보드 한도 표시도 이 값을 쓴다.
+  dv01_limit:
+    net: 5000
+    gross: 8000
+    beta_lookback: 250
+
+  # ── 유니버스 ───────────────────────────────────────────────────────────
+  # exclude_assets: 유니버스에서 완전 제외 (2026-07-14/07-22 A/B, 유로존 4종 — 내부상관 0.65
+  # 한 덩어리, 매매 시 손해). ⚠ 더 깎지 말 것: 12→8 이미 선택편의 누적.
   exclude_assets:
     - DU1 Comdty    # 독일 2Y (Schatz)
     - RX1 Comdty    # 독일 10Y (Bund)
     - OAT1 Comdty   # 프랑스 10Y
     - IK1 Comdty    # 이탈리아 10Y (BTP)
-
-  # 시그널 유니버스에는 남기고 '매매'에서만 제외 (2026-07-22 채택, B안).
-  # 동기: 운용자가 한국 소재 — KTB(09:00-15:45 KST 주간장)와 미국(CME Globex,
-  # 한국 주간에도 개장)은 집행이 깨끗하지만 영국·일본·호주는 매매 시간이 애매.
-  # 즉 성과가 아니라 '집행 가능성'이라는 외생 제약에서 나온 컷이다.
-  #
-  # A/B (scripts/test_signal_only_assets.py) — 매매 韓美4 / 시그널 8 유지:
-  #   2016+ SR 0.91→1.20, 2012+ 0.64→0.83, MaxDD -6.1%→-5.5%, 회전 33x→15x,
-  #   H1·H2·T+2·시간대정직 전부 개선 (시간대정직 1.18 ≈ T+1 1.20 → 아티팩트 아님).
-  # 이유: 현행 8종 북에서 韓美 4종이 손익의 88%를 리스크 예산 47%로 냈고,
-  # 호주·일본·영국이 예산 53%를 먹으며 손익 12%만 기여했다 → 예산 회수.
-  #
-  # ⚠ 시그널 유니버스를 8종으로 '유지'하는 것이 핵심 — 4종으로 좁히면(C안)
-  # 2016+ 1.20→1.11, MaxDD -5.5%→-7.3% 로 나빠진다. value/carry 가 반쪽 헤지가
-  # 되는 손실보다, 넓은 횡단면이 주는 시그널 품질 이득이 크다 (알파 대부분이
-  # 반쪽헤지와 무관한 trend/policy 에서 나오기 때문 — test_directionality.py).
-  # 유로존을 시그널에 '추가'하는 것도 검증했으나 이득 없음 (1.20→1.10) —
-  # 내부상관 0.65 인 한 덩어리가 횡단면의 33%를 차지해 기준선을 왜곡한다.
-  #
-  # ⚠ 실효 독립 베팅 수 2.41 → 1.86. ρ(TU1,TY1)=0.78, ρ(KE1,KAA1)=0.87 이라
-  # 사실상 '미국 듀레이션 + 한국 듀레이션' 2개 베팅이다 (둘 사이 상관은 0.10~0.18
-  # 로 낮아 그나마 작동). 한미 금리가 동시 역행하는 글로벌 쇼크에 상쇄 수단 없음.
+  # signal_only_assets: 시그널·횡단면 기준선에는 참여, 매매만 0 (2026-07-22 — 한국 소재
+  # 운용자의 집행 시간 제약. 시그널 8종 유지가 핵심: 4종으로 좁히면 성과 악화).
+  # ⚠ 실효 독립 베팅은 사실상 '미국 듀레이션 + 한국 듀레이션' 2개 (ρ TU·TY 0.78, KE·KAA 0.87).
   signal_only_assets:
-    - G 1 Comdty    # 영국 Gilt — 런던 마감, 집행 시간 애매
+    - G 1 Comdty    # 영국 Gilt
     - JB1 Comdty    # 일본 JGB
-    - YM1 Comdty    # 호주 3Y
-    - XM1 Comdty    # 호주 10Y
-
-  # sleeve_factor_signals.csv 범위 — 대시보드 '금리 팩터 시그널 시계열' 차트 소스.
-  #   signal (기본) — 시그널 유니버스 8종. 英·日·豪는 포지션이 0 이지만 횡단면
-  #                   z·demean 기준선을 만들어 韓美 포지션을 실제로 좌우하므로,
-  #                   "왜 오늘 KTB 숏인가"를 읽으려면 시계열에 필요하다.
-  #   traded        — 매매 자산만 (韓美 4종).
-  #   all           — 전체 12종 (+유로존; 어떤 시그널에도 기여하지 않음).
-  # 유로존 제외 이유: exclude_assets 라 아무것도 구동하지 않는 장식이고, 검증된
-  # 적 없는 신호를 띄우면 재량 개입 압력만 만든다 (오히려 '매매하면 손해'가
-  # 확인된 자산군). 佛·伊의 실제 정보는 아웃라이트가 아니라 對분트 스프레드에
-  # 있으므로, 유럽 스트레스가 필요하면 전용 스프레드 지표를 따로 만들 것.
-  #
-  # ⚠ 이건 '팩터 시계열' 차트 범위일 뿐, 주문 후보 표와는 별개다. 후보 표
-  # ('자산별 트레이딩 시그널')는 strategy_dashboard.py 가 매매 자산만 렌더한다.
+    - YM1 Comdty    # 호주 3Y (ASX, 100−금리 호가)
+    - XM1 Comdty    # 호주 10Y (ASX, 100−금리 호가)
+  # 팩터 차트(sleeve_factor_signals.csv) 범위: signal = 시그널 8종 + 관찰 전용 분트.
   factor_monitor_scope: signal
-
-  # 시그널에도 매매에도 쓰지 않지만 맥락용으로 팩터 차트에만 얹을 자산.
-  # 분트 = 유럽 듀레이션 벤치마크 — 매매하지 않아도 트레이더가 유럽 금리 방향을
-  # 읽는 기준점으로 쓴다. 佛·伊 대신 분트 하나만 넣는 이유: 유로존 4종은 내부
-  # 상관 0.65 의 한 덩어리라 사실상 같은 정보를 네 번 반복하고, 佛·伊의 고유
-  # 정보(국가신용 스트레스)는 아웃라이트가 아니라 對분트 스프레드에 있어 이
-  # 차트로는 어차피 안 보인다.
-  # 안전성: 팩터 5종 모두 컬럼별 시계열 연산이라 자산을 얹어도 기존 자산의
-  # 표시값은 바뀌지 않고, 시그널·포지션에는 전혀 영향이 없다.
   factor_monitor_extra:
-    - RX1 Comdty    # 독일 10Y (Bund) — 관찰 전용
+    - RX1 Comdty    # 독일 10Y — 관찰 전용 (시그널·매매 무관)
 
-  # Sleeve blend weights (per asset class; carry applies to FX only)
+  # ── 데이터·손익 기준 (2026-10-02 감사) ─────────────────────────────────
+  # roll_adjust: 금리 연속선물을 실제 월물 교체일(FUT_CUR_GEN_TICKER) 기준 ratio back-adjust.
+  # pnl_basis: futures = 롤 보정 선물 수익률(실계좌 손익). yield_implied 는 비교용(캐리 누락).
+  roll_adjust: true
+  pnl_basis: futures
+
+  # ── 슬리브 ─────────────────────────────────────────────────────────────
+  # trend = 6/12개월 TSMOM, value = 2년 평균회귀, carry = 국가간 환헤지 캐리,
+  # policy = 자국 2Y/3Y 6개월 변화(인하 사이클 롱). 가중 균등.
+  # 2026-10-13 재검증 (scripts/research/test_composition_2026_10.py, 사전등록, 2012+ 패널,
+  # 교정 캐리): 4슬리브 A 개발 0.41/홀드 0.89/전체 0.57 · 밸류 제외 0.31/0.89 · 캐리 제외
+  # 0.50/0.75 · 추세+정책 0.47/0.73 → 규칙('잡음 0.10 내 최소 슬리브')상 4슬리브 유지.
   sleeve_weights:
     trend: 1.0
-    # 2026-06-12 A/B: value 가중 단조반응 (0→0.91, 0.5→0.98, 1.0→1.02 SR,
-    # H2 1.05→1.14, 연도별 8/11 우위) — 0.5에서 1.0으로 상향, 전 슬리브 균등.
     value: 1.0
     carry: 1.0
-    # 2026-06-11 A/B (2012-2026, net of costs): policy momentum (2Y yield
-    # 6m change via policy_rate_map) lifted rates SR 0.14→0.20 (0.31 with
-    # position smoothing); curve-slope carry HURT (0.14→0.08) — keep 0.
-    curve: 0.0
     policy: 1.0
-    # ⛔ 2026-08-14 매크로 데이터 슬리브 홀드아웃 A/B 기각
-    # (scripts/test_macro_factors.py — 개발 2012-2021 판정 / 홀드아웃 2022+ 확인).
-    # inflation (BEI/CPI 모멘텀) · path (1Y OIS − 정책금리 리프라이싱) 모두
-    # 상관 게이트는 통과 (max|ρ| 0.13 / 0.38 — 진짜 새 정보원)했으나 성과 게이트
-    # 탈락: 개발표본 SR 0.67→0.48 / 0.63, 홀드아웃 1.07→0.78 / 0.56 으로 양
-    # 구간 동반 악화. 데이터·슬리브·프로토콜은 엔진에 남김 (signal_macro 패널,
-    # macro_pub_lag 25거래일 발표랙 포함) — 다른 시그널 구성으로 재도전할 때
-    # 같은 홀드아웃 규율로 검증할 것. 파라미터(63d/126d 창) 재튜닝 금지.
-    inflation: 0.0
-    path: 0.0
-  # Per-sleeve cross-sectional neutralization (1=market-neutral RV, 0=directional).
-  # Trend keeps its directional CTA premium; Value/Carry are relative-value.
-  #
-  # ⛔ 2026-07-23 trend/policy 부분 중립화(0.25/0.5/1.0 단독·결합) A/B 기각
-  # (scripts/test_xs_neutralize.py, FX 는 xs_neutralize_fx 로 고정하고 금리만
-  # 변경): 2016+ 1.20→1.13~0.72, 2012+ 0.84→0.80~0.41 로 용량-반응이 단조
-  # 악화 — 어떤 셀도 어떤 열(H1/H2/T+2/시간대정직)에서도 개선 없음. 국가 간
-  # 상대 금리 모멘텀은 이 북(시그널8/매매 韓美4 반쪽헤지 구조)에서는 부재.
-  # trend=0/policy=0 이 확정 우위 — [[directionality-ab]] 와 같은 결론의 재확인:
-  # 이 북의 알파는 방향성 CTA 프리미엄이다. 재론하려면 새 표본으로.
+  # carry_method: hedged_xs = (테너금리 − 자국 정책금리) ÷ 채권 위험, 국가간 레벨 비교.
+  # 채권 위험 = 선물 실현볼, 단 ASX(assets.yaml yield_quoted_futures)는 par 듀레이션 × 금리볼.
+  carry_method: hedged_xs
+  # 횡단면 중립화 (1 = 시장중립 상대가치, 0 = 방향성). trend/policy 중립화는 2026-07-23
+  # A/B 에서 전 격자 단조 악화 → 이 북의 알파는 방향성 CTA 프리미엄.
   xs_neutralize:
     trend: 0.0
     value: 1.0
     carry: 1.0
-  signal_smooth_span: 5     # EWMA span on conviction to damp turnover (1=off)
-  # EWMA on final positions (fraction of prior held; 0=off). 2026-06-11 A/B:
-  # 0.8 halved turnover 134x→73x and lifted full-period port SR 0.40→0.51.
-  position_smooth: 0.8
+  fx_carry_source: yield    # FX 북(모니터링 전용) 캐리 = 2Y 금리차
+  trend_horizons: [126, 252]
+  trend_z_window: 252
+  value_window: 504
+  carry_window: 252
+  policy_period: 126
+  signal_clip: 3.0
+  signal_smooth_span: 5     # 컨빅션 EWMA span
+  position_smooth: 0.8      # 최종 포지션 EWMA (전일 비중 0.8 — 회전 절반)
 
-  # Shadow-equity trailing stop on the RATES book (2026-06-11): un-stopped
-  # book drawdown ≤ dd_half → full size, ≤ dd_flat → half, beyond → flat;
-  # re-engages as the shadow book recovers. Responds to realized damage, not
-  # regime forecasts — fast price/vol gates (21d veto / 63d agreement / vol
-  # brake) all LOWERED SR in A/B, while this kept SR ≈0.5 and cut rates MaxDD
-  # -33%→-14%. Robust across the 2/4...6/12 threshold sweep; 4/8 = the
-  # pre-registered prototype values (3/6 scored best but within noise).
-  #
-  # ⚠ 2026-07-22 래치 버그 수정 — dd_window 신설. 기존에는 산술 cumsum 의
-  # '전기간' 고점 대비로 dd 를 재서, 섀도우 북이 옛 고점(2022-09-28)을 못 넘자
-  # dd 가 임계 위에 영구 고착 → 2023-07 이후 계속 플랫, 2016+ 42%일 플랫으로
-  # 스톱이 킬스위치가 됐다. 이제 자산곡선은 복리, dd 는 고점대비 비율, 고점은
-  # dd_window 일 롤링 최대(0=옛 전기간 동작)라 오래된 고점이 굴러떨어지며
-  # 재진입이 열린다. 리버전 OFF 기준 스윕에서 252d 가 임계값과 무관하게
-  # 전기간을 지배(SR 0.76~0.95 vs 0.69~0.82). 임계는 사전등록값 4/8 유지 —
-  # 252d/3·6 이 0.95 로 더 높았으나 같은 표본에서 재튜닝하지 않는다
-  # (메커니즘 버그만 고치고 파라미터는 건드리지 않음).
+  # ── 리스크 ─────────────────────────────────────────────────────────────
+  vol_halflife: 33          # 실현볼 EWMA 반감기 (인버스볼 사이징)
+  target_asset_vol: 0.10    # 자산당 위험 (인버스볼)
+  max_asset_pos: 3.0        # 볼타겟 전 자산 포지션 상한 (⚠ TU·KE 는 자주 포화 — 2026-10-13 감사)
+  max_gross_leverage: 10.0
+  port_vol_window: 63       # 포트폴리오 볼타겟 과거창
+  vol_target_mode: separate # 금리/FX 북 독립 타게팅 (FX 는 모니터링 전용)
+  target_port_vol: 0.10
+  target_port_vol_rates: 0.071
+  target_port_vol_fx: 0.071
+  rates_exposure_scale: 0.5 # 금리 북 최종 노출 스케일 (2026-07-16 운용 캘리브레이션)
+
+  # 북스톱: 스톱 전 섀도우 북의 252일 롤링 고점 대비 낙폭 → 절반/플랫 (사전등록 4/8,
+  # 2026-07-22 래치 수정). 스톱 구간 대체 북 4종은 2026-10-02 전부 기각.
+  # ⚠ 섀도우는 노출 스케일(×0.5) '전' 북 기준 → 실제 자본 기준으로는 약 2%/4% 낙폭에서 작동.
+  # 2026-10-13: '목표 3.55%·배율 1·임계 2/4' 로 다시 쓰는 등가 재표현을 시험했으나 복리 경로
+  # 차이로 임계 근처 80일의 스톱 상태가 바뀌고 SR 0.72→0.66 — 스톱이 임계값에 민감한 구조라
+  # 재표현하지 않았다 (설정 숫자를 바꾸면 결과가 크게 갈릴 수 있음에 유의).
   book_stop:
     enabled: true
     dd_half: 4.0
     dd_flat: 8.0
-    dd_window: 252    # 고점 산정 롤링창(거래일). 0 = 전기간(구동작, 래치 위험)
+    dd_window: 252
 
-  # Fast cross-sectional reversal sub-book on rates (2026-06-11, prop-desk
-  # "don't sit flat" request — the stopped book was flat 77% of days). Fades
-  # each market's 10d move RELATIVE to global duration (market-neutral;
-  # ts-fade of the aggregate move scored -0.5 SR — never enable that).
-  # Always-on (Hurst range-gating cut SR 0.70→0.51); runs OUTSIDE book_stop;
-  # blended (1-w)·main + w·reversion in finalize_positions. Rates book A/B:
-  # SR 0.55 → 0.89, MaxDD -14% → -9%, flat days 77% → 0%.
-  # ⚠ COST CLIFF (turnover ~600x/yr): net SR 0.70 @0.5bp, 0.31 @1bp, ≤0
-  # @1.5bp — execute passively; cut weight or disable if real costs exceed
-  # ~1bp. Earns mainly in JGB/AU/KR; ~flat in US/EU.
-  #
-  # ⛔ 2026-07-22 영구 OFF — 이 서브북의 수익은 알파가 아니라 '비동시 종가'
-  # 아티팩트였다. KTB 15:45 KST / JGB 15:02 JST 마감은 시카고 마감보다 ~14시간
-  # 이르므로 아시아 가격은 미국 움직임을 하루 늦게 반영한다: 일간수익률 상관이
-  # 美당일 vs 美전일 기준으로 KE1 0.18/0.33, JB1 0.15/0.37, KAA1 0.18/0.37
-  # (대조군 미국 TU1 은 0.81/-0.03). xs_neutralize=1.0 인 이 슬리브는 '글로벌
-  # 평균 대비 아직 안 따라온 시장을 산다' = 그 캐치업을 수확하는 기계였고,
-  # 손익의 111%가 아시아+영국(KAA 41%/JB 29%/KE 27%/G 14%), 미국은 -11%.
-  # 결정적으로 하루만 늦춰 집행하면 SR 1.01 → -0.14 로 소멸하며, 미국 종가를
-  # 보고 한국 종가에 체결하는 것은 물리적으로 불가능하다(KTB 야간장 없음).
-  # 위 "SR 0.55→0.89", "JGB/AU/KR 에서 번다"는 기록은 알파의 증거가 아니라
-  # 아티팩트의 증상이었다. 다시 켜지 말 것 — 켜면 모든 A/B 가 오염된다.
-  reversion:
-    enabled: false
-    weight: 0.5
-    lookback: 10
-    z_window: 120
-    smooth: 0.5
-
-  # ── Curve trades (2026-07-23): DV01(≈vol)-중립 스티프너 합성 자산 ──────
-  # 동기: 현행 북은 ρ(TU,TY)=0.78, ρ(KE,KAA)=0.87 로 실효 베팅이 '미국 듀레이션
-  # + 한국 듀레이션' 2개뿐. 같은 4개 계약으로 커브 기울기(정책 vs 텀프리미엄)
-  # 라는 독립 팩터를 추가한다. 합성 수익률 = H·r_short − r_long (H = 전일
-  # σ_long/σ_short, causal). 시그널·볼타겟·북스톱은 합성 공간, 최종 출력은
-  # 실계약 레그(short +H / long −1)로 환산 → 하위 소비자는 실자산만 본다.
-  # 동일 국가·동시 마감 페어만 허용 — 비동시 종가 아티팩트 구조적으로 없음.
-  # 슬리브: trend/value(합성 가격), carry(−z(slope): 가파름→플래트너 롤다운),
-  # policy(완화→불 스티프닝). 가중은 본북 전례대로 사전등록 균등(재튜닝 금지).
-  #
-  # ⛔ 2026-07-23 A/B 기각 (scripts/test_curve_blocks.py). 금리 북 SR:
-  #   2016+ 1.20 → 0.70, 2012+ 0.84 → 0.54 (H1 폭락 1.37→0.17, 회전 15x→54x).
-  # 커브 북 단독(합성 공간, 두다리 비용): SR@0.5bp −0.29/−0.34, 1bp −0.42/−0.51
-  # — 비용 문제가 아니라 gross 자체가 음수. 슬리브 분해(진단용, 재튜닝 금지):
-  #   carry(−z slope) 가 명백히 음수(−0.43/−0.35 gross) = 이 표본에서 커브
-  #   리치니스 롤다운 프리미엄 부재; trend/policy 는 US 만 소폭 +(0.3~0.5
-  #   gross)이나 net 에선 소멸, KR 커브는 거의 전 구간 음수 (KE·KAA 상관 0.87
-  #   → 스프레드 분산이 작아 비용 대비 신호가 얇다). 'US 커브만 trend+policy'
-  #   같은 부분 채택은 같은 표본 재튜닝이므로 금지 — 켜려면 새 표본/새 데이터
-  #   (예: 실제 커브 yield 스프레드 시그널)로 재검증할 것.
-  curve_trades:
-    enabled: false        # ⛔ 2026-07-23 A/B 기각 — 켜기 전 위 주석 필독
-    risk_weight: 1.0      # 커브 컨빅션 전체 스케일 (아웃라이트 대비)
-    pairs:
-      - {name: US2s10s, short_leg: TU1 Comdty, long_leg: TY1 Comdty}
-      - {name: KR3s10s, short_leg: KE1 Comdty, long_leg: KAA1 Comdty}
-
-  # ── Block risk budgeting (2026-07-23) ─────────────────────────────────
-  # 인버스볼 equal-risk-per-asset 은 상관 0.8+ 국가 블록에 예산을 이중 배분
-  # 한다. 블록 내 평균 롤링 상관으로 블록 합산 변동성을 추정, 각 블록이
-  # '한 개 베팅' 리스크가 되도록 멤버를 1/√(m(1+(m−1)ρ̄)) 로 축소 — 이후
-  # 포트폴리오 볼타겟이 레벨을 복원하므로 순효과는 블록 간 예산 재배분.
-  # 미등록 자산·커브 합성은 싱글톤(영향 없음).
-  #
-  # ⛔ 2026-07-23 A/B 기각 (scripts/test_curve_blocks.py). 금리 북 SR:
-  #   2016+ 1.20 → 1.01 (H2 1.03→0.70), 2012+ 0.84 → 0.69, MaxDD 도 악화
-  #   (−5.5%→−7.5%). 이론상 '베팅 균등'이 맞아 보여도, 이 북에선 상관 높은
-  #   국가 듀레이션 중복이 곧 수익원이라 예산을 걷어내면 (FX 쪽으로 상대
-  #   예산이 흘러) 금리 알파만 희석된다. 실효 베팅 수 문제의 해법은 예산
-  #   재배분이 아니라 '수익성 있는 새 베팅 추가'여야 한다는 교훈.
-  risk_blocks:
-    enabled: false        # ⛔ 2026-07-23 A/B 기각 — 켜기 전 위 주석 필독
-    corr_window: 252
-    blocks:
-      US_dur: [TU1 Comdty, TY1 Comdty]
-      KR_dur: [KE1 Comdty, KAA1 Comdty]
-      AU_dur: [YM1 Comdty, XM1 Comdty]   # signal_only 라 현재는 무효, 안전용
-
-  # (가) Regime gate: turn the TREND sleeve down in ranging/choppy regimes
-  # (Hurst ≤ threshold) to avoid whipsaw (the 2023-25 rates problem).
-  #
-  # ⛔ 2026-08-14 제거 (scripts/test_cleanup_ab.py). 리버전 OFF·스톱 수정 이후
-  # 재검증 결과 게이트는 죽은 복잡성: OFF 시 2016+ SR 1.12→1.16, 2012+
-  # 0.75→0.79 로 양 표본 · 전 열(H1/H2/T+2/시간대정직) 개선 또는 동치.
-  # 정확히 이 게이트가 막아야 했던 2023-24 챱 구간 손실도 못 막았다 (연도별
-  # 2023 -1.7%, 2024 -0.8% — ON 상태에서). Hurst 120d 추정 노이즈가 트렌드를
-  # 무작위로 껐다 켰다 한 것에 가깝다. 켜려면 새 표본으로 재검증할 것.
-  # (같은 A/B 에서 value/carry 제거도 검증 — 단독 SR 은 -0.06/-0.52 로 음수지만
-  #  결합 기여 +0.06~0.15 가 양 표본 · 전 열에서 재현되어 '분산 헤지'로 유지.
-  #  carry 부호 반전은 +0.5 수준(G/H 행)이나 같은 표본 부호 채굴이라 금지.)
-  regime_gate:
-    enabled: false
-    method: rs              # 'rs' (R/S) or 'dfa'
-    window: 120
-    threshold: 0.5
-    ranging_trend_weight: 0.0   # trend multiplier when ranging (0=off, 1=no gate)
-    recompute_every: 5          # recompute Hurst every N days (ffill between)
-
-  # Carry source. Rates carry is always yield-based (cross-country yield level,
-  # active only when signal_yields are loaded). FX carry:
-  #   'yield' = true 2Y differential (foreign-US); best in 2022+ normal-rates regime
-  #   'price' = rate-differential momentum; best in 2020-21 reflation era
-  # Within statistical noise full-sample — see sleeve_engine findings.
-  fx_carry_source: yield
-
-  # ── 2026-10-02 실매매 로직 감사 (scripts/test_roll_carry_ab.py) ──────────
-  # roll_adjust: 금리 연속선물을 FUT_CUR_GEN_TICKER 롤일 기준 ratio back-adjust.
-  #   무보정 XX1 은 롤일마다 가짜 수익률(KE1 잔차 7.8σ, TY1 평균 −22bp)이 트렌드·
-  #   실현볼·볼타겟·북스톱에 들어갔다. 최신 가격은 실제 근월물 그대로.
-  # pnl_basis: futures = 롤 보정 선물 수익률(실계좌 손익, 캐리·베이시스 포함).
-  #   구 yield_implied(금리변동×β)는 롤 점프 우회로였는데 캐리/베이시스가 빠져
-  #   2016+ SR 을 0.92 → 0.63 만큼 부풀렸다 (주로 KE 2021-22 베이시스, 숏 북 캐리).
-  # carry_method: hedged_xs = (테너금리 − 자국 정책금리)/실현볼 의 국가간 레벨 비교.
-  #   legacy 는 KE 캐리가 US 2Y 와 비트 동일(자국 정보 0). 사전등록 게이트 통과:
-  #   2016+ 0.63→0.72 · 개발 0.46→0.51 · 홀드아웃 0.87→1.03 · T+2 0.73.
-  roll_adjust: true
-  pnl_basis: futures
-  carry_method: hedged_xs
-
-  # Signal construction. Fast (63d) trend whipsaws on rates; 6-12m horizons
-  # are the robust TSMOM standard.
-  trend_horizons: [126, 252]
-  trend_z_window: 252
-  value_window: 504         # ~2y mean-reversion lookback
-  carry_window: 252
-  signal_clip: 3.0          # clip each sleeve signal to ±this (in z units)
-
-  # Risk model
-  vol_halflife: 33          # EWMA halflife (days) for realized vol
-  target_asset_vol: 0.10    # per-asset risk target (inverse-vol sizing)
-  target_port_vol: 0.10     # portfolio annualized vol target (combined 모드용)
-  port_vol_window: 63       # trailing window for ex-ante portfolio vol
-
-  # ── 볼타겟 스코프 (2026-07-24 운용 요청: 금리/FX 북 완전 분리) ──────────
-  # combined (구동작) — 금리 4종 + FX 5종을 한 포트폴리오로 묶어 target_port_vol
-  #   하나에 맞춘다. 이러면 FX 북 변동성이 튈 때 금리 포지션이 같이 줄어든다.
-  # separate (현행) — 각 북이 자기 타겟을 독립 타게팅. 한 북의 유니버스·변동성이
-  #   바뀌어도 다른 북의 포지션은 비트 단위로 불변 = 별도 팀/별도 한도 운용 가능.
-  #
-  # A/B (scripts/test_vol_target_split.py, 2016+ / 2012+, net of costs,
-  # yield-implied, 금리는 rates_exposure_scale 0.5 적용 후):
-  #   A 결합 10%      금리SR 1.21/0.84, 금리vol 2.6%, 금리DD -5.5%, 합vol 7.6%
-  #   B 분리 각 10%   금리SR 1.12/0.67, 금리vol 3.3%, 금리DD -5.9%, 합vol 11.0%
-  #   C 분리 각 7.1%  금리SR 1.15/0.77, 금리vol 2.6%, 금리DD -4.7%, 합vol 7.9%  ← 채택
-  #
-  # ⚠ 분리의 대가를 정직하게 기록한다: 같은 위험(C)에서도 금리 SR 1.21→1.15,
-  # 2012+ 0.84→0.77 로 소폭 하락한다. 원인은 성과 저하가 아니라 구조 변화 —
-  # 결합 모드에서 금리 북의 스케일은 FX 가 지배하는 합산 변동성을 따라가느라
-  # 사실상 완만했는데, 분리하면 금리 자체 변동성에 반응해 스케일이 더 자주
-  # 움직인다 (회전 15x→17x). 즉 이 손실은 '분리 운용'이라는 요구사항의 가격이며
-  # 성능 최적화로 되돌릴 수 있는 종류가 아니다. 되돌리려면 mode 를 combined 로.
-  #
-  # 타겟 7.1% = 10%/√2 — 상관 ≈0 인 두 북을 각각 7.1% 로 잡으면 합산이 약 10%
-  # (실측 7.9%, 스무딩·북스톱이 실현변동성을 타겟 아래로 눌러서). 합산 총위험을
-  # 현행 수준으로 보존하는 값이라 per_unit 1252 델타 캘리브레이션도 그대로 유효.
-  vol_target_mode: separate
-  target_port_vol_rates: 0.071
-  target_port_vol_fx: 0.071
-  max_asset_pos: 3.0        # cap on any single asset position
-  max_gross_leverage: 10.0  # cap on summed gross exposure
-  # 금리 북 최종 노출 스케일 (2026-07-16 운용 요청: 실제 운용 북 대비 총/net
-  # 델타가 과대 → 절반으로 축소). 시그널·볼타겟·북스톱·리버전 로직은 그대로
-  # 두고 finalize_positions 맨 끝에서 금리 자산 최종 포지션에만 곱한다 →
-  # 백테스트 로그(pos::/rpnl::)·라이브 스냅샷·대시보드 DV01·계약수가 모두
-  # 일관되게 ×0.5. 1.0 = 스케일 없음(원복).
-  rates_exposure_scale: 0.5
-
-  # Transaction costs (bps of turnover); per-ticker overrides allowed
+  # 거래비용 (명목 회전 대비 bp)
   costs_bps:
     rates: 0.5
     fx: 1.0
     index: 1.0
     KRW Curncy: 3.0
-
-
-# ───────────────────────────────────────────────────────────────────────────
-# 2026-09-11 FX 전략 공장 폐기 — 아래 섹션 제거: advanced_strategies,
-# alpha_strategies, discovery, backtest, cross_asset_indicators, strategy_types,
-# technical_indicators (전부 팩토리 전용 소비자). 복구 지점: git tag
-# pre-fx-factory-retire. 이 파일은 이제 `sleeves:` 하나만 갖는다.
-# ───────────────────────────────────────────────────────────────────────────

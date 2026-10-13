@@ -1,15 +1,12 @@
 """
-Sleeve-engine backtest.
+금리 북 백테스트 (SleeveEngine) → sleeve_backtest_log.csv · sleeve_factor_signals.csv.
 
-Runs the continuous, risk-targeted sleeve book (Trend / Value / Carry) and
-reports performance vs the legacy strategy-factory. Because every signal is
-rolling and NOTHING is fitted, a single full-sample pass with positions
-shifted by one day is already out-of-sample at every point (no walk-forward
-folder machinery needed).
+모든 시그널이 롤링·무적합이라 포지션을 하루 시프트한 단일 전체 표본 패스가 곧 매 시점
+표본외다 (절단 테스트로 실증 — scripts/invariants.py). 손익 회계는 src/sleeves/accounting.py.
+주의: 하이퍼파라미터·슬리브 구성은 같은 표본에서 여러 번 선택됐으므로 보고 SR 은 낙관적이다.
 
 Usage:
-    python scripts/run_sleeve_backtest.py
-    python scripts/run_sleeve_backtest.py --start-date 2022-01-01 --target-vol 0.10
+    python scripts/run_sleeve_backtest.py --start-date 2016-01-01
 """
 
 import sys
@@ -24,11 +21,10 @@ import matplotlib.pyplot as plt
 sys.path.append(str(Path(__file__).parent.parent))
 
 from src.data.loader import DataLoader
-from src.data.preprocessor import DataPreprocessor
 from src.sleeves.sleeve_engine import SleeveEngine, TRADING_DAYS
-
-# Default per-asset transaction cost (basis points of notional turnover)
-DEFAULT_COSTS_BPS = {'rates': 0.5, 'fx': 1.0, 'index': 1.0, 'KRW Curncy': 3.0}
+# 손익 회계 단일 출처 — 아래 이름들은 하위 호환용 재수출
+from src.sleeves.accounting import (asset_pnl, book_pnl, perf_stats, cost_bps_for,  # noqa: F401
+                                    DEFAULT_COSTS_BPS, sharpe, max_drawdown, window)
 
 
 def load_sleeve_config() -> dict:
@@ -47,16 +43,6 @@ def freshness_watch(engine) -> list:
             if m.get(a):
                 w.append(m[a])
     return sorted(set(w))
-
-
-def cost_bps_for(asset: str, costs: dict) -> float:
-    if asset in costs:
-        return costs[asset]
-    if 'Comdty' in asset:
-        return costs.get('rates', 0.5)
-    if 'Curncy' in asset:
-        return costs.get('fx', 1.0)
-    return costs.get('index', 1.0)
 
 
 def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
@@ -106,17 +92,10 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
         return None
     factors = {
         'trend':  engine.trend_signal(ra),
-        'value':  engine.value_signal(ra, 'rates'),
+        'value':  engine.value_signal(ra),
         'carry':  engine.carry_signal(ra, 'rates'),
-        'curve':  engine.curve_signal(ra),
         'policy': engine.policy_signal(ra),
     }
-    # 매크로 슬리브(inflation/path)는 '가중 > 0 = 검증 통과·채택' 상태일 때만
-    # 기록한다 — 미검증 신호를 차트에 띄우면 재량 개입 압력만 만든다는 기존
-    # 원칙(유로존 제외와 같은 논리) 그대로.
-    for fac in ('inflation', 'path'):
-        if float((engine.sleeve_weights or {}).get(fac, 0.0)) != 0.0:
-            factors[fac] = getattr(engine, f'{fac}_signal')(ra)
     blocks = []
     for fac, df in factors.items():
         if df is None or df.empty:
@@ -137,21 +116,12 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
     return out
 
 
-def perf_stats(daily: pd.Series) -> dict:
-    daily = daily.dropna()
-    if daily.empty or daily.std() == 0:
-        return {'sharpe': 0.0, 'vol': 0.0, 'ret': 0.0, 'maxdd': 0.0}
-    sharpe = daily.mean() / daily.std() * np.sqrt(TRADING_DAYS)
-    vol = daily.std() * np.sqrt(TRADING_DAYS)
-    eq = (1 + daily).cumprod()
-    ann_ret = eq.iloc[-1] ** (TRADING_DAYS / len(daily)) - 1
-    maxdd = (eq / eq.cummax() - 1).min()
-    return {'sharpe': sharpe, 'vol': vol, 'ret': ann_ret, 'maxdd': maxdd}
-
-
 def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
         data_start='2010-01-01', cfg_override=None, exclude_assets=None,
         save_outputs=True):
+    """금리 북 백테스트. 엔진은 항상 전체 패널(data_start~)로 돌리고 결과만 start_date 부터
+    잘라 낸다 — 라이브(대시보드)와 같은 워밍업이라 백테스트 초기가 콜드스타트로 왜곡되지
+    않는다 (2026-10-13: 2016 에서 엔진을 새로 시작하면 2016-18 SR 0.86 vs 라이브 조건 0.52)."""
     print("📊 Loading price data...")
     loader = DataLoader()
     cfg = load_sleeve_config()
@@ -161,28 +131,13 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
                 cfg[k] = {**cfg[k], **v}
             else:
                 cfg[k] = v
-    # 엔진 입력 가격의 단일 경로 (캐시 → ffill → cfg.roll_adjust 면 롤 보정)
-    prices = loader.engine_prices(cfg, start_date=data_start)
+    if target_vol is not None:
+        cfg['target_port_vol_rates'] = target_vol
+    prices, yields, macro = loader.engine_inputs(cfg, start_date=data_start, asof=end_date)
     if exclude_assets:
-        # 유니버스 축소 실험/운용: 엔진 유니버스는 prices 컬럼에서 결정되므로
-        # 여기서 제외하면 시그널·xs-demean·볼타겟팅 모두 축소 유니버스로 재계산됨.
         drop = [a for a in exclude_assets if a in prices.columns]
         prices = prices.drop(columns=drop)
         print(f"   ⛔ Excluded {len(drop)} assets: {', '.join(drop)}")
-    if start_date:
-        prices = prices[prices.index >= pd.to_datetime(start_date)]
-    if end_date:
-        prices = prices[prices.index <= pd.to_datetime(end_date)]
-
-    # Signal-only yields (Carry/Value/Curve/Policy). Fixed 2010+ cache so the
-    # window never triggers per-run Bloomberg fetches.
-    yields = loader.load_signal_yields(start_date="2010-01-01", use_cache=True)
-    # Signal-only macro (inflation/path 슬리브 — 가중 0 이면 무영향).
-    macro = loader.load_signal_macro(start_date="2010-01-01", use_cache=True)
-
-    if target_vol is not None:
-        cfg['target_port_vol'] = target_vol
-    costs = {**DEFAULT_COSTS_BPS, **(cfg.get('costs_bps', {}) or {})}
 
     engine = SleeveEngine(prices, config=cfg, yields=yields, macro=macro)
     # 데이터 신선도 — 오래된/누락 데이터로 시그널을 내고 있으면 크게 경고
@@ -190,131 +145,87 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
     print(f"   데이터 기준일 {fr['data_asof']} (기대 세션 {fr['expected']})")
     for msg in fr['issues']:
         print(f"   ⚠⚠ {msg}")
-    src_fx = 'yields' if engine._has_fx_yields() else 'price-proxy'
-    src_rt = 'yields' if engine._has_rates_yields() else 'OFF (no yields)'
+    for msg in fr.get('warnings', []):
+        print(f"   ⚠ {msg}")
     _so = [a for a in engine.rates_assets if a in engine.signal_only_assets]
-    # 볼타겟 스코프를 명시 — separate 면 북별 타겟이라 target_port_vol 하나만
-    # 찍으면 실제 운용값과 다르게 읽힌다 (2026-07-24 금리/FX 분리).
-    if getattr(engine, 'vol_target_mode', 'combined') == 'separate':
-        tv_txt = (f"vol target = 북별 분리 (금리 {engine.target_port_vol_rates:.1%} / "
-                  f"FX {engine.target_port_vol_fx:.1%})")
-    else:
-        tv_txt = f"vol target = 결합 {engine.target_port_vol:.0%}"
-    print(f"   Rates: {len(engine.rates_assets)} 시그널 / "
-          f"{len(engine.rates_assets) - len(_so)} 매매 | FX: {len(engine.fx_assets)} | "
-          f"{tv_txt}")
+    print(f"   Rates: {len(engine.rates_assets)} 시그널 / {len(engine.rates_assets) - len(_so)} 매매 | "
+          f"FX(모니터링): {len(engine.fx_assets)} | 금리 볼타겟 {engine.target_port_vol_rates:.2%} × "
+          f"노출 {engine.rates_exposure_scale:g} | 캐리 {engine.carry_method}")
     if _so:
         print(f"   🎯 시그널 전용 (포지션 0): {', '.join(_so)}")
-    print(f"   Carry source — FX: {src_fx} | Rates carry/value: {src_rt}")
 
-    # Overlays (position_smooth + rates book stop) applied inside the engine —
-    # same path as the live feed and dashboard. CLI --smooth overrides config.
     positions = engine.finalize_positions(
         engine.compute_target_positions(),
         smooth_override=smooth if smooth and smooth > 0 else None,
     )
     if engine.book_stop_enabled:
         _w = engine.book_stop_dd_window
-        print(f"   🛑 Rates book stop ON (shadow-DD half {engine.book_stop_dd_half:.0f}% "
-              f"/ flat {engine.book_stop_dd_flat:.0f}%, peak = "
+        print(f"   🛑 Rates book stop ON (shadow-DD half {engine.book_stop_dd_half:g}% "
+              f"/ flat {engine.book_stop_dd_flat:g}%, peak = "
               f"{f'{_w}d rolling' if _w > 0 else 'all-time ⚠latch risk'})")
-    if not engine.reversion_enabled:
-        print("   ⛔ Reversion sub-book OFF (비동시 종가 아티팩트 — 2026-07-22 감사)")
+    if engine._dv01_state is not None:
+        f = engine._dv01_state['factor']
+        print(f"   📏 DV01 한도 ON (순 {engine.dv01_net_limit:,.0f} / 그로스 {engine.dv01_gross_limit:,.0f} "
+              f"만원/bp @ {engine.dv01_capital:,.0f}억) — 축소 발동 {(f < 1).mean():.1%} 일")
 
-    traded = list(positions.columns)
-    dir_returns = engine.dir_returns[traded].reindex(positions.index).fillna(0.0)
-
-    # 손익 기준 (cfg.pnl_basis):
-    #   'futures'       — 롤 보정된 선물 수익률 그대로 = 실제 계좌 손익 (캐리·롤다운·
-    #                     베이시스 포함). roll_adjust 가 켜져 있을 때만 의미가 있다.
-    #   'yield_implied' — '캐시금리 변동(bp) × 회귀 베타' 이론 수익률 (구방식). 무보정
-    #                     연속선물의 롤 점프를 피하려던 우회로 — 캐리가 빠진다.
-    # beta = d(directional return)/d(yield bp), 최근 LB일 회귀(룩어헤드 방지로 1일 시프트).
-    rates_cols = engine.rates_assets
-    pnl_returns = dir_returns.copy()
-    pnl_basis = str(cfg.get('pnl_basis', 'yield_implied')).lower()
+    pnl_basis = str(cfg.get('pnl_basis', 'futures')).lower()
     if pnl_basis == 'futures' and not cfg.get('roll_adjust', False):
         print("   ⚠ pnl_basis=futures 인데 roll_adjust 가 꺼져 있음 → 롤 점프가 손익에 들어감")
     print(f"   손익 기준: {pnl_basis}  | 롤 보정: {'ON' if cfg.get('roll_adjust') else 'OFF'}")
-    LB = 250
-    yblk = engine.yields
-    for a in (rates_cols if pnl_basis != 'futures' else []):
-        if a not in pnl_returns.columns:
-            continue
-        yt = engine.tradeable_yield_map.get(a)
-        if yblk is None or yt is None or yt not in yblk.columns:
-            continue
-        dy_bp = yblk[yt].reindex(dir_returns.index).diff() * 100.0
-        fr = dir_returns[a]
-        beta = (fr.rolling(LB, min_periods=60).cov(dy_bp)
-                / dy_bp.rolling(LB, min_periods=60).var()).shift(1)
-        implied = beta * dy_bp
-        # 베타 워밍업 전이나 금리 결측 구간은 실제 수익률로 폴백.
-        pnl_returns[a] = implied.where(implied.notna(), dir_returns[a])
 
-    # PnL: yesterday's position earns today's directional return
-    held = positions.shift(1).fillna(0.0)
-    gross_pnl = held * pnl_returns
-
-    # Transaction costs on daily turnover
+    # 손익 회계 단일 출처 (src/sleeves/accounting.py) — 전체 기간으로 계산 후 잘라 낸다
+    traded = list(positions.columns)
+    net_pnl = asset_pnl(engine, positions, traded, basis=pnl_basis)
     turnover = positions.diff().abs().fillna(0.0)
-    cost_rate = pd.Series({a: cost_bps_for(a, costs) / 10000.0 for a in traded})
-    cost_pnl = turnover.mul(cost_rate, axis=1)
-    net_pnl = gross_pnl - cost_pnl
+    if start_date:
+        keep = positions.index >= pd.to_datetime(start_date)
+        positions, net_pnl, turnover = positions[keep], net_pnl[keep], turnover[keep]
 
     rates_cols = engine.rates_assets
     fx_cols = engine.fx_assets
-
     port = net_pnl.sum(axis=1)
     rates = net_pnl[rates_cols].sum(axis=1) if rates_cols else pd.Series(0.0, index=port.index)
     fx = net_pnl[fx_cols].sum(axis=1) if fx_cols else pd.Series(0.0, index=port.index)
 
     # ── Report ───────────────────────────────────────────────────────────
-    avg_gross = positions.abs().sum(axis=1).mean()
-    ann_turnover = turnover.sum(axis=1).mean() * TRADING_DAYS
+    avg_gross = positions[rates_cols].abs().sum(axis=1).mean()
+    ann_turnover = turnover[rates_cols].sum(axis=1).mean() * TRADING_DAYS
     print("\n" + "=" * 64)
     print(f"  SLEEVE BACKTEST  {positions.index[0].date()} → {positions.index[-1].date()}")
     print("=" * 64)
-    for name, series in [('PORTFOLIO', port), ('  Rates', rates), ('  FX', fx)]:
+    for name, series in [('  Rates', rates), ('  FX(모니터링)', fx)]:
         s = perf_stats(series)
-        print(f"{name:<12} Sharpe {s['sharpe']:5.2f} | Vol {s['vol']:5.1%} | "
+        print(f"{name:<14} Sharpe {s['sharpe']:5.2f} | Vol {s['vol']:5.1%} | "
               f"AnnRet {s['ret']:6.1%} | MaxDD {s['maxdd']:6.1%}")
-    print(f"\n  Avg gross leverage: {avg_gross:.2f}x | Annualized turnover: {ann_turnover:.1f}x")
+    print(f"\n  금리 평균 그로스 {avg_gross:.2f}x | 연 회전율 {ann_turnover:.1f}x")
 
     # ── Plot ───────────────────────────────────────────────────────────────
     if plot:
         fig, ax = plt.subplots(2, 1, figsize=(13, 9), height_ratios=[3, 1])
-        for series, label in [(port, 'Portfolio'), (rates, 'Rates'), (fx, 'FX')]:
-            s = perf_stats(series)
-            (1 + series).cumprod().plot(ax=ax[0], label=f"{label} (SR {s['sharpe']:.2f})")
-        ax[0].set_title(f"Sleeve Engine — Trend/Value/Carry "
-                        f"(target vol {engine.target_port_vol:.0%})")
+        s = perf_stats(rates)
+        (1 + rates).cumprod().plot(ax=ax[0], label=f"Rates (SR {s['sharpe']:.2f})")
+        ax[0].set_title(f"Sleeve Engine — rates book (vol target {engine.target_port_vol_rates:.2%} x "
+                        f"exposure {engine.rates_exposure_scale:g})")
         ax[0].set_ylabel("Cumulative (1+r)"); ax[0].grid(alpha=0.3); ax[0].legend()
-        positions.abs().sum(axis=1).plot(ax=ax[1], color='gray', lw=0.8)
+        positions[rates_cols].abs().sum(axis=1).plot(ax=ax[1], color='gray', lw=0.8)
         ax[1].set_ylabel("Gross lev"); ax[1].grid(alpha=0.3)
         sd = positions.index[0].strftime('%Y-%m-%d')
-        out = f"sleeve_backtest_{sd}_tv{int(engine.target_port_vol*100)}.png"
+        out = f"sleeve_backtest_{sd}_tv10.png"
         plt.tight_layout(); plt.savefig(out, dpi=110)
         print(f"\n📊 Saved plot → {out}")
 
-    # Save daily series for further analysis
+    # Save daily series (PM FACTOR_RATES · 대시보드 차트의 원천)
     out_df = pd.DataFrame({'portfolio': port, 'rates': rates, 'fx': fx})
     out_df['equity'] = (1 + port).cumprod()
-    # 자산별 금리 일별 순손익 (대시보드 '금리 자산별 누적손익(억원)' 차트용).
-    # 컬럼 합 = 'rates' 와 동일. prefix 'rpnl::' 로 기존 컬럼과 구분.
-    # 2026-07-22: 시그널 전용 자산(signal_only_assets)은 포지션·손익이 항상 0 이라
-    # 차트 범례에 0 짜리 선만 늘린다 → 실제 매매 자산만 기록한다.
+    # 매매 자산만 기록 (시그널 전용은 항상 0). rpnl:: 합 = 'rates', pos:: = 목표 포지션.
     traded_cols = [a for a in rates_cols if a not in engine.signal_only_assets]
     for a in traded_cols:
         out_df[f'rpnl::{a}'] = net_pnl[a]
-    # 자산별 일별 포지션 (대시보드 '총/net 델타 시계열' 차트용). prefix 'pos::'.
     for a in traded_cols:
         out_df[f'pos::{a}'] = positions[a]
     if save_outputs:
         out_df.to_csv('sleeve_backtest_log.csv')
         print("✅ Saved sleeve_backtest_log.csv")
-
-        # 대시보드 '금리 팩터 모니터링' 소스 — 엔진 산출 팩터 z-score를 그대로 저장.
         save_factor_signals(engine)
 
     return out_df

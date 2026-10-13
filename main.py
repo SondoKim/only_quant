@@ -32,9 +32,7 @@ def _summary() -> int:
     with open(cfg_path, 'r', encoding='utf-8') as f:
         cfg = (yaml.safe_load(f) or {}).get('sleeves', {}) or {}
     loader = DataLoader()
-    px = loader.engine_prices(cfg, start_date='2010-01-01')
-    yields = loader.load_signal_yields(start_date='2010-01-01', use_cache=True)
-    macro = loader.load_signal_macro(start_date='2010-01-01', use_cache=True)
+    px, yields, macro = loader.engine_inputs(cfg)
     e = SleeveEngine(px, config=cfg, yields=yields, macro=macro)
     pos = e.finalize_positions(e.compute_target_positions())
     traded = [a for a in e.rates_assets if a not in e.signal_only_assets]
@@ -66,10 +64,10 @@ def main() -> None:
     p = argparse.ArgumentParser(description='Global Macro Rates Book — SleeveEngine CLI')
     p.add_argument('--mode', choices=['signals', 'summary'], default='signals')
     p.add_argument('--asset', default=None, help='특정 자산만 (티커 일부, 예: TU1)')
-    p.add_argument('--capital', type=float, default=500.0,
-                   help="금리 북 배정자본 (억원, 기본 500 = PM FACTOR_RATES) — DV01·손익 환산 기준")
-    p.add_argument('--delta-budget', type=float, default=5000.0, help='순DV01 한도 (만원/bp)')
-    p.add_argument('--gross-budget', type=float, default=8000.0, help='그로스 DV01 한도 (만원/bp)')
+    p.add_argument('--capital', type=float, default=None,
+                   help="금리 북 배정자본 (억원, 기본 = config capital_억) — DV01·손익 환산 기준")
+    p.add_argument('--delta-budget', type=float, default=None, help='순DV01 한도 (만원/bp, 기본 = config)')
+    p.add_argument('--gross-budget', type=float, default=None, help='그로스 DV01 한도 (만원/bp, 기본 = config)')
     args = p.parse_args()
 
     if args.mode == 'summary':

@@ -12,6 +12,7 @@
   dv01     DV01 계수 상식 — |β|×1e4 (= 수정듀레이션, 년)이 테너 범위 안인가
   fresh    데이터 신선도 — DataLoader.freshness_report
   pos      최종 포지션 — 유한값, 시그널 전용 자산 0, 북스톱 스케일 ∈ {0, 0.5, 1}
+  trunc    절단 테스트 — T 까지 자른 입력으로 돌린 T일 포지션 = 전체 표본 T일 포지션 (미래참조 직접 증명)
 
 사용: run_invariants(engine, loader, pos) → [(항목, 상태, 설명)]
      audit_lookahead.py ⑥ 과 daily_run.py 1c 단계가 호출한다.
@@ -50,6 +51,12 @@ def check_roll(engine, loader, assets, years=3):
         return [('roll', 'FAIL', '롤 정보 없음 — 보정이 적용되지 않음')]
     out = []
     start = engine.prices.index[-1] - pd.DateOffset(years=years)
+    skipped = (loader.load_log.get('roll_adjust') or {}).get('skipped') or {}
+    for a, ds in skipped.items():
+        recent = [d for d in ds if pd.Timestamp(d) >= engine.prices.index[0]]
+        if recent:
+            out.append(('roll', 'FAIL' if a in assets else 'WARN',
+                        f'{a}: 롤 보정이 건너뛴 롤일 {recent[:4]} — 그날 수익률에 월물 점프가 남음'))
     for a in assets:
         gc = f'gen::{a}'
         b, dy = _yield_beta(engine, a)
@@ -78,7 +85,7 @@ def check_degenerate(engine, traded):
     if w.get('trend'):
         sleeves['trend'] = engine.trend_signal(R)
     if w.get('value'):
-        sleeves['value'] = engine.value_signal(R, 'rates')
+        sleeves['value'] = engine.value_signal(R)
     if w.get('carry'):
         sleeves['carry'] = engine.carry_signal(R, 'rates')
     if w.get('policy'):
@@ -117,6 +124,24 @@ def check_dv01(engine, traded):
     return out
 
 
+def check_data(engine, traded):
+    """입력 데이터 상식: 방향성 수익률이 유한한가, 하루 |수익률| > 5% 인 금리선물 날이 있는가
+    (롤 보정 후 국채선물에서 5% 일간 변동은 데이터 이상 — 0 가격·잘못된 롤 이음)."""
+    r = engine.dir_returns[[a for a in engine.rates_assets if a in engine.dir_returns.columns]]
+    nonfinite = {a: int((~np.isfinite(r[a]) & r[a].notna()).sum()) for a in r.columns}
+    nonfinite = {a: n for a, n in nonfinite.items() if n}
+    big = {a: [str(d.date()) for d in r.index[r[a].abs() > 0.05]][:3] for a in r.columns}
+    big = {a: v for a, v in big.items() if v}
+    msgs = []
+    if nonfinite:
+        msgs.append(f'비유한 수익률 {nonfinite}')
+    if big:
+        msgs.append(f'일간 |수익률|>5% {big}')
+    return [('data', 'FAIL' if msgs else 'PASS',
+             '; '.join(msgs) if msgs else
+             f'금리선물 {len(r.columns)}종 수익률 유한 · 일간 5% 초과 없음 ({r.index[0].date()}~)')]
+
+
 def check_positions(engine, pos):
     out = []
     last = pos.iloc[-1]
@@ -136,16 +161,48 @@ def check_positions(engine, pos):
     return out
 
 
-def run_invariants(engine, loader, pos, watch=None):
+def truncation_test(loader, cfg, pos_full, n_dates=3, start='2016-01-01', dates=None):
+    """절단(미래참조) 테스트: T 까지 자른 입력(가격·롤정보·일드·매크로)으로 엔진을 처음부터 돌린
+    T일 금리 포지션 vs 전체 표본의 T일 포지션. 인과적인 파이프라인이면 부동소수점 오차(~1e-12)만 남는다.
+    날짜 = 최근 2일 + start 이후 무작위(표본 길이로 시드 → 매일 다른 날짜를 찍는다).
+    반환: (최악 차이, [(T, 차이), ...])."""
+    from src.sleeves.sleeve_engine import SleeveEngine
+    idx = pos_full.index[pos_full.index >= pd.Timestamp(start)]
+    if dates is None:
+        rng = np.random.default_rng(len(pos_full))
+        k = max(0, min(n_dates - 2, len(idx) - 2))
+        picks = list(rng.choice(idx[:-2], k, replace=False)) if k else []
+        dates = sorted(set([pd.Timestamp(d) for d in picks] + list(idx[-2:])))
+    rows = []
+    for T in dates:
+        px, yl, mc = loader.engine_inputs(cfg, asof=T)
+        e = SleeveEngine(px, config=cfg, yields=yl, macro=mc)
+        pt = e.finalize_positions(e.compute_target_positions())
+        R = [a for a in e.rates_assets if a in pt.columns and a in pos_full.columns]
+        rows.append((pd.Timestamp(T), float((pt.loc[T, R] - pos_full.loc[T, R]).abs().max())))
+    return max((d for _, d in rows), default=0.0), rows
+
+
+def run_invariants(engine, loader, pos, watch=None, trunc_dates=3):
     traded = [a for a in engine.rates_assets if a not in engine.signal_only_assets]
     res = []
+    res += check_data(engine, traded)
     res += check_roll(engine, loader, traded)
     res += check_degenerate(engine, traded)
     res += check_dv01(engine, traded)
     fr = loader.freshness_report(watch=watch)
-    res += [('fresh', 'FAIL', m) for m in fr['issues']] or \
-           [('fresh', 'PASS', f"데이터 기준일 {fr['data_asof']} (기대 {fr['expected']})")]
+    fres = ([('fresh', 'FAIL', m) for m in fr['issues']]
+            + [('fresh', 'WARN', m) for m in fr.get('warnings', [])])
+    res += fres or [('fresh', 'PASS', f"데이터 기준일 {fr['data_asof']} (기대 {fr['expected']})")]
     res += check_positions(engine, pos)
+    if trunc_dates:
+        try:
+            worst, rows = truncation_test(loader, engine.cfg, pos, n_dates=trunc_dates)
+            res.append(('trunc', 'PASS' if worst < 1e-9 else 'FAIL',
+                        f"절단 테스트 {len(rows)}개 날짜 ({', '.join(str(T.date()) for T, _ in rows)}) "
+                        f"최대 차이 {worst:.1e} (기준 < 1e-9 — 넘으면 미래참조/비인과 계산)"))
+        except Exception as e:  # 점검 실패는 경고로 — 일과를 막지 않는다
+            res.append(('trunc', 'WARN', f'절단 테스트 실행 실패: {e}'))
     return res
 
 

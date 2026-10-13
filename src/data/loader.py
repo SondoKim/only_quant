@@ -143,45 +143,47 @@ class DataLoader:
         self,
         start_date: str = "2020-01-01",
         end_date: str = None,
-        use_cache: bool = True
+        use_cache: bool = True,
+        raw: bool = False,
     ) -> pd.DataFrame:
-        """
-        Load price data from Bloomberg or cache.
-        
-        Args:
-            start_date: Start date in YYYY-MM-DD format
-            end_date: End date in YYYY-MM-DD format (default: yesterday)
-            use_cache: Whether to use cached data if available
-            
-        Returns:
-            DataFrame with price data, indexed by date
+        """가격 패널 (Bloomberg → 캐시).
+
+        두 가지 캐시를 같은 Bloomberg 풀에서 만든다:
+          prices_{start}_{end}.parquet    — ffill + 전 컬럼 공통구간(dropna). PM·total_dashboard
+                                            가 읽는 기존 계약 그대로 (형식을 바꾸지 말 것: PM
+                                            quant_sleeves 가 열별로 써서 바꾸면 다른 전략 이력이 변한다).
+          pricesraw_{start}_{end}.parquet — ffill 만 (앞쪽 결측 유지). 엔진 전용 (raw=True):
+                                            늦게 시작하는 제외 자산(OAT1 2012-04)이 패널 시작을
+                                            잘라먹지 않게 engine_inputs 가 필요한 열만 골라 dropna 한다.
         """
         if end_date is None:
             end_date = default_end_date()
+        kind = 'pricesraw' if raw else 'prices'
+        cache_file = self.cache_dir / f"{kind}_{start_date}_{end_date}.parquet"
 
-        cache_file = self.cache_dir / f"prices_{start_date}_{end_date}.parquet"
-
-        # Try loading from cache
         if use_cache and cache_file.exists():
-            logger.info(f"📂 Loading cached data from {cache_file}")
+            logger.info(f"📂 Loading cached {kind} from {cache_file}")
             self.load_log['prices'] = {'file': cache_file, 'source': 'cache'}
             return pd.read_parquet(cache_file)
 
-        # Load from Bloomberg
         if XBBG_AVAILABLE:
-            raw = self._load_from_bloomberg(start_date, end_date)
-            if raw is not None and not raw.empty:
-                df = raw.ffill().dropna()
-                if not df.empty:
-                    df.to_parquet(cache_file)
-                    _write_meta(cache_file, raw)
+            got = self._load_from_bloomberg(start_date, end_date)
+            if got is not None and not got.empty:
+                full = got.ffill().dropna(how='all')
+                common = got.ffill().dropna()
+                for k, df in (('pricesraw', full), ('prices', common)):
+                    f = self.cache_dir / f"{k}_{start_date}_{end_date}.parquet"
+                    if not df.empty and (k == kind or not f.exists()):
+                        df.to_parquet(f)
+                        _write_meta(f, got)
+                out = full if raw else common
+                if not out.empty:
                     self.load_log['prices'] = {'file': cache_file, 'source': 'bloomberg'}
-                    return df
+                    return out
                 logger.error("❌ Bloomberg 가격: 결측 없는 행이 없음 (티커 하나가 통째로 비었을 가능성)")
 
-        # Fallback to latest cache
-        return self._load_fallback_cache()
-    
+        return self._load_fallback_cache(raw=raw)
+
     def _load_from_bloomberg(
         self,
         start_date: str,
@@ -216,9 +218,11 @@ class DataLoader:
             logger.error(f"❌ Bloomberg 로드 실패: {e}")
             return None
     
-    def _load_fallback_cache(self) -> pd.DataFrame:
-        """Load most recent cached data as fallback."""
-        cache_files = list(self.cache_dir.glob("prices_*.parquet"))
+    def _load_fallback_cache(self, raw: bool = False) -> pd.DataFrame:
+        """Bloomberg 실패 시 가장 최근 캐시 (raw 면 pricesraw 우선, 없으면 prices)."""
+        cache_files = list(self.cache_dir.glob("pricesraw_*.parquet")) if raw else []
+        if not cache_files:
+            cache_files = list(self.cache_dir.glob("prices_*.parquet"))
         
         cache_files = [f for f in cache_files if f.name != 'prices_sample.parquet']
         if cache_files:
@@ -475,11 +479,14 @@ class DataLoader:
         return pd.DataFrame()
 
     def roll_adjust(self, prices: pd.DataFrame, info: Optional[pd.DataFrame] = None,
-                    max_gap: float = 0.10) -> pd.DataFrame:
+                    max_stitch: float = 0.03) -> pd.DataFrame:
         """금리선물 컬럼을 ratio back-adjust (위 설명). 롤 정보가 없으면 원본 + 경고.
 
-        max_gap: |P1/P2 − 1| 가 이보다 큰 롤은 데이터 이상으로 보고 건너뛴다
-        (국채선물 월물간 가격차는 통상 1% 미만).
+        롤 검증은 '월물간 가격차'가 아니라 '이어 붙인 수익률' P1_t / P2_{t-1} − 1 로 한다:
+        새 근월물의 롤일 수익률이 정상적인 하루 변동(|·| ≤ max_stitch)이면 이음이 맞다.
+        (2026-10-13: 월물간 가격차 10% 상한은 2011-12 길트 표준쿠폰 6%→4% 변경 롤(차 12.6%,
+        이음 수익률 +0.47%)을 데이터 오류로 오판해 건너뛰었다.) 건너뛴 롤은 load_log 에 남고
+        invariants 의 roll 점검이 FAIL 로 띄운다.
         """
         info = self.load_roll_info() if info is None else info
         if info is None or info.empty:
@@ -494,12 +501,13 @@ class DataLoader:
                 continue
             g = info[gc].reindex(out.index).ffill()
             p2 = info[pc].reindex(out.index).ffill()
-            roll = (g != g.shift()) & g.notna() & g.shift().notna()
+            roll = (g != g.shift()) & g.notna() & g.shift().notna() & out[a].shift().notna()
             ratio = out[a].shift() / p2.shift()          # P1_{t-1} / P2_{t-1}
-            ok = roll & ratio.notna() & ((ratio - 1.0).abs() <= max_gap)
-            bad = int((roll & ~ok).sum())
-            if bad:
-                skipped[a] = bad
+            stitched = out[a] / p2.shift() - 1.0         # 새 근월물의 롤일 수익률
+            ok = roll & ratio.notna() & (stitched.abs() <= max_stitch)
+            bad = roll & ~ok
+            if bad.any():
+                skipped[a] = [str(d.date()) for d in out.index[bad]]
             m = pd.Series(1.0, index=out.index)
             m[ok] = 1.0 / ratio[ok]
             # K_t = Π_{롤일 s > t} (P2_{s-1}/P1_{s-1}) — 최신 K=1 (실제 가격 유지)
@@ -507,61 +515,129 @@ class DataLoader:
             out[a] = out[a] * K
             applied.append(a)
         if skipped:
-            logger.warning(f"⚠️ 롤 보정 일부 건너뜀 (가격차 > {max_gap:.0%}): {skipped}")
+            logger.warning(f"⚠️ 롤 보정 건너뜀 (이음 수익률 > {max_stitch:.0%} 또는 차월물 가격 없음): {skipped}")
         self.load_log['roll_adjust'] = {'applied': applied, 'skipped': skipped}
         return out
 
+    def engine_inputs(self, cfg: Optional[Dict[str, Any]] = None, start_date: str = "2010-01-01",
+                      asof: Optional[str] = None):
+        """슬리브 엔진 입력의 단일 경로 → (가격, 일드, 매크로).
+
+        가격: 캐시 로드 → (엔진이 쓰지 않는 제외 자산 컬럼 제거) → ffill/dropna →
+        (cfg.roll_adjust 면) 롤 보정. 일드·매크로: 2010+ 캐시.
+        asof 를 주면 가격·롤정보·일드·매크로를 모두 그 날짜까지 잘라서 만든다 —
+        절단(미래참조) 테스트가 '그날 라이브가 봤을 입력'을 재현하는 데 쓴다.
+        백테스트·대시보드·감사·연구가 모두 이걸 써야 서로 다른 입력을 보는 일이 없다.
+        """
+        cfg = cfg or {}
+        raw = self.load_data(start_date=start_date, use_cache=True, raw=True)
+        # 제외 자산은 엔진 유니버스·시그널 어디에도 안 쓰이는데, 늦게 시작하는 컬럼(OAT1 2012-04)이
+        # dropna 로 패널 전체의 시작을 잘라먹는다 → 관찰용(factor_monitor_extra)만 남기고 뺀다.
+        keep_extra = set(cfg.get('factor_monitor_extra', []) or [])
+        drop = [c for c in (cfg.get('exclude_assets', []) or [])
+                if c in raw.columns and c not in keep_extra]
+        raw = raw.drop(columns=drop)
+        # 0 이하 가격 = 미상장/미거래 표기 (KAA1 은 2010-10-25 이전 210일이 0.0 — 0→105 로 넘어가는
+        # 날 수익률이 무한대가 돼 볼타겟·북스톱 자산곡선을 영구 오염시킨다). 결측으로 처리.
+        raw = raw.where(raw > 0)
+        info = None
+        yl = self.load_signal_yields(start_date="2010-01-01", use_cache=True)
+        mc = self.load_signal_macro(start_date="2010-01-01", use_cache=True)
+        if asof is not None:
+            T = pd.Timestamp(asof)
+            raw = raw[raw.index <= T]
+            yl = yl[yl.index <= T] if not yl.empty else yl
+            mc = mc[mc.index <= T] if not mc.empty else mc
+        px = raw.ffill().dropna()
+        if cfg.get('roll_adjust', False):
+            info = self.load_roll_info()
+            if asof is not None and info is not None and not info.empty:
+                info = info[info.index <= pd.Timestamp(asof)]
+            px = self.roll_adjust(px, info=info)
+        return px, yl, mc
+
     def engine_prices(self, cfg: Optional[Dict[str, Any]] = None,
                       start_date: str = "2010-01-01") -> pd.DataFrame:
-        """슬리브 엔진 입력 가격 패널의 단일 경로: 캐시 로드 → ffill/dropna →
-        (cfg.roll_adjust 면) 롤 보정. 백테스트·대시보드·감사가 모두 이걸 써야
-        서로 다른 가격을 보는 일이 없다."""
-        from .preprocessor import DataPreprocessor
-        px = DataPreprocessor(self.load_data(start_date=start_date, use_cache=True)).clean().get_data()
-        if (cfg or {}).get('roll_adjust', False):
-            px = self.roll_adjust(px)
-        return px
+        """engine_inputs 의 가격만 (호환용)."""
+        return self.engine_inputs(cfg, start_date)[0]
 
     # ──────────────────────────────────────────────────────────────────────
     # 데이터 신선도 점검 (2026-10-02)
     # ──────────────────────────────────────────────────────────────────────
+    def _market_groups(self) -> Dict[str, set]:
+        """티커 → 같은 시장(선물 + 그 테너/정책 금리) 티커 집합. 휴장 판정용."""
+        sy = self.config.get('signal_yields', {}) or {}
+        groups: Dict[str, set] = {}
+        for fut in self._roll_assets():
+            g = {fut}
+            for m in ('tradeable_yield_map', 'policy_rate_map'):
+                t = (sy.get(m, {}) or {}).get(fut)
+                if t:
+                    g.add(t)
+            for t in g:
+                groups.setdefault(t, set()).update(g)
+        return groups
+
     def freshness_report(self, watch: Optional[List[str]] = None,
                          end_date: Optional[str] = None) -> Dict[str, Any]:
-        """이 로더가 읽은 캐시의 신선도 점검 → {'data_asof', 'expected', 'issues': [...]}.
+        """이 로더가 읽은 캐시의 신선도 점검.
 
-        issues 항목은 사람이 읽는 경고 문장. 비어 있으면 정상.
-          · 이전 캐시 폴백(Bloomberg 실패) — 가장 심각: 시그널이 '오늘 것'이 아님
-          · 패널 마지막 날짜 < 기대 세션 (평일 기준; 양 시장 공휴일이면 정상)
-          · 감시 티커의 마지막 '실데이터' < 패널 마지막 날짜 → ffill 로 전일값 사용 중
-            (해당 시장 휴장일이면 정상, 아니면 Bloomberg 누락)
-          · 롤 정보가 가격보다 오래됨 → 최근 롤이 보정 안 된 채 시그널에 들어감
+        반환 {'data_asof', 'expected', 'issues': [FAIL 문장], 'warnings': [WARN 문장]}.
+        FAIL — 시그널을 그대로 쓰면 안 되는 상태:
+          · Bloomberg 실패 → 이전 캐시 폴백 / 데이터 자체가 없음(해당 슬리브 비활성)
+          · 패널이 기대 세션보다 2영업일 이상 오래됨
+          · 감시 티커가 패널보다 4영업일 이상 늦거나, 2~3영업일 늦은데 같은 시장의 다른
+            티커는 최신 (휴장이 아니라 그 티커만 누락)
+          · 롤 정보가 가격보다 오래됨 / 롤 정보 없음
+        WARN — 휴장일 가능성이 높은 1영업일 지연, 같은 시장 전체가 2~3영업일 멈춘 연휴.
+        (2026-10-13: 일본 체육의날 JB1 하루 지연을 FAIL 로 띄우던 오탐을 이렇게 나눴다.)
         """
         expected = expected_last_session(end_date)
         issues: List[str] = []
-        asof = {}
+        warns: List[str] = []
+        asof, lv_all, panel_last = {}, {}, {}
         for kind in ('prices', 'yields', 'macro', 'rolls'):
             ent = self.load_log.get(kind)
-            if not ent or not ent.get('file'):
+            if not ent:
+                continue
+            if not ent.get('file'):
+                if kind != 'rolls':
+                    issues.append(f"[{kind}] 데이터 없음 (Bloomberg·캐시 모두 실패) — 관련 슬리브 비활성")
                 continue
             f = Path(ent['file'])
             try:
                 last = pd.read_parquet(f).index.max()
             except Exception:
+                issues.append(f"[{kind}] 캐시 읽기 실패 ({f.name})")
                 continue
             asof[kind] = last
             if ent.get('source') == 'fallback':
                 issues.append(f"[{kind}] Bloomberg 실패 → 이전 캐시 사용 ({f.name}, 마지막 {last.date()})")
-            if last < expected and kind in ('prices', 'yields'):
-                issues.append(f"[{kind}] 마지막 날짜 {last.date()} < 기대 세션 {expected.date()} "
-                              f"(양 시장 공휴일이 아니면 데이터가 오래됨)")
-            lv = _read_meta(f).get('last_valid', {})
-            for t in (watch or []):
-                d = lv.get(t)
-                if d is None:
-                    continue
-                if pd.Timestamp(d) < last:
-                    issues.append(f"[{kind}] {t} 실데이터 마지막 {d} < 패널 {last.date()} "
-                                  f"— 휴장이 아니면 Bloomberg 누락 (전일값으로 채워짐)")
+            if kind in ('prices', 'yields') and last < expected:
+                lag = int(np.busday_count(last.date(), expected.date()))
+                msg = (f"[{kind}] 마지막 날짜 {last.date()} < 기대 세션 {expected.date()} "
+                       f"({lag}영업일 — 양 시장 공휴일이 아니면 데이터가 오래됨)")
+                (warns if lag <= 1 else issues).append(msg)
+            for t, d in (_read_meta(f).get('last_valid', {}) or {}).items():
+                if d is not None:
+                    lv_all[t] = pd.Timestamp(d)
+                    panel_last[t] = last
+        groups = self._market_groups()
+        for t in (watch or []):
+            if t not in lv_all or lv_all[t] >= panel_last[t]:
+                continue
+            lag = int(np.busday_count(lv_all[t].date(), panel_last[t].date()))
+            peers = [x for x in groups.get(t, {t}) if x in lv_all and x != t]
+            whole_market = bool(peers) and all(lv_all[x] < panel_last[x] for x in peers)
+            msg = (f"{t} 실데이터 마지막 {lv_all[t].date()} < 패널 {panel_last[t].date()} "
+                   f"({lag}영업일, 전일값으로 채워짐)")
+            if lag <= 1:
+                warns.append(msg + " — 휴장 가능")
+            elif lag <= 3 and whole_market:
+                warns.append(msg + " — 같은 시장 전체가 멈춤(연휴 가능)")
+            else:
+                issues.append(msg + (" — 같은 시장의 다른 티커는 최신: 누락 의심" if peers and not whole_market
+                                     else " — 휴장이 아니면 Bloomberg 누락"))
         if 'rolls' in asof and 'prices' in asof and asof['rolls'] < asof['prices']:
             issues.append(f"[rolls] 롤 정보 {asof['rolls'].date()} < 가격 {asof['prices'].date()} "
                           f"— 그 사이 롤이 있었다면 보정되지 않음")
@@ -570,7 +646,7 @@ class DataLoader:
             issues.append("[rolls] 롤 정보 없음 — 무보정 연속선물로 시그널 계산 중")
         data_asof = min((asof[k] for k in ('prices', 'yields') if k in asof), default=None)
         return {'data_asof': None if data_asof is None else str(data_asof.date()),
-                'expected': str(expected.date()), 'issues': issues}
+                'expected': str(expected.date()), 'issues': issues, 'warnings': warns}
 
     def get_cross_asset_pairs(self) -> Dict[str, List[tuple]]:
         """Get cross-asset pairs from configuration."""
