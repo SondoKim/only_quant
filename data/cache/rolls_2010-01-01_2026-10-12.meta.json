@@ -1,0 +1,29 @@
+{
+ "last_valid": {
+  "gen::DU1 Comdty": "2026-10-12",
+  "gen::G 1 Comdty": "2026-10-12",
+  "gen::IK1 Comdty": "2026-10-12",
+  "gen::JB1 Comdty": "2026-10-09",
+  "gen::KAA1 Comdty": "2026-10-12",
+  "gen::KE1 Comdty": "2026-10-12",
+  "gen::OAT1 Comdty": "2026-10-12",
+  "gen::RX1 Comdty": "2026-10-12",
+  "gen::TU1 Comdty": "2026-10-12",
+  "gen::TY1 Comdty": "2026-10-12",
+  "gen::XM1 Comdty": "2026-10-12",
+  "gen::YM1 Comdty": "2026-10-12",
+  "px2::DU1 Comdty": "2026-10-12",
+  "px2::G 1 Comdty": "2026-10-12",
+  "px2::IK1 Comdty": "2026-10-12",
+  "px2::JB1 Comdty": "2026-10-09",
+  "px2::KAA1 Comdty": "2026-10-12",
+  "px2::KE1 Comdty": "2026-10-12",
+  "px2::OAT1 Comdty": "2026-10-12",
+  "px2::RX1 Comdty": "2026-10-12",
+  "px2::TU1 Comdty": "2026-10-12",
+  "px2::TY1 Comdty": "2026-10-12",
+  "px2::XM1 Comdty": "2026-10-12",
+  "px2::YM1 Comdty": "2026-10-12"
+ },
+ "pulled": "2026-10-13T12:39:40"
+}
