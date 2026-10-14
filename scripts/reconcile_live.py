@@ -8,6 +8,8 @@
  ③ PM 환산: PM 이 그날 낸 FACTOR 목표(portfolio_management/data/source_targets.csv) ÷ 공표한
     1배 계약수 = 실효 배분 배수. 상품 간 배수가 같고 부호가 일치해야 정상.
  ④ 집행: 실보유(PM 체결 원장 trade_log.csv 누적 순체결) vs PM 전 전략 합산 목표(전일 기준).
+ ⓪ 재공표: live_record 는 추가 전용 — 같은 기준일을 다시 돌려 포지션이 바뀐 날(rev ≥ 1)과 그 크기.
+    ①②③ 은 날짜별 마지막 공표(rev 최대)를 쓴다.
     상품 계좌는 전략을 구분하지 않으므로 FACTOR 만의 실손익은 분리할 수 없다 — ④는 '목표대로
     집행됐는가'까지만 본다 (전략별 실손익 귀속 규칙은 PM 쪽 결정 사항).
 
@@ -31,6 +33,20 @@ RECORD = ROOT / 'data' / 'live_record.csv'
 LOG = ROOT / 'sleeve_backtest_log.csv'
 REPORT = ROOT / 'data' / 'reconcile_report.json'
 PM_KEY = {'TU1 Comdty': 'TU', 'TY1 Comdty': 'TY', 'KE1 Comdty': 'KTB3', 'KAA1 Comdty': 'KTB10'}
+
+
+def revisions(rec_all):
+    """같은 기준일 재공표 — 첫 공표 vs 마지막 공표 포지션 차이."""
+    A = _assets(rec_all)
+    g = rec_all.groupby(level=0)
+    multi = [d for d, n in g.size().items() if n > 1]
+    rows = []
+    for d in multi:
+        x = rec_all.loc[[d]]
+        diff = max(abs(float(x[f'pos::{a}'].iloc[-1]) - float(x[f'pos::{a}'].iloc[0])) for a in A)
+        rows.append({'date': str(d.date()), 'revs': int(len(x)), 'max_abs_dpos': round(diff, 4),
+                     'first': str(x['generated'].iloc[0]), 'last': str(x['generated'].iloc[-1])})
+    return {'status': 'ok', 'days_revised': len(rows), 'rows': rows}
 
 
 def _assets(rec):
@@ -129,14 +145,20 @@ def main() -> int:
     if not RECORD.exists():
         print("live_record.csv 없음 — scripts/live_record.py 가 daily_run 3단계에서 쌓는다")
         return 0
-    rec = pd.read_csv(RECORD, index_col='date', parse_dates=True)
+    from scripts.live_record import read_record
+    rec_all = read_record(latest_only=False)
+    rec = read_record()                       # 날짜별 마지막 공표
     log = pd.read_csv(LOG, index_col=0, parse_dates=True) if LOG.exists() else pd.DataFrame()
     rep = {'generated': pd.Timestamp.now().isoformat(timespec='seconds'),
            'published_days': len(rec), 'first': str(rec.index[0].date()), 'last': str(rec.index[-1].date()),
+           'revisions': revisions(rec_all),
            'restatement': restatement(rec, log), 'paper_pnl': paper_pnl(rec),
            'pm_conversion': pm_conversion(rec, pm_dir), 'execution': execution(pm_dir)}
     REPORT.write_text(json.dumps(rep, ensure_ascii=False, indent=1, default=str), encoding='utf-8')
     print(f"실매매 대사 — 공표 {rep['published_days']}일 ({rep['first']} ~ {rep['last']})")
+    v = rep['revisions']
+    print(f" ⓪ 재공표: {v['days_revised']}일" + (" · " + ", ".join(f"{r['date']}({r['revs']}회, 최대 |Δpos| {r['max_abs_dpos']:.3f})"
+                                                     for r in v['rows'][-5:]) if v['rows'] else ''))
     r = rep['restatement']
     print(f" ① 재작성: {r['status']}" + (f" · 최대 |Δpos| {r['max_abs_diff']:.3f} · 재작성일 {len(r['restated_days'])}일"
                                        if r['status'] == 'ok' else ''))

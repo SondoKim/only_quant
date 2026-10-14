@@ -591,6 +591,9 @@ class DataLoader:
           · 롤 정보가 가격보다 오래됨 / 롤 정보 없음
         WARN — 휴장일 가능성이 높은 1영업일 지연, 같은 시장 전체가 2~3영업일 멈춘 연휴.
         (2026-10-13: 일본 체육의날 JB1 하루 지연을 FAIL 로 띄우던 오탐을 이렇게 나눴다.)
+        정책금리(carry_short_rate_map — 결정일에만 바뀌는 계단형)는 따로: 실데이터가 6영업일 이상
+        끊기면 WARN(값은 유효할 수 있으나 다음 결정 전 갱신 확인), 45영업일 이상이면 FAIL (2026-10-14:
+        RBATCTR 이 09-29 이후 블룸버그에서 끊겼는데 감시 대상이 아니었다).
         """
         expected = expected_last_session(end_date)
         issues: List[str] = []
@@ -623,10 +626,20 @@ class DataLoader:
                     lv_all[t] = pd.Timestamp(d)
                     panel_last[t] = last
         groups = self._market_groups()
+        step = {t for t in ((self.config.get('signal_macro', {}) or {})
+                            .get('carry_short_rate_map', {}) or {}).values() if t}
         for t in (watch or []):
             if t not in lv_all or lv_all[t] >= panel_last[t]:
                 continue
             lag = int(np.busday_count(lv_all[t].date(), panel_last[t].date()))
+            if t in step:
+                msg = (f"{t}(정책금리) 실데이터 마지막 {lv_all[t].date()} < 패널 {panel_last[t].date()} "
+                       f"({lag}영업일, 마지막 값 {'유지' if lag < 45 else '유지 — 그 사이 결정이 있었다면 틀림'})")
+                if lag >= 45:
+                    issues.append(msg + " — Bloomberg 갱신 확인")
+                elif lag >= 6:
+                    warns.append(msg + " — 계단형이라 값은 유효할 수 있음, 다음 결정 전 Bloomberg 갱신 확인")
+                continue
             peers = [x for x in groups.get(t, {t}) if x in lv_all and x != t]
             whole_market = bool(peers) and all(lv_all[x] < panel_last[x] for x in peers)
             msg = (f"{t} 실데이터 마지막 {lv_all[t].date()} < 패널 {panel_last[t].date()} "

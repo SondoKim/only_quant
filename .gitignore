@@ -21,3 +21,5 @@ data/run_stamps/
 data/rates_signal_table.json
 data/rates_signal_table.tmp
 data/reconcile_report.json
+data/daily_checks.json
+data/daily_checks.tmp

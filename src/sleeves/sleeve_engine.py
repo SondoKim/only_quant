@@ -43,14 +43,18 @@ def _zscore(df: pd.DataFrame, window: int, min_periods: Optional[int] = None) ->
 
 
 def rolling_dv01_beta(fut_returns: pd.Series, yield_pct: pd.Series,
-                      lookback: int = 250, min_periods: int = 60) -> pd.Series:
-    """|β_t| = 명목 1 당 1bp 손익 (선물 일간수익률을 금리 bp 변화에 회귀한 기울기의 크기).
+                      lookback: int = 250, min_periods: int = 60, horizon: int = 5) -> pd.Series:
+    """|β_t| = 명목 1 당 1bp 손익 (선물 horizon일 수익률을 같은 구간 금리 bp 변화에 회귀한 기울기의 크기).
 
-    t일 값은 t일까지의 데이터만 쓴다 (t일 종가에 결정하는 포지션의 DV01 환산용).
-    대시보드·PM 의 DV01 과 같은 정의 (DV01 만원/bp = 포지션 × |β| × 배정자본(억) × 1e4).
+    horizon 일 겹침 구간 변화로 회귀한다 (2026-10-14 사용자 결정 '5일 단위 회귀로 통일'): 일간 회귀는
+    블룸버그 미국 금리 스냅샷이 CBOT 정산보다 늦어 β 가 낮게 나온다 (일간 상관 美 −0.90 vs 韓 −0.98 —
+    TU 1.53 vs 5일 1.67, TY 5.40 vs 5.92). t일 값은 t일까지의 데이터만 쓴다 (인과).
+    DV01 만원/bp = 포지션 × |β| × 배정자본(억) × 1e4 — 엔진 한도·대시보드·라이브 기록·PM 계약당 DV01 공용.
     """
-    dy = yield_pct.diff() * 100.0
-    b = (fut_returns.rolling(lookback, min_periods=min_periods).cov(dy)
+    h = max(int(horizon), 1)
+    r = fut_returns.rolling(h).sum() if h > 1 else fut_returns
+    dy = yield_pct.diff(h) * 100.0
+    b = (r.rolling(lookback, min_periods=min_periods).cov(dy)
          / dy.rolling(lookback, min_periods=min_periods).var())
     return b.abs()
 
@@ -107,6 +111,10 @@ class SleeveEngine:
         self.fx_short_yield = sy.get('fx_short_yield', {}) or {}
         self.policy_rate_map = sy.get('policy_rate_map', {}) or {}
         self.carry_short_rate_map = sm.get('carry_short_rate_map', {}) or {}
+        # 단기금리 보정(%p): FDTR = 연준 목표범위 '상단' → −0.125 로 중간값 (2026-10-14 사용자 결정 —
+        # 다른 나라는 단일 정책금리라 미국만 캐리가 12.5bp 낮게 잡히던 정의 불일치)
+        self.carry_short_rate_offset = {k: float(v) for k, v in
+                                        (sm.get('carry_short_rate_offset', {}) or {}).items()}
         # 금리호가 선물(ASX: 100 − 금리) → 테너(년). 가격 수익률 변동성이 실제 채권 위험이 아니므로
         # 캐리 위험 분모는 par 수정듀레이션 × 금리 변동성으로 대체한다 (2026-10-13 감사).
         self.yield_quoted_tenor = {k: float(v) for k, v in
@@ -172,6 +180,7 @@ class SleeveEngine:
         self.dv01_net_limit = float(dl.get('net', 0.0) or 0.0)
         self.dv01_gross_limit = float(dl.get('gross', 0.0) or 0.0)
         self.dv01_lookback = int(dl.get('beta_lookback', 250))
+        self.dv01_horizon = int(dl.get('beta_horizon', 5))
         self._dv01_state: Optional[Dict[str, Any]] = None
 
         # ── Derived series ───────────────────────────────────────────────
@@ -307,9 +316,11 @@ class SleeveEngine:
         raw = {}
         for a in assets:
             ys = self._y(self.tradeable_yield_map.get(a))
-            sr = self._m(self.carry_short_rate_map.get(a))
+            st = self.carry_short_rate_map.get(a)
+            sr = self._m(st)
             if ys is None or sr is None or a not in risk.columns:
                 continue
+            sr = sr + self.carry_short_rate_offset.get(st, 0.0)
             raw[a] = (ys - sr) / 100.0 / risk[a].replace(0.0, np.nan)
         if len(raw) < 3:
             logger.warning("hedged_xs carry: 단기금리/일드가 있는 자산 %d개 < 3 — 캐리 비활성", len(raw))
@@ -444,7 +455,8 @@ class SleeveEngine:
             y = self._y(self.tradeable_yield_map.get(a))
             if y is None or a not in self.dir_returns.columns or a in self.yield_quoted_tenor:
                 continue
-            out[a] = rolling_dv01_beta(self.dir_returns[a], y, self.dv01_lookback)
+            out[a] = rolling_dv01_beta(self.dir_returns[a], y, self.dv01_lookback,
+                                       horizon=self.dv01_horizon)
         return pd.DataFrame(out, index=self.prices.index)
 
     def _apply_dv01_limit(self, pos: pd.DataFrame) -> pd.DataFrame:
@@ -472,11 +484,22 @@ class SleeveEngine:
         return out
 
     def book_stop_status(self) -> Optional[Dict[str, Any]]:
-        """마지막 실행 기준 북스톱 상태 (대시보드/해석용, 없으면 None)."""
+        """마지막 실행 기준 북스톱 상태 (대시보드/해석용, 없으면 None).
+
+        scale = 오늘 포지션에 적용된 배율 — 전일 낙폭(dd_prev)으로 정해진다 (shift(1), 인과).
+        dd = 오늘 종가 낙폭 → next_scale = 다음 거래일에 적용될 배율. 임계를 넘는 날 '오늘 낙폭'과
+        '오늘 배율'의 기준일이 하루 어긋나 보이던 문구(2026-10-14 검토)를 두 값으로 나눠 해소."""
         st = self._book_stop_state
         if not self.book_stop_enabled or not st:
             return None
-        return {'scale': float(st['scale'].iloc[-1]), 'dd': float(st['dd'].iloc[-1]),
+        dd = st['dd']
+
+        def stage(x: float) -> float:
+            return 1.0 if x <= self.book_stop_dd_half else (0.5 if x <= self.book_stop_dd_flat else 0.0)
+        d_now = float(dd.iloc[-1])
+        d_prev = float(dd.iloc[-2]) if len(dd) >= 2 else float('nan')
+        return {'scale': float(st['scale'].iloc[-1]), 'dd': d_now, 'dd_prev': d_prev,
+                'next_scale': stage(d_now),
                 'dd_half': self.book_stop_dd_half, 'dd_flat': self.book_stop_dd_flat,
                 'dd_window': self.book_stop_dd_window}
 

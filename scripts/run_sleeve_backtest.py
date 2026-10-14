@@ -36,19 +36,20 @@ def load_sleeve_config() -> dict:
 
 
 def freshness_watch(engine) -> list:
-    """신선도 감시 티커: 시그널 유니버스 금리선물 + 그 일드 + USDKRW(계약 환산)."""
+    """신선도 감시 티커: 시그널 유니버스 금리선물 + 그 일드 + 캐리 정책금리(계단형, 별도 기준)
+    + USDKRW(계약 환산)."""
     w = list(engine.rates_assets) + ['KRW Curncy']
     for a in engine.rates_assets:
-        for m in (engine.tradeable_yield_map, engine.policy_rate_map):
+        for m in (engine.tradeable_yield_map, engine.policy_rate_map, engine.carry_short_rate_map):
             if m.get(a):
                 w.append(m[a])
     return sorted(set(w))
 
 
 def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
-    """Persist the rates factor z-score time-series (Trend/Value/Carry/Curve/
-    Policy) exactly as the SleeveEngine computes them — the authoritative source
-    for total_dashboard's '금리 팩터 모니터링' chart.
+    """Persist the rates factor z-score time-series (Trend/Value/Carry/Policy)
+    exactly as the SleeveEngine uses them (after cross-sectional neutralization)
+    — the authoritative source for total_dashboard's '금리 팩터 모니터링' chart.
 
     Saved wide, one column per factor×asset ('{factor}::{ticker}'), matching the
     'pos::' / 'rpnl::' prefix convention in sleeve_backtest_log.csv. Full history
@@ -81,21 +82,35 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
     else:
         ra = list(engine.rates_assets)
     # factor_monitor_extra: 시그널에도 매매에도 안 쓰지만 맥락용으로 차트에만
-    # 얹는 자산 (예: 분트 = 유럽 듀레이션 벤치마크). 위 다섯 팩터는 전부 컬럼별
-    # 시계열 연산(_zscore 롤링)이라 자산을 얹어도 기존 자산의 값은 변하지 않는다
-    # — 횡단면 demean 은 여기가 아니라 _class_sleeves 에서 일어난다.
+    # 얹는 자산 (예: 분트 = 유럽 듀레이션 벤치마크).
     for a in ((engine.cfg or {}).get('factor_monitor_extra', []) or []):
         if a in engine.prices.columns and a not in ra:
             ra.append(a)
     if not ra:
         print("⚠ No rates assets — factor signals not saved.")
         return None
-    factors = {
-        'trend':  engine.trend_signal(ra),
-        'value':  engine.value_signal(ra),
-        'carry':  engine.carry_signal(ra, 'rates'),
-        'policy': engine.policy_signal(ra),
-    }
+    # 2026-10-14: 엔진이 '실제로 쓰는' 값 = 시그널 8종 횡단면 중립화(_class_sleeves) 후 값을 저장한다.
+    # 예전엔 중립화 전 value 를 저장해 KE·KAA 밸류가 매매 방향과 반대 부호로 보였다 (KE +0.88 vs 실제 −0.97).
+    # 시그널 유니버스 밖 관찰 자산(분트 등)은 같은 날 유니버스 평균을 빼 '유니버스 대비' 값으로 —
+    # 유니버스 계산에는 섞지 않는다 (캐리처럼 횡단면 연산인 팩터가 관찰 자산 때문에 바뀌지 않게).
+    U = list(engine.rates_assets)
+    used = engine._class_sleeves(U, 'rates')
+    raw_fn = {'trend': engine.trend_signal, 'value': engine.value_signal,
+              'carry': lambda a: engine.carry_signal(a, 'rates'), 'policy': engine.policy_signal}
+    extras = [a for a in ra if a not in U]
+    factors = {}
+    for fac in ('trend', 'value', 'carry', 'policy'):
+        if fac not in used:
+            continue
+        raw_u = raw_fn[fac](U).reindex(columns=U)
+        df = used[fac].where(raw_u.notna())            # 워밍업 결측은 0 이 아니라 결측으로
+        if extras:
+            strength = float(engine.xs_neutralize.get(fac, 0.0))
+            mean_u = raw_u.fillna(0.0).mean(axis=1)
+            raw_x = (raw_fn[fac](extras) if fac != 'carry' else pd.DataFrame(index=df.index))
+            raw_x = raw_x.reindex(index=df.index, columns=extras)
+            df = pd.concat([df, raw_x.sub(strength * mean_u, axis=0)], axis=1)
+        factors[fac] = df
     blocks = []
     for fac, df in factors.items():
         if df is None or df.empty:
@@ -116,7 +131,7 @@ def save_factor_signals(engine, out_path='sleeve_factor_signals.csv'):
     return out
 
 
-def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
+def run(start_date=None, end_date=None, target_vol=None, smooth=None, plot=True,
         data_start='2010-01-01', cfg_override=None, exclude_assets=None,
         save_outputs=True):
     """금리 북 백테스트. 엔진은 항상 전체 패널(data_start~)로 돌리고 결과만 start_date 부터
@@ -156,7 +171,7 @@ def run(start_date=None, end_date=None, target_vol=None, smooth=0.0, plot=True,
 
     positions = engine.finalize_positions(
         engine.compute_target_positions(),
-        smooth_override=smooth if smooth and smooth > 0 else None,
+        smooth_override=smooth,   # None = config position_smooth, 0 = 끔 (예전엔 0 이 None 으로 바뀌어 끌 수 없었다)
     )
     if engine.book_stop_enabled:
         _w = engine.book_stop_dd_window
@@ -237,8 +252,8 @@ def main():
     p.add_argument('--end-date', default=None)
     p.add_argument('--target-vol', type=float, default=None,
                    help='Target annualized portfolio vol (overrides config)')
-    p.add_argument('--smooth', type=float, default=0.0,
-                   help='EWMA position smoothing 0..1 (fraction of prior held); 0=off')
+    p.add_argument('--smooth', type=float, default=None,
+                   help='EWMA position smoothing 0..1 (전일 비중). 기본 = config position_smooth, 0 = 끔')
     p.add_argument('--data-start', default='2010-01-01',
                    help='Price-panel load start (loader truncates to common inception)')
     p.add_argument('--config-json', default=None,

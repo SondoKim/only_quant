@@ -51,6 +51,53 @@ ROOT = Path(__file__).parent.parent
 # (capital_억 · dv01_limit). PM pm_config.UNIT_KRW['FACTOR_RATES'] 도 같은 값을 읽는다.
 # 포지션 1.0 = 배정자본 만큼의 선물 명목, PM 배분 배수 적용 전 기준.
 SIGNAL_JSON = ROOT / 'data' / 'rates_signal_table.json'
+# daily_run 1c 단계(신선도·불변식·절단 테스트) 결과 — 같은 데이터 기준일이면 HTML 배너·JSON 'checks' 에 싣는다
+CHECKS_JSON = ROOT / 'data' / 'daily_checks.json'
+
+
+def load_daily_checks(signal_date: str) -> dict:
+    """daily_run 1c 점검 결과 {'status': PASS|WARN|FAIL|not_run, 'fail': [...], 'warn': [...]}.
+
+    기준일이 다르거나 파일이 없으면 'not_run' (대시보드를 단독 실행했거나 1c 가 실패한 경우)."""
+    try:
+        c = json.loads(CHECKS_JSON.read_text(encoding='utf-8'))
+    except Exception:
+        return {'status': 'not_run', 'fail': [], 'warn': []}
+    if str(c.get('data_asof')) != str(signal_date):
+        return {'status': 'not_run', 'fail': [], 'warn': [], 'stale_asof': c.get('data_asof')}
+    return c
+
+
+# CBOT 국채선물 월물 코드 (분기물)
+_MONTH_CODE = {'H': 3, 'M': 6, 'U': 9, 'Z': 12}
+_CODE_MONTH = {v: k for k, v in _MONTH_CODE.items()}
+
+
+def delivery_notes(gen_tickers: dict, asof) -> list:
+    """미국 제네릭 1번월(TU1·TY1)이 인도 기간에 들어간 만기 월물이면 '다음 월물로 주문' 안내.
+
+    블룸버그 제네릭은 만기일까지 만기 월물에 머문다(TU 는 인도월 전체, TY 는 인도월 대부분) — 실제
+    유동성은 인도월 첫 영업일 2영업일 전(첫 포지션일) 무렵 다음 월물로 넘어간다 (2026-10-14 검토).
+    인도월 첫 영업일 3영업일 전부터 안내한다. 손익 차이는 작다(2016+ 연 −5bp)."""
+    out = []
+    t = pd.Timestamp(asof).normalize()
+    for a in ('TU1 Comdty', 'TY1 Comdty'):
+        g = str(gen_tickers.get(a) or '')
+        root = a[:2]
+        if len(g) < 4 or g[:2] != root or g[2] not in _MONTH_CODE or not g[3:].isdigit():
+            continue
+        m, yd = _MONTH_CODE[g[2]], int(g[3:])
+        year = (t.year // 10) * 10 + yd
+        if year < t.year - 1:
+            year += 10
+        first_bd = pd.Timestamp(year, m, 1) + pd.offsets.BDay(0)
+        if t < first_bd - pd.offsets.BDay(3):
+            continue
+        nm, ny = (m + 3, year) if m < 12 else (3, year + 1)
+        nxt = f"{root}{_CODE_MONTH[nm]}{ny % 10}"
+        out.append(f"{root}1 이 인도 기간의 만기 월물({g})입니다 — 실제 주문은 다음 월물 {nxt} 로 "
+                   f"(제네릭 가격·계약수 환산은 차이 미미)")
+    return out
 
 
 def _book_cfg() -> dict:
@@ -69,8 +116,8 @@ GROSS_DV01_LIMIT = float((_BOOK.get('dv01_limit') or {}).get('gross', 8000.0))
 
 
 def dv01_betas(engine, assets):
-    """{자산: |β|} — 엔진의 롤링 β(최근 250일, 롤 보정 선물 수익률 vs 테너 금리 bp)의 최신값.
-    엔진 DV01 한도와 같은 값이다. DV01(만원/bp) = 포지션 × |β| × 배정자본(억) × 1e4."""
+    """{자산: |β|} — 엔진의 롤링 β(250일, 롤 보정 선물 5일 수익률 vs 테너 금리 5일 bp 변화)의 최신값.
+    엔진 DV01 한도·PM 계약당 DV01 과 같은 값이다. DV01(만원/bp) = 포지션 × |β| × 배정자본(억) × 1e4."""
     b = engine.dv01_betas([a for a in assets if a not in engine.signal_only_assets])
     return {a: float(b[a].dropna().iloc[-1]) for a in b.columns if b[a].notna().any()}
 
@@ -186,9 +233,19 @@ def build_sleeve_snapshots(loader):
         # 시점별 β (엔진 DV01 한도와 같은 값) — DV01 이력·이력 최대를 그날 β 로 환산
         rates_snap['dv01_beta_hist'] = engine.dv01_betas(
             [a for a in rates_snap['target'] if a not in engine.signal_only_assets])
+        rates_snap['dv01_method'] = {'horizon': engine.dv01_horizon, 'lookback': engine.dv01_lookback}
         from scripts.run_sleeve_backtest import freshness_watch
         rates_snap['freshness'] = loader.freshness_report(watch=freshness_watch(engine))
         rates_snap['roll_adjust'] = bool(cfg.get('roll_adjust', False))
+        rates_snap['checks'] = load_daily_checks(str(pd.Timestamp(rates_snap['date']).date()))
+        try:   # 제네릭 1번월 티커 (인도 기간 안내용)
+            rf = (loader.load_log.get('rolls') or {}).get('file')
+            gen = pd.read_parquet(rf) if rf else pd.DataFrame()
+            gt = {c[5:]: gen[c].dropna().iloc[-1] for c in gen.columns
+                  if c.startswith('gen::') and gen[c].notna().any()}
+            rates_snap['delivery_notes'] = delivery_notes(gt, rates_snap['date'])
+        except Exception:
+            rates_snap['delivery_notes'] = []
         fx_snap = engine.sleeve_snapshot('fx') if engine.fx_assets else None
         return rates_snap, fx_snap, loader.merge_signal_yields(px)
     except Exception as e:
@@ -289,24 +346,29 @@ def sleeve_narrative(snap, net_dv01=None):
         """북스톱 상태 문장 (스톱 비활성이면 None)."""
         if not bs:
             return None
+        # 오늘 배율(sc)은 전일 낙폭(dd_prev)으로 정해진다 (인과 1일 지연) — 오늘 낙폭(dd)은 다음 배율을 정한다.
         dd, sc = bs['dd'], bs['scale']
+        dd_used = bs.get('dd_prev', dd)
+        nxt = bs.get('next_scale', sc)
         win = bs.get('dd_window') or 0
         wtxt = f"{win}일 롤링 고점" if win else "전기간 고점"
+        tail = ("" if abs(nxt - sc) < 1e-9 else
+                f" ⚠ 오늘 종가 낙폭 {dd:.1f}% 기준으로 다음 거래일 배율은 ×{nxt:g} 로 바뀝니다.")
         if sc >= 0.999:
             return ("북스톱",
-                    f"정상 작동 중입니다. 섀도우 북 드로다운 {dd:.1f}% "
-                    f"({wtxt} 대비)로 감축 임계 {bs['dd_half']:g}% 아래 — "
+                    f"정상 작동 중입니다. 오늘 배율 ×1 은 전일 섀도우 북 드로다운 {dd_used:.1f}% "
+                    f"({wtxt} 대비)가 감축 임계 {bs['dd_half']:g}% 아래라서입니다 (오늘 종가 {dd:.1f}%) — "
                     f"포지션 100% 집행. (섀도우는 노출 스케일 전 북 기준이라 실자본으로는 "
-                    f"약 절반 수준의 낙폭에서 작동)")
+                    f"약 절반 수준의 낙폭에서 작동)" + tail)
         if sc > 0.01:
             return ("⚠ 북스톱",
-                    f"감축 중입니다. 드로다운 {dd:.1f}% 가 {bs['dd_half']:.0f}% 를 "
-                    f"넘어 금리 포지션이 ×{sc:g} 로 축소됐습니다. 섀도우 북이 "
-                    f"회복하면 자동 복원되니 수동으로 되돌리지 마십시오.")
+                    f"감축 중입니다. 전일 드로다운 {dd_used:.1f}% 가 {bs['dd_half']:.0f}% 를 "
+                    f"넘어 금리 포지션이 ×{sc:g} 로 축소됐습니다 (오늘 종가 {dd:.1f}%). 섀도우 북이 "
+                    f"회복하면 자동 복원되니 수동으로 되돌리지 마십시오." + tail)
         return ("⛔ 북스톱",
-                f"발동했습니다. 드로다운 {dd:.1f}% 가 플랫 임계 "
-                f"{bs['dd_flat']:.0f}% 를 초과해 금리 북이 플랫(×0)입니다. "
-                f"섀도우 북 회복 시 자동 재진입합니다.")
+                f"발동했습니다. 전일 드로다운 {dd_used:.1f}% 가 플랫 임계 "
+                f"{bs['dd_flat']:.0f}% 를 초과해 금리 북이 플랫(×0)입니다 (오늘 종가 {dd:.1f}%). "
+                f"섀도우 북 회복 시 자동 재진입합니다." + tail)
 
     # ── ⓪ 북이 비어 있으면 여기서 끝 (해석할 포지션이 없음) ─────────────
     # 이 분기가 없으면 그로스 0 인 북에 대해 "미국 숏(+0.00)이 한국보다 크다"
@@ -461,6 +523,10 @@ def sleeve_narrative(snap, net_dv01=None):
     if st:
         out.append(st)
 
+    # ── ⑥ 월물 안내 (미국 제네릭 1번월이 인도 기간이면) ─────────────────
+    for note in (snap.get('delivery_notes') or []):
+        out.append(("월물", note))
+
     basis = ("팩터 옆 숫자는 슬리브 z값의 매매 자산 평균에 가중치를 적용한 "
              "컨빅션 기여도입니다."
              if DIRECTIONAL else
@@ -587,11 +653,17 @@ def compute_delta_info(snap, budget_w, gross_budget_w=None, capital_억=RATES_CA
         return None
     unit = capital_억 * 1e4
     k = {a: betas[a] * unit for a in tgt if a in betas}
+    hist = snap.get('positions')
+    # DV01 은 반올림 전 포지션으로 (target/prev 는 표시용 3자리 반올림 — live_record 와 어긋나던 원인)
+    if hist is not None and len(hist):
+        last = hist.iloc[-1]
+        prv = hist.iloc[-2] if len(hist) >= 2 else last
+        tgt = {a: float(last.get(a, tgt[a])) for a in tgt}
+        prev = {a: float(prv.get(a, tgt[a])) for a in tgt}
     dv = {a: tgt[a] * k[a] for a in k}
     dv_prev = {a: prev.get(a, tgt[a]) * k[a] for a in k}
     net_w = sum(dv.values())
     gross_w = sum(abs(v) for v in dv.values())
-    hist = snap.get('positions')
     net_hist_w = gross_hist_w = None
     if hist is not None and len(hist):
         cols = [a for a in k if a in hist.columns]
@@ -620,8 +692,8 @@ def compute_delta_info(snap, budget_w, gross_budget_w=None, capital_억=RATES_CA
 def _dv01_basis_txt(d):
     """DV01 환산 근거 한 줄 (콘솔/HTML 공용)."""
     ks = ' · '.join(f"{short_name(a)} {v:,.1f}" for a, v in d['k'].items())
-    txt = (f"DV01 = 포지션 × |β| × 배정자본 {d['capital']:,.0f}억 (PM 배분 배수 적용 전) — "
-           f"포지션 1.0 당 만원/bp: {ks}")
+    txt = (f"DV01 = 포지션 × |β| × 배정자본 {d['capital']:,.0f}억 (PM 배분 배수 적용 전, β = 선물 5일 수익률 ÷ "
+           f"금리 5일 변동 회귀 250일 — PM 계약당 DV01 과 같은 값) — 포지션 1.0 당 만원/bp: {ks}")
     f = d.get('limit_factor')
     if f is not None:
         txt += (f" · 엔진 DV01 한도 적용: 오늘 ×{f:.2f} 로 축소됨" if f < 0.999 else
@@ -640,8 +712,12 @@ def freshness_lines(snap, include_warn=True):
     out = [f"⛔ {m}" for m in (fr.get('issues') or [])]
     if snap and not snap.get('roll_adjust', False):
         out.append("⛔ 롤 보정 OFF — 연속선물 롤 점프가 시그널·스톱에 포함됨 (config roll_adjust)")
+    # daily_run 1c 불변식·절단 테스트 (신선도 항목은 위와 중복이라 제외)
+    ck = (snap or {}).get('checks') or {}
+    out += [f"⛔ [점검 {it}] {m}" for it, m in (ck.get('fail') or []) if it != 'fresh']
     if include_warn:
         out += [f"ℹ {m}" for m in (fr.get('warnings') or [])]
+        out += [f"ℹ [점검 {it}] {m}" for it, m in (ck.get('warn') or []) if it != 'fresh']
     return out
 
 
@@ -1144,6 +1220,8 @@ def write_signal_json(signal_date, sig_rows, sleeve_snap, delta_info, pnl_totals
                '출처': '슬리브'}
         table.append(row)
     d = delta_info or {}
+    betas = sleeve_snap.get('dv01_beta') or {}
+    ck = sleeve_snap.get('checks') or {'status': 'not_run'}
     payload = {
         'generated': pd.Timestamp.now().isoformat(timespec='seconds'),
         'signal_date': signal_date,
@@ -1154,10 +1232,18 @@ def write_signal_json(signal_date, sig_rows, sleeve_snap, delta_info, pnl_totals
         'dv01': {'net_w': d.get('net_w'), 'gross_w': d.get('gross_w'),
                  'budget': d.get('budget'), 'gross_budget': d.get('gross_budget'),
                  'per_asset': d.get('dv')},
+        # 계약당 DV01 단일 출처 (2026-10-14): |β|×1e4 = 명목 1 당 1bp 손익의 '듀레이션' 표현.
+        # PM positions.dv01_contract_live 가 TU·TY·KTB3·KTB10 계약당 DV01 = 이 값 × 가격 × 점가치 로 쓴다.
+        'durations': {a: round(float(b) * 1e4, 4) for a, b in betas.items()},
+        'dv01_method': sleeve_snap.get('dv01_method'),
         'pnl_1d': pnl_totals,
         'book_stop': sleeve_snap.get('book_stop'),
         'dv01_factor': sleeve_snap.get('dv01_factor'),
         'freshness': sleeve_snap.get('freshness'),
+        # daily_run 1c 점검 (불변식·절단 테스트) — FAIL 이면 PM 탭이 빨간 배너를 띄운다
+        'checks': {'status': ck.get('status', 'not_run'), 'fail': ck.get('fail') or [],
+                   'warn': ck.get('warn') or []},
+        'notes': sleeve_snap.get('delivery_notes') or [],
     }
     SIGNAL_JSON.parent.mkdir(parents=True, exist_ok=True)
     tmp = SIGNAL_JSON.with_suffix('.tmp')

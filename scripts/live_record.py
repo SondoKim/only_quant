@@ -6,8 +6,11 @@
 권고했는가'는 어디에도 남지 않았다. 이 파일은 날짜별로 한 행씩 쌓고 과거 행을 고치지 않는다 —
 실매매 대사(scripts/reconcile_live.py)와 사후 검증의 기준이다.
 
-행 = 데이터 기준일 T (같은 T 재실행이면 그 행만 최신 실행으로 교체, 과거 행 불변):
-  generated · git(커밋, dirty 표시) · cfg_hash(운용 설정 지문) · data_asof
+행 = 데이터 기준일 T 의 공표 1회. 추가만 하고 어떤 행도 고치거나 지우지 않는다 (2026-10-14: 예전엔 같은
+T 재실행이 그 행을 덮어써 '처음 공표한 값'이 사라졌다 — 10-12 행이 실제 집행과 다른 새 코드 값으로 바뀐 예).
+같은 T 를 다시 돌려 포지션이 바뀌면 rev 를 올려 새 행으로 쌓는다 (포지션·DV01 이 같으면 기록 생략).
+  rev(같은 T 의 공표 순번, 0 부터) · generated · git(커밋, dirty 표시) · cfg_hash(운용 설정 지문) · data_asof
+  checks_fail          daily_run 1c 점검 FAIL 건수 (같은 기준일 점검이 없으면 공란)
   pos::<자산>          목표 포지션 (배정자본 대비 명목 배수, T 종가 결정 → T+1 보유)
   dv01::<자산>         DV01 (만원/bp, 배정자본 기준, + = 듀레이션 롱)
   contracts_1x::<자산> 배정자본 1배 기준 목표 계약수 (PM 배분 배수 적용 전, 반올림 전)
@@ -61,7 +64,7 @@ def build_row() -> pd.DataFrame:
     cap = float(cfg.get('capital_억', 500.0))
     beta = e.dv01_betas(traded)
     usdkrw = float(px['KRW Curncy'].iloc[-1]) if 'KRW Curncy' in px.columns else float('nan')
-    row = {'generated': pd.Timestamp.now().isoformat(timespec='seconds'), 'git': _git(),
+    row = {'rev': 0, 'generated': pd.Timestamp.now().isoformat(timespec='seconds'), 'git': _git(),
            'cfg_hash': hashlib.sha1(json.dumps(cfg, sort_keys=True, default=str).encode()).hexdigest()[:10],
            'data_asof': str(T.date()), 'capital_억': cap, 'usdkrw': usdkrw}
     net = gross = 0.0
@@ -77,6 +80,11 @@ def build_row() -> pd.DataFrame:
         row.update({f'pos::{a}': round(p, 6), f'dv01::{a}': round(dv, 1),
                     f'contracts_1x::{a}': round(p * cap * 1e8 / (price * pv * fx), 2),
                     f'price::{a}': price})
+    try:   # daily_run 1c 점검 결과 (같은 데이터 기준일일 때만)
+        ck = json.loads((ROOT / 'data' / 'daily_checks.json').read_text(encoding='utf-8'))
+        row['checks_fail'] = len(ck.get('fail') or []) if str(ck.get('data_asof')) == str(T.date()) else None
+    except Exception:
+        row['checks_fail'] = None
     st = e.book_stop_status() or {}
     row.update({'net_dv01': round(net, 1), 'gross_dv01': round(gross, 1),
                 'stop_scale': st.get('scale'), 'stop_dd': st.get('dd'),
@@ -84,26 +92,45 @@ def build_row() -> pd.DataFrame:
     return pd.DataFrame([row], index=pd.Index([T.date()], name='date'))
 
 
+def read_record(latest_only: bool = True) -> pd.DataFrame:
+    """공표 원장 읽기. latest_only = 같은 날짜의 마지막 공표(rev 최대)만 (대사·페이퍼 손익 기본)."""
+    rec = pd.read_csv(RECORD, index_col='date', parse_dates=True)
+    if 'rev' not in rec.columns:            # 2026-10-14 이전 형식 (날짜당 1행)
+        rec.insert(0, 'rev', 0)
+    rec = rec.reset_index().sort_values(['date', 'rev']).set_index('date')
+    return rec[~rec.index.duplicated(keep='last')] if latest_only else rec
+
+
 def main() -> int:
     row = build_row()
-    T = row.index[0]
+    T = pd.Timestamp(row.index[0])
+    row.index = pd.DatetimeIndex([T], name='date')
     if RECORD.exists():
-        old = pd.read_csv(RECORD, index_col='date', parse_dates=False)
-        old.index = pd.to_datetime(old.index).date
-        later = [d for d in old.index if d > T]
-        if later:
-            print(f"⚠ live_record 에 {T} 이후 행이 있음 ({later[-1]}) — 데이터가 뒤로 간 실행, 기록하지 않음")
+        old = read_record(latest_only=False)
+        later = old.index[old.index > T]
+        if len(later):
+            print(f"⚠ live_record 에 {T.date()} 이후 행이 있음 ({later[-1].date()}) — 데이터가 뒤로 간 실행, 기록하지 않음")
             return 0
-        replaced = T in old.index
-        out = pd.concat([old[old.index != T], row])
+        same = old[old.index == T]
+        if len(same):
+            last = same.iloc[-1]
+            cols = [c for c in row.columns if c.startswith(('pos::', 'dv01::'))]
+            if all(c in last.index and abs(float(last[c]) - float(row[c].iloc[0])) < 1e-6 for c in cols):
+                print(f"✅ live_record {T.date()} rev {int(last['rev'])} 와 포지션·DV01 동일 — 기록 생략")
+                return 0
+            row['rev'] = int(same['rev'].max()) + 1
+        out = pd.concat([old, row])
     else:
-        replaced, out = False, row
+        out = row
     out.index.name = 'date'
     RECORD.parent.mkdir(parents=True, exist_ok=True)
-    out.sort_index().to_csv(RECORD)
+    out = out[['rev'] + [c for c in out.columns if c != 'rev']]
+    out.to_csv(RECORD, date_format='%Y-%m-%d')
     pos_txt = ' · '.join(f"{c[5:].split()[0]} {row[c].iloc[0]:+.3f}" for c in row.columns if c.startswith('pos::'))
-    print(f"✅ live_record {'갱신' if replaced else '추가'}: {T} | {pos_txt} | 순DV01 {row['net_dv01'].iloc[0]:+,.0f} "
-          f"| git {row['git'].iloc[0]} | cfg {row['cfg_hash'].iloc[0]} | 누적 {len(out)}일")
+    rev = int(row['rev'].iloc[0])
+    print(f"✅ live_record 추가: {T.date()} rev {rev}{' (같은 날 재공표 — 이전 행 보존)' if rev else ''} | {pos_txt} "
+          f"| 순DV01 {row['net_dv01'].iloc[0]:+,.0f} | 점검 FAIL {row['checks_fail'].iloc[0]} "
+          f"| git {row['git'].iloc[0]} | cfg {row['cfg_hash'].iloc[0]} | 누적 {out.index.nunique()}일 {len(out)}행")
     return 0
 
 

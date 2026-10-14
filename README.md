@@ -23,6 +23,10 @@ scripts/invariants.py           불변식 + 절단(미래참조) 테스트 — d
 
 - 시그널 유니버스 8종(美2·英1·日1·豪2·韓2), 매매는 한국·미국 4종 (`signal_only_assets`).
 - 배정자본(`capital_억`)·DV01 한도(`dv01_limit`)의 단일 출처 = `config/indicators.yaml` → PM 도 읽는다.
+- DV01 β = 선물 5일 수익률 ÷ 테너 금리 5일 bp 변화 회귀(250일). 엔진 한도·대시보드·라이브 기록과
+  PM 계약당 DV01(TU·TY·KTB3·KTB10)이 같은 값을 쓴다 — `data/rates_signal_table.json` `durations`.
+- 일과 점검(1c) 결과 `data/daily_checks.json` → HTML 배너 · PM JSON `checks` · live_record `checks_fail`.
+  `data/live_record.csv` 는 추가 전용 (같은 기준일 재공표는 `rev` 를 올려 새 행).
 - FX 는 매매하지 않고 슬리브 엔진 FX 팩터를 모니터링 섹션에만 표시한다.
 - 설정: `config/indicators.yaml` → `sleeves:`, 티커·일드 맵: `config/assets.yaml`.
 

@@ -245,7 +245,7 @@ signal_macro:
   # 캐리 = 테너금리 − 자국 단기금리 (CIP 로 US 항 상쇄). 2026-10-02 감사: 기존 산식은
   # KE 에서 테너금리=펀딩금리(GVSK3YR)라 캐리가 US 2Y 와 비트 동일했다.
   carry_short_rate_map:
-    TU1 Comdty:  FDTR Index        # Fed 목표(상단)
+    TU1 Comdty:  FDTR Index        # Fed 목표범위 상단 → 아래 offset 으로 중간값
     TY1 Comdty:  FDTR Index
     KE1 Comdty:  KORP7D Index      # BOK 7일 RP
     KAA1 Comdty: KORP7D Index
@@ -253,6 +253,12 @@ signal_macro:
     JB1 Comdty:  BOJDTR Index      # BOJ
     YM1 Comdty:  RBATCTR Index     # RBA
     XM1 Comdty:  RBATCTR Index
+  # 단기금리 보정(%p, 위 시리즈에 더함). FDTR 은 연준 목표범위 '상단'(범위 폭 25bp, 2008-12 이후 상시)
+  # 이라 −0.125 = 중간값. 다른 나라는 단일 정책금리 — 상단을 쓰면 미국 캐리만 12.5bp 낮게 잡혀 TU
+  # (위험 분모가 작음) 캐리 z 가 크게 흔들렸다 (2026-10-14 사용자 결정, 오늘 TU −0.748 → −0.421,
+  # SR 2012+ 0.583 → 0.571 · 2016+ 0.619 → 0.617 — 성과 무관한 정의 교정).
+  carry_short_rate_offset:
+    FDTR Index: -0.125
 
   # 시그널 미사용, 캐시만 (향후 실험·대시보드 맥락용): 채권 변동성 체제(MOVE),
   # 미국 5Y BEI·CPI YoY (인플레 프록시 교차검증용).

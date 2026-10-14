@@ -24,9 +24,10 @@ import pandas as pd
 
 # 매매 자산의 기대 수정듀레이션 범위 (년). β = 명목 1 당 1bp 수익률 → ×1e4 = 듀레이션.
 # (호주 YM/XM 은 100−금리 호가라 β 가 듀레이션이 아님 — 시그널 전용이라 점검 제외)
+# 2016+ 5일 회귀 β 범위: TU 1.51~1.89 · TY 4.91~6.74 · KE 2.48~3.53 · KAA 7.73~9.23 (2026-10-14).
 EXPECTED_DURATION = {
     'TU1 Comdty': (1.2, 2.5), 'TY1 Comdty': (4.5, 8.0),
-    'KE1 Comdty': (2.0, 3.5), 'KAA1 Comdty': (6.0, 10.0),
+    'KE1 Comdty': (2.0, 4.0), 'KAA1 Comdty': (6.0, 10.0),
 }
 ROLL_Z_FAIL = 2.5         # 롤일 |잔차|/σ 중앙값이 이보다 크면 롤 점프가 시그널에 들어가는 중
 DEGEN_WINDOW = 252
@@ -111,16 +112,17 @@ def check_degenerate(engine, traded):
 
 
 def check_dv01(engine, traded):
+    """엔진이 실제로 쓰는 DV01 β (5일 회귀, 엔진 한도·대시보드·PM 공용) 의 듀레이션 상식."""
     out = []
+    B = engine.dv01_betas(traded)
     for a in traded:
-        b, dy = _yield_beta(engine, a)
-        if b is None:
+        if a not in B.columns or not B[a].notna().any():
             out.append(('dv01', 'WARN', f'{a}: 일드 없음 — DV01 환산 불가'))
             continue
-        dur = abs(b.iloc[-1]) * 1e4
+        dur = float(B[a].dropna().iloc[-1]) * 1e4
         lo, hi = EXPECTED_DURATION.get(a, (0.5, 30.0))
         st = 'PASS' if lo <= dur <= hi else 'FAIL'
-        out.append(('dv01', st, f'{a}: |β|×1e4 = {dur:.2f}년 (기대 {lo}~{hi})'))
+        out.append(('dv01', st, f'{a}: |β|×1e4 = {dur:.2f}년 ({engine.dv01_horizon}일 회귀, 기대 {lo}~{hi})'))
     return out
 
 

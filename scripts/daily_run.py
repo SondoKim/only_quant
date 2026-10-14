@@ -7,6 +7,7 @@
         금리 팩터 → sleeve_factor_signals.csv)
 단계 1b: factor_summary.py (→ data/factor_summary.json)
 단계 1c: 데이터 신선도 · 불변식 · 절단(미래참조) 점검 (scripts/invariants.py)
+        → data/daily_checks.json (2·3단계가 읽어 HTML 배너 · PM JSON 'checks' · live_record 에 싣는다)
 단계 2: strategy_dashboard.py --html (콘솔 시그널 + HTML + PM 용 data/rates_signal_table.json)
 단계 3: live_record.py (그날 공표한 목표 포지션을 data/live_record.csv 에 추가 — 재작성 안 함)
 단계 3b: reconcile_live.py (공표 vs 백테스트 재작성 · 라이브 페이퍼 손익 · PM 환산 · 집행 대사)
@@ -94,11 +95,36 @@ def _checks() -> dict:
         fr['invariants'] = inv
         fr['issues'] = fr['issues'] + [f'[불변식 {it}] {m}' for it, st, m in inv
                                        if st == 'FAIL' and it != 'fresh']
+        _write_checks(fr)
         return fr
     except Exception as e:
-        return {'data_asof': None, 'expected': None, 'issues': [f'신선도/불변식 점검 실패: {e}']}
+        fr = {'data_asof': None, 'expected': None, 'issues': [f'신선도/불변식 점검 실패: {e}']}
+        _write_checks(fr)
+        return fr
     finally:
         logging.disable(logging.NOTSET)
+
+
+def _write_checks(fr: dict) -> None:
+    """1c 결과를 data/daily_checks.json 으로 — 2단계 대시보드가 같은 기준일이면 HTML 배너·PM JSON
+    'checks' 에 싣고, 3단계 live_record 가 FAIL 건수를 남긴다 (2026-10-14: 예전엔 FAIL 이 콘솔에만 찍혔다)."""
+    import json
+    inv = fr.get('invariants') or []
+    fail = [[it, m] for it, st, m in inv if st == 'FAIL']
+    warn = [[it, m] for it, st, m in inv if st == 'WARN']
+    if not inv:   # 점검 자체가 실패 — 사유를 FAIL 로
+        fail = [['checks', m] for m in fr.get('issues', [])]
+    status = 'FAIL' if fail else ('WARN' if warn else 'PASS')
+    out = {'generated': datetime.now().isoformat(timespec='seconds'), 'data_asof': fr.get('data_asof'),
+           'expected': fr.get('expected'), 'status': status, 'fail': fail, 'warn': warn}
+    try:
+        p = ROOT / 'data' / 'daily_checks.json'
+        p.parent.mkdir(parents=True, exist_ok=True)
+        tmp = p.with_suffix('.tmp')
+        tmp.write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding='utf-8')
+        tmp.replace(p)
+    except Exception as e:
+        print(f"  [주의] daily_checks.json 기록 실패: {e}")
 
 
 def _run(cmd: list) -> int:
