@@ -1,5 +1,12 @@
 # Global Macro Rates Book (SleeveEngine)
 
+> **운용 위치 (2026-10-15~)**: FACTOR_RATES 운용 코드는 `D:\김선도\Python\live_strategies` 의 `factor_rates` 로 옮겼다
+> (이 레포의 src·scripts 를 계산 그대로 옮김). PM 러너가 그 코드를 고정 커밋 스냅샷에서 돌리고, 블룸버그 패널은
+> PM `market_panels.py` 가 `D:\김선도\Python\market_data\panels` 에 받는다. PM·total_dashboard 는 더 이상 이 레포의
+> data/cache·sleeve_backtest_log.csv·data/*.json 을 읽지 않는다. 이 레포는 금리 팩터 연구·도구(live_record·reconcile_live·
+> PPT 등) 레포로 남는다. 개선 연구는 live_strategies factor_rates 코드를 불러와 시작하고, 채택하면 그쪽에 커밋한 뒤
+> PM `pm_config.LIVE_PINS['FACTOR_RATES']` 로 반영한다.
+
 블룸버그 데이터로 돌아가는 글로벌 금리 팩터 북. 2026-09-11 FX 전략 공장(조합 탐색·
 월별 재선정 방식)을 폐기하고 금리 북 슬리브 엔진만 남겼다 — 복구 지점: git tag
 `pre-fx-factory-retire`. 2026-10-13 엔진에서 기각된 실험 기능을 걷어냈다 — 복구 지점:
